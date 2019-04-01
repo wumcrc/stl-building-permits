@@ -1,0 +1,105 @@
+---
+title: "Permit Cleaning Data"
+output: html_notebook
+---
+### Intro
+This file is complied by Andrew D. Smith for use by the WUMCRC. Project started on 3/29/2019
+
+## Dependencies and library
+This file will need dplyr.
+
+```{r}
+library(dplyr)
+library(RODBC)
+library(rgdal)
+library(maptools)
+library(tidyverse)
+library(sp)
+library(sf)
+```
+
+
+### set wd
+
+
+```{r}
+setwd("G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning")
+```
+
+### import data
+
+```{r}
+channel <- odbcConnectAccess("G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
+```
+
+### Run SQL Query to return data
+
+```{r}
+data <- sqlQuery( channel , paste ("select *
+ from PrmBldg"))
+```
+
+### filter only recent permits
+
+For this next line, you will need to change the date. The dates are in the format 'YYYY-MM-DD'.
+
+
+```{r}
+data_month <- filter(data, FirstDate > '2018-01-01'& FirstDate < '2018-02-01')
+```
+
+### drop unused variables
+
+```{r}
+data_month<- select(data_month, -'CancelType', -'OwnerCode', -'StrucType1', -'StrucType2', -'StrucType3', -'NewUseGroup1' , -'NewUseGroup2' , -'NewUseGroup3' , -'OldUseGroup1' , -'OldUseGroup2' , -'OldUseGroup3', -'CorrName' , -'CorrCo', -'CorrAddr' , -'CorrCity', -'CorrState', -'CorrZIP', -'OccName' , -'OccCo', -'OccAddr' , -'OccCity', -'OccState', -'OccZIP' , -'ContrNum', -'ContrName' , -'ContrContact', -'ContrAddr' , -'ContrCity', -'ContrState', -'ContrZIP') 
+```
+
+### rename handle
+
+```{r}
+data_month %>%
+  rename(HANDLE = Handle) -> data_month
+```
+
+
+### import blank parcel data
+
+```{r}
+shape <- readOGR(dsn = ".", layer = "prcl")
+```
+
+### merge data into shapefle using HANDLE
+
+```{r}
+shape <- merge(shape, data_month, by="HANDLE", duplicateGeoms = TRUE)
+```
+
+
+
+
+```{r}
+shape <- shape[!is.na(shape$AB)]
+```
+
+
+
+```{r}
+writeOGR(shape, dsn =".", layer= "prcl_merge2", driver = "ESRI Shapefile")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

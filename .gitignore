@@ -1,5 +1,7 @@
-# Microsoft 
+# Microsoft
 *.mdb
+Thumbs.db
+thumbs.db
 
 # History files
 .Rhistory
@@ -37,3 +39,6 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+
+# Large Files
+*.dbf
