@@ -6,7 +6,7 @@ output: html_notebook
 This file is complied by Andrew D. Smith for use by the WUMCRC. Project started on 3/29/2019
 
 ## Dependencies and library
-This file will need dplyr.
+
 
 ```{r}
 library(dplyr)
@@ -16,6 +16,7 @@ library(maptools)
 library(tidyverse)
 library(sp)
 library(sf)
+library(ggplot2)
 ```
 
 
@@ -27,6 +28,7 @@ setwd("G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning")
 ```
 
 ### import data
+
 
 ```{r}
 channel <- odbcConnectAccess("G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
@@ -64,6 +66,9 @@ data_month %>%
 
 ### import blank parcel data
 
+This line will pull in the shapefile prcl that is in the working directory
+
+
 ```{r}
 shape <- readOGR(dsn = ".", layer = "prcl")
 ```
@@ -75,18 +80,31 @@ shape <- merge(shape, data_month, by="HANDLE", duplicateGeoms = TRUE)
 ```
 
 
+### Drop parcels with no permits
 
 
 ```{r}
-shape <- shape[!is.na(shape$AB)]
+shape <- shape[!is.na(shape@data$AppType) ,]
 ```
 
 
 
+
+
+## Set WD again to send the shapefile to the correct spot
+
+
 ```{r}
-writeOGR(shape, dsn =".", layer= "prcl_merge2", driver = "ESRI Shapefile")
+setwd("G:/Projects/Monthly-Reports/stl-building-permits/monthly-shapefiles")
 ```
 
+
+### write shapefile
+
+
+```{r}
+writeOGR(shape, dsn =".", layer= "permits_MONTH_YEAR", driver = "ESRI Shapefile")
+```
 
 
 

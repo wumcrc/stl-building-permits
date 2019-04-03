@@ -245,18 +245,69 @@ $(document).ready(function () {
 </div>
 <div id="dependencies-and-library" class="section level2">
 <h2>Dependencies and library</h2>
-<p>This file will need dplyr.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkcGx5cilcbmxpYnJhcnkoUk9EQkMpXG5saWJyYXJ5KHJnZGFsKVxubGlicmFyeShtYXB0b29scylcbmxpYnJhcnkodGlkeXZlcnNlKVxubGlicmFyeShzcClcbmxpYnJhcnkoc2YpXG5gYGAifQ== -->
-<pre class="r"><code>library(dplyr)
-library(RODBC)
-library(rgdal)
-library(maptools)
-library(tidyverse)
-library(sp)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkcGx5cilcbmBgYCJ9 -->
+<pre class="r"><code>library(dplyr)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiXG5BdHRhY2hpbmcgcGFja2FnZTogkWRwbHlyklxuXG5UaGUgZm9sbG93aW5nIG9iamVjdHMgYXJlIG1hc2tlZCBmcm9tIJFwYWNrYWdlOnN0YXRzkjpcblxuICAgIGZpbHRlciwgbGFnXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0cyBhcmUgbWFza2VkIGZyb20gkXBhY2thZ2U6YmFzZZI6XG5cbiAgICBpbnRlcnNlY3QsIHNldGRpZmYsIHNldGVxdWFsLCB1bmlvblxuXG5XYXJuaW5nIG1lc3NhZ2U6XG5wYWNrYWdlIOKAmHNw4oCZIHdhcyBidWlsdCB1bmRlciBSIHZlcnNpb24gMy41LjMgXG4ifQ== -->
+<pre><code>
+Attaching package: &lt;U+393C&gt;&lt;U+3E31&gt;dplyr&lt;U+393C&gt;&lt;U+3E32&gt;
+
+The following objects are masked from &lt;U+393C&gt;&lt;U+3E31&gt;package:stats&lt;U+393C&gt;&lt;U+3E32&gt;:
+
+    filter, lag
+
+The following objects are masked from &lt;U+393C&gt;&lt;U+3E31&gt;package:base&lt;U+393C&gt;&lt;U+3E32&gt;:
+
+    intersect, setdiff, setequal, union
+
+Warning message:
+package sp was built under R version 3.5.3 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShST0RCQylcbmxpYnJhcnkocmdkYWwpXG5gYGAifQ== -->
+<pre class="r"><code>library(RODBC)
+library(rgdal)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSCRcmdkYWySIHdhcyBidWlsdCB1bmRlciBSIHZlcnNpb24gMy41LjNyZ2RhbDogdmVyc2lvbjogMS40LTMsIChTVk4gcmV2aXNpb24gODI4KVxuIEdlb3NwYXRpYWwgRGF0YSBBYnN0cmFjdGlvbiBMaWJyYXJ5IGV4dGVuc2lvbnMgdG8gUiBzdWNjZXNzZnVsbHkgbG9hZGVkXG4gTG9hZGVkIEdEQUwgcnVudGltZTogR0RBTCAyLjIuMywgcmVsZWFzZWQgMjAxNy8xMS8yMFxuIFBhdGggdG8gR0RBTCBzaGFyZWQgZmlsZXM6IEM6L1VzZXJzL3NtaXRoYW4vRG9jdW1lbnRzL1Ivd2luLWxpYnJhcnkvMy41L3JnZGFsL2dkYWxcbiBHREFMIGJpbmFyeSBidWlsdCB3aXRoIEdFT1M6IFRSVUUgXG4gTG9hZGVkIFBST0ouNCBydW50aW1lOiBSZWwuIDQuOS4zLCAxNSBBdWd1c3QgMjAxNiwgW1BKX1ZFUlNJT046IDQ5M11cbiBQYXRoIHRvIFBST0ouNCBzaGFyZWQgZmlsZXM6IEM6L1VzZXJzL3NtaXRoYW4vRG9jdW1lbnRzL1Ivd2luLWxpYnJhcnkvMy41L3JnZGFsL3Byb2pcbiBMaW5raW5nIHRvIHNwIHZlcnNpb246IDEuMy0xIFxuIn0= -->
+<pre><code>package &lt;U+393C&gt;&lt;U+3E31&gt;rgdal&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3rgdal: version: 1.4-3, (SVN revision 828)
+ Geospatial Data Abstraction Library extensions to R successfully loaded
+ Loaded GDAL runtime: GDAL 2.2.3, released 2017/11/20
+ Path to GDAL shared files: C:/Users/smithan/Documents/R/win-library/3.5/rgdal/gdal
+ GDAL binary built with GEOS: TRUE 
+ Loaded PROJ.4 runtime: Rel. 4.9.3, 15 August 2016, [PJ_VERSION: 493]
+ Path to PROJ.4 shared files: C:/Users/smithan/Documents/R/win-library/3.5/rgdal/proj
+ Linking to sp version: 1.3-1 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShtYXB0b29scylcbmBgYCJ9 -->
+<pre class="r"><code>library(maptools)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSCRbWFwdG9vbHOSIHdhcyBidWlsdCB1bmRlciBSIHZlcnNpb24gMy41LjNDaGVja2luZyByZ2VvcyBhdmFpbGFiaWxpdHk6IEZBTFNFXG4gXHROb3RlOiB3aGVuIHJnZW9zIGlzIG5vdCBhdmFpbGFibGUsIHBvbHlnb24gZ2VvbWV0cnkgXHRjb21wdXRhdGlvbnMgaW4gbWFwdG9vbHMgZGVwZW5kIG9uIGdwY2xpYixcbiBcdHdoaWNoIGhhcyBhIHJlc3RyaWN0ZWQgbGljZW5jZS4gSXQgaXMgZGlzYWJsZWQgYnkgZGVmYXVsdDtcbiBcdHRvIGVuYWJsZSBncGNsaWIsIHR5cGUgZ3BjbGliUGVybWl0KClcbiJ9 -->
+<pre><code>package &lt;U+393C&gt;&lt;U+3E31&gt;maptools&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3Checking rgeos availability: FALSE
+    Note: when rgeos is not available, polygon geometry     computations in maptools depend on gpclib,
+    which has a restricted licence. It is disabled by default;
+    to enable gpclib, type gpclibPermit()</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5gYGAifQ== -->
+<pre class="r"><code>library(tidyverse)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSCRdGlkeXZlcnNlkiB3YXMgYnVpbHQgdW5kZXIgUiB2ZXJzaW9uIDMuNS4zXHUwMDFiWzMwbS0tIFx1MDAxYlsxbUF0dGFjaGluZyBwYWNrYWdlc1x1MDAxYlsyMm0gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tIHRpZHl2ZXJzZSAxLjIuMSAtLVx1MDAxYlszOW1cblx1MDAxYlszMG1cdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bWdncGxvdDJcdTAwMWJbMzBtIDMuMS4wICAgICBcdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bXJlYWRyICBcdTAwMWJbMzBtIDEuMy4xXG5cdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bXRpYmJsZSBcdTAwMWJbMzBtIDIuMC4xICAgICBcdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bXB1cnJyICBcdTAwMWJbMzBtIDAuMy4wXG5cdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bXRpZHlyICBcdTAwMWJbMzBtIDAuOC4zICAgICBcdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bXN0cmluZ3JcdTAwMWJbMzBtIDEuNC4wXG5cdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bWdncGxvdDJcdTAwMWJbMzBtIDMuMS4wICAgICBcdTAwMWJbMzJtdlx1MDAxYlszMG0gXHUwMDFiWzM0bWZvcmNhdHNcdTAwMWJbMzBtIDAuNC4wXHUwMDFiWzM5bVxucGFja2FnZSCRZ2dwbG90MpIgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiAzLjUuM3BhY2thZ2UgkXRpZHlykiB3YXMgYnVpbHQgdW5kZXIgUiB2ZXJzaW9uIDMuNS4zcGFja2FnZSCRcmVhZHKSIHdhcyBidWlsdCB1bmRlciBSIHZlcnNpb24gMy41LjNwYWNrYWdlIJFmb3JjYXRzkiB3YXMgYnVpbHQgdW5kZXIgUiB2ZXJzaW9uIDMuNS4zXHUwMDFiWzMwbS0tIFx1MDAxYlsxbUNvbmZsaWN0c1x1MDAxYlsyMm0gLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tIHRpZHl2ZXJzZV9jb25mbGljdHMoKSAtLVxuXHUwMDFiWzMxbXhcdTAwMWJbMzBtIFx1MDAxYlszNG1kcGx5clx1MDAxYlszMG06Olx1MDAxYlszMm1maWx0ZXIoKVx1MDAxYlszMG0gbWFza3MgXHUwMDFiWzM0bXN0YXRzXHUwMDFiWzMwbTo6ZmlsdGVyKClcblx1MDAxYlszMW14XHUwMDFiWzMwbSBcdTAwMWJbMzRtZHBseXJcdTAwMWJbMzBtOjpcdTAwMWJbMzJtbGFnKClcdTAwMWJbMzBtICAgIG1hc2tzIFx1MDAxYlszNG1zdGF0c1x1MDAxYlszMG06OmxhZygpXHUwMDFiWzM5bVxuIn0= -->
+<pre><code>package &lt;U+393C&gt;&lt;U+3E31&gt;tidyverse&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3[30m-- [1mAttaching packages[22m --------------------------------------- tidyverse 1.2.1 --[39m
+[30m[32mv[30m [34mggplot2[30m 3.1.0     [32mv[30m [34mreadr  [30m 1.3.1
+[32mv[30m [34mtibble [30m 2.0.1     [32mv[30m [34mpurrr  [30m 0.3.0
+[32mv[30m [34mtidyr  [30m 0.8.3     [32mv[30m [34mstringr[30m 1.4.0
+[32mv[30m [34mggplot2[30m 3.1.0     [32mv[30m [34mforcats[30m 0.4.0[39m
+package &lt;U+393C&gt;&lt;U+3E31&gt;ggplot2&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3package &lt;U+393C&gt;&lt;U+3E31&gt;tidyr&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3package &lt;U+393C&gt;&lt;U+3E31&gt;readr&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3package &lt;U+393C&gt;&lt;U+3E31&gt;forcats&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3[30m-- [1mConflicts[22m ------------------------------------------ tidyverse_conflicts() --
+[31mx[30m [34mdplyr[30m::[32mfilter()[30m masks [34mstats[30m::filter()
+[31mx[30m [34mdplyr[30m::[32mlag()[30m    masks [34mstats[30m::lag()[39m</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShzcClcbmxpYnJhcnkoc2YpXG5gYGAifQ== -->
+<pre class="r"><code>library(sp)
 library(sf)</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSCRc2aSIHdhcyBidWlsdCB1bmRlciBSIHZlcnNpb24gMy41LjNMaW5raW5nIHRvIEdFT1MgMy42LjEsIEdEQUwgMi4yLjMsIFBST0ogNC45LjNcbiJ9 -->
+<pre><code>package &lt;U+393C&gt;&lt;U+3E31&gt;sf&lt;U+393C&gt;&lt;U+3E32&gt; was built under R version 3.5.3Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <div id="set-wd" class="section level3">
@@ -283,9 +334,10 @@ library(sf)</code></pre>
 <h3>Run SQL Query to return data</h3>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSA8LSBzcWxRdWVyeSggY2hhbm5lbCAsIHBhc3RlIChcInNlbGVjdCAqXG4gZnJvbSBQcm1CbGRnXCIpKVxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZGF0YSA8LSBzcWxRdWVyeSggY2hhbm5lbCAsIHBhc3RlIChcInNlbGVjdCAqXG4gZnJvbSBQcm1CbGRnXG4gV0hFUkUgRmlyc3REYXRlID4gMjAxOC0wMS0wMVwiKSlcbmBgYCJ9 -->
 <pre class="r"><code>data &lt;- sqlQuery( channel , paste (&quot;select *
- from PrmBldg&quot;))</code></pre>
+ from PrmBldg
+ WHERE FirstDate &gt; 2018-01-01&quot;))</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -349,27 +401,29 @@ It has 1 fields</code></pre>
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2hhcGUgPC0gc2hhcGVbIWlzLm5hKHNoYXBlJEFCKV1cbmBgYCJ9 -->
-<pre class="r"><code>shape &lt;- shape[!is.na(shape$AB)]</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2hhcGUgPC0gc2hhcGVbIWlzLm5hKHNoYXBlQGRhdGEkQXBwVHlwZSkgLF1cbmBgYCJ9 -->
+<pre class="r"><code>shape &lt;- shape[!is.na(shape@data$AppType) ,]</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+</div>
+</div>
+<div id="set-wd-again-to-send-the-shapefile-to-the-correct-spot" class="section level2">
+<h2>Set WD again to send the shapefile to the correct spot</h2>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiYGBgclxud3JpdGVPR1Ioc2hhcGUsIGRzbiA9XCIuXCIsIGxheWVyPSBcInByY2xfbWVyZ2UyXCIsIGRyaXZlciA9IFwiRVNSSSBTaGFwZWZpbGVcIilcbmBgYCJ9 -->
 <pre class="r"><code>writeOGR(shape, dsn =&quot;.&quot;, layer= &quot;prcl_merge2&quot;, driver = &quot;ESRI Shapefile&quot;)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gd3JpdGVPR1Ioc2hhcGUsIGRzbiA9IFwiLlwiLCBsYXllciA9IFwicHJjbF9tZXJnZTJcIiwgZHJpdmVyID0gXCJFU1JJIFNoYXBlZmlsZVwiKSA6IFxuICBOQSBOVUxMIHVua25vd24gZGF0YSB0eXBlXG4ifQ== -->
-<pre><code>Error in writeOGR(shape, dsn = &quot;.&quot;, layer = &quot;prcl_merge2&quot;, driver = &quot;ESRI Shapefile&quot;) : 
-  NA NULL unknown data type</code></pre>
+<!-- rnb-output-begin eyJkYXRhIjoiRmllbGQgbmFtZXMgYWJicmV2aWF0ZWQgZm9yIEVTUkkgU2hhcGVmaWxlIGRyaXZlclxuIn0= -->
+<pre><code>Field names abbreviated for ESRI Shapefile driver</code></pre>
 <!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 </div>
-</div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIlBlcm1pdCBDbGVhbmluZyBEYXRhIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCiMjIyBJbnRybw0KVGhpcyBmaWxlIGlzIGNvbXBsaWVkIGJ5IEFuZHJldyBELiBTbWl0aCBmb3IgdXNlIGJ5IHRoZSBXVU1DUkMuIFByb2plY3Qgc3RhcnRlZCBvbiAzLzI5LzIwMTkNCg0KIyMgRGVwZW5kZW5jaWVzIGFuZCBsaWJyYXJ5DQpUaGlzIGZpbGUgd2lsbCBuZWVkIGRwbHlyLg0KDQpgYGB7cn0NCmxpYnJhcnkoZHBseXIpDQpsaWJyYXJ5KFJPREJDKQ0KbGlicmFyeShyZ2RhbCkNCmxpYnJhcnkobWFwdG9vbHMpDQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmxpYnJhcnkoc3ApDQpsaWJyYXJ5KHNmKQ0KYGBgDQoNCg0KIyMjIHNldCB3ZA0KDQoNCmBgYHtyfQ0Kc2V0d2QoIkc6L1Byb2plY3RzL01vbnRobHktUmVwb3J0cy9zdGwtYnVpbGRpbmctcGVybWl0cy9wZXJtaXQtZGF0YS1jbGVhbmluZyIpDQpgYGANCg0KIyMjIGltcG9ydCBkYXRhDQoNCmBgYHtyfQ0KY2hhbm5lbCA8LSBvZGJjQ29ubmVjdEFjY2VzcygiRzovUHJvamVjdHMvTW9udGhseS1SZXBvcnRzL3N0bC1idWlsZGluZy1wZXJtaXRzL3Blcm1pdC1kYXRhLWNsZWFuaW5nL3BybWJkby9wcm1iZG8iKQ0KYGBgDQoNCiMjIyBSdW4gU1FMIFF1ZXJ5IHRvIHJldHVybiBkYXRhDQoNCmBgYHtyfQ0KZGF0YSA8LSBzcWxRdWVyeSggY2hhbm5lbCAsIHBhc3RlICgic2VsZWN0ICoNCiBmcm9tIFBybUJsZGciKSkNCmBgYA0KDQojIyMgZmlsdGVyIG9ubHkgcmVjZW50IHBlcm1pdHMNCg0KRm9yIHRoaXMgbmV4dCBsaW5lLCB5b3Ugd2lsbCBuZWVkIHRvIGNoYW5nZSB0aGUgZGF0ZS4gVGhlIGRhdGVzIGFyZSBpbiB0aGUgZm9ybWF0ICdZWVlZLU1NLUREJy4NCg0KDQpgYGB7cn0NCmRhdGFfbW9udGggPC0gZmlsdGVyKGRhdGEsIEZpcnN0RGF0ZSA+ICcyMDE4LTAxLTAxJyYgRmlyc3REYXRlIDwgJzIwMTgtMDItMDEnKQ0KYGBgDQoNCiMjIyBkcm9wIHVudXNlZCB2YXJpYWJsZXMNCg0KYGBge3J9DQpkYXRhX21vbnRoPC0gc2VsZWN0KGRhdGFfbW9udGgsIC0nQ2FuY2VsVHlwZScsIC0nT3duZXJDb2RlJywgLSdTdHJ1Y1R5cGUxJywgLSdTdHJ1Y1R5cGUyJywgLSdTdHJ1Y1R5cGUzJywgLSdOZXdVc2VHcm91cDEnICwgLSdOZXdVc2VHcm91cDInICwgLSdOZXdVc2VHcm91cDMnICwgLSdPbGRVc2VHcm91cDEnICwgLSdPbGRVc2VHcm91cDInICwgLSdPbGRVc2VHcm91cDMnLCAtJ0NvcnJOYW1lJyAsIC0nQ29yckNvJywgLSdDb3JyQWRkcicgLCAtJ0NvcnJDaXR5JywgLSdDb3JyU3RhdGUnLCAtJ0NvcnJaSVAnLCAtJ09jY05hbWUnICwgLSdPY2NDbycsIC0nT2NjQWRkcicgLCAtJ09jY0NpdHknLCAtJ09jY1N0YXRlJywgLSdPY2NaSVAnICwgLSdDb250ck51bScsIC0nQ29udHJOYW1lJyAsIC0nQ29udHJDb250YWN0JywgLSdDb250ckFkZHInICwgLSdDb250ckNpdHknLCAtJ0NvbnRyU3RhdGUnLCAtJ0NvbnRyWklQJykgDQpgYGANCg0KIyMjIHJlbmFtZSBoYW5kbGUNCg0KYGBge3J9DQpkYXRhX21vbnRoICU+JQ0KICByZW5hbWUoSEFORExFID0gSGFuZGxlKSAtPiBkYXRhX21vbnRoDQpgYGANCg0KDQojIyMgaW1wb3J0IGJsYW5rIHBhcmNlbCBkYXRhDQoNCmBgYHtyfQ0Kc2hhcGUgPC0gcmVhZE9HUihkc24gPSAiLiIsIGxheWVyID0gInByY2wiKQ0KYGBgDQoNCiMjIyBtZXJnZSBkYXRhIGludG8gc2hhcGVmbGUgdXNpbmcgSEFORExFDQoNCmBgYHtyfQ0Kc2hhcGUgPC0gbWVyZ2Uoc2hhcGUsIGRhdGFfbW9udGgsIGJ5PSJIQU5ETEUiLCBkdXBsaWNhdGVHZW9tcyA9IFRSVUUpDQpgYGANCg0KDQoNCg0KYGBge3J9DQpzaGFwZSA8LSBzaGFwZVshaXMubmEoc2hhcGUkQUIpXQ0KYGBgDQoNCg0KDQpgYGB7cn0NCndyaXRlT0dSKHNoYXBlLCBkc24gPSIuIiwgbGF5ZXI9ICJwcmNsX21lcmdlMiIsIGRyaXZlciA9ICJFU1JJIFNoYXBlZmlsZSIpDQpgYGANCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQo=</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIlBlcm1pdCBDbGVhbmluZyBEYXRhIg0Kb3V0cHV0OiBodG1sX25vdGVib29rDQotLS0NCiMjIyBJbnRybw0KVGhpcyBmaWxlIGlzIGNvbXBsaWVkIGJ5IEFuZHJldyBELiBTbWl0aCBmb3IgdXNlIGJ5IHRoZSBXVU1DUkMuIFByb2plY3Qgc3RhcnRlZCBvbiAzLzI5LzIwMTkNCg0KIyMgRGVwZW5kZW5jaWVzIGFuZCBsaWJyYXJ5DQoNCg0KYGBge3J9DQpsaWJyYXJ5KGRwbHlyKQ0KbGlicmFyeShST0RCQykNCmxpYnJhcnkocmdkYWwpDQpsaWJyYXJ5KG1hcHRvb2xzKQ0KbGlicmFyeSh0aWR5dmVyc2UpDQpsaWJyYXJ5KHNwKQ0KbGlicmFyeShzZikNCmBgYA0KDQoNCiMjIyBzZXQgd2QNCg0KDQpgYGB7cn0NCnNldHdkKCJHOi9Qcm9qZWN0cy9Nb250aGx5LVJlcG9ydHMvc3RsLWJ1aWxkaW5nLXBlcm1pdHMvcGVybWl0LWRhdGEtY2xlYW5pbmciKQ0KYGBgDQoNCiMjIyBpbXBvcnQgZGF0YQ0KDQpgYGB7cn0NCmNoYW5uZWwgPC0gb2RiY0Nvbm5lY3RBY2Nlc3MoIkc6L1Byb2plY3RzL01vbnRobHktUmVwb3J0cy9zdGwtYnVpbGRpbmctcGVybWl0cy9wZXJtaXQtZGF0YS1jbGVhbmluZy9wcm1iZG8vcHJtYmRvIikNCmBgYA0KDQojIyMgUnVuIFNRTCBRdWVyeSB0byByZXR1cm4gZGF0YQ0KDQpgYGB7cn0NCmRhdGEgPC0gc3FsUXVlcnkoIGNoYW5uZWwgLCBwYXN0ZSAoInNlbGVjdCAqDQogZnJvbSBQcm1CbGRnDQogV0hFUkUgRmlyc3REYXRlID4gMjAxOC0wMS0wMSIpKQ0KYGBgDQoNCiMjIyBmaWx0ZXIgb25seSByZWNlbnQgcGVybWl0cw0KDQpGb3IgdGhpcyBuZXh0IGxpbmUsIHlvdSB3aWxsIG5lZWQgdG8gY2hhbmdlIHRoZSBkYXRlLiBUaGUgZGF0ZXMgYXJlIGluIHRoZSBmb3JtYXQgJ1lZWVktTU0tREQnLg0KDQoNCmBgYHtyfQ0KZGF0YV9tb250aCA8LSBmaWx0ZXIoZGF0YSwgRmlyc3REYXRlID4gJzIwMTgtMDEtMDEnJiBGaXJzdERhdGUgPCAnMjAxOC0wMi0wMScpDQpgYGANCg0KIyMjIGRyb3AgdW51c2VkIHZhcmlhYmxlcw0KDQpgYGB7cn0NCmRhdGFfbW9udGg8LSBzZWxlY3QoZGF0YV9tb250aCwgLSdDYW5jZWxUeXBlJywgLSdPd25lckNvZGUnLCAtJ1N0cnVjVHlwZTEnLCAtJ1N0cnVjVHlwZTInLCAtJ1N0cnVjVHlwZTMnLCAtJ05ld1VzZUdyb3VwMScgLCAtJ05ld1VzZUdyb3VwMicgLCAtJ05ld1VzZUdyb3VwMycgLCAtJ09sZFVzZUdyb3VwMScgLCAtJ09sZFVzZUdyb3VwMicgLCAtJ09sZFVzZUdyb3VwMycsIC0nQ29yck5hbWUnICwgLSdDb3JyQ28nLCAtJ0NvcnJBZGRyJyAsIC0nQ29yckNpdHknLCAtJ0NvcnJTdGF0ZScsIC0nQ29yclpJUCcsIC0nT2NjTmFtZScgLCAtJ09jY0NvJywgLSdPY2NBZGRyJyAsIC0nT2NjQ2l0eScsIC0nT2NjU3RhdGUnLCAtJ09jY1pJUCcgLCAtJ0NvbnRyTnVtJywgLSdDb250ck5hbWUnICwgLSdDb250ckNvbnRhY3QnLCAtJ0NvbnRyQWRkcicgLCAtJ0NvbnRyQ2l0eScsIC0nQ29udHJTdGF0ZScsIC0nQ29udHJaSVAnKSANCmBgYA0KDQojIyMgcmVuYW1lIGhhbmRsZQ0KDQpgYGB7cn0NCmRhdGFfbW9udGggJT4lDQogIHJlbmFtZShIQU5ETEUgPSBIYW5kbGUpIC0+IGRhdGFfbW9udGgNCmBgYA0KDQoNCiMjIyBpbXBvcnQgYmxhbmsgcGFyY2VsIGRhdGENCg0KYGBge3J9DQpzaGFwZSA8LSByZWFkT0dSKGRzbiA9ICIuIiwgbGF5ZXIgPSAicHJjbCIpDQpgYGANCg0KIyMjIG1lcmdlIGRhdGEgaW50byBzaGFwZWZsZSB1c2luZyBIQU5ETEUNCg0KYGBge3J9DQpzaGFwZSA8LSBtZXJnZShzaGFwZSwgZGF0YV9tb250aCwgYnk9IkhBTkRMRSIsIGR1cGxpY2F0ZUdlb21zID0gVFJVRSkNCmBgYA0KDQoNCg0KDQoNCmBgYHtyfQ0Kc2hhcGUgPC0gc2hhcGVbIWlzLm5hKHNoYXBlQGRhdGEkQXBwVHlwZSkgLF0NCmBgYA0KDQoNCiMjIFNldCBXRCBhZ2FpbiB0byBzZW5kIHRoZSBzaGFwZWZpbGUgdG8gdGhlIGNvcnJlY3Qgc3BvdA0KDQoNCmBgYHtyfQ0Kd3JpdGVPR1Ioc2hhcGUsIGRzbiA9Ii4iLCBsYXllcj0gInBlcm1pdHNfTU9OVEhfWUVBUiIsIGRyaXZlciA9ICJFU1JJIFNoYXBlZmlsZSIpDQpgYGANCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQoNCg0KDQo=</div>
 
 
 
