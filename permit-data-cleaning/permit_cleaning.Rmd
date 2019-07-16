@@ -103,15 +103,23 @@ setwd("G:/Projects/Monthly-Reports/stl-building-permits/monthly-shapefiles")
 
 
 ```{r}
-writeOGR(shape, dsn =".", layer= "permits_MONTH_YEAR", driver = "ESRI Shapefile")
+writeOGR(shape, dsn =".", layer= "permits_MONTH_YEAR1", driver = "ESRI Shapefile")
 ```
 
 
 
+### Recode values to neighborhood names
+
+```{r}
+data_month %>%
+  mutate(nbhd_car = as.character(Nbrhd)) -> data_month
+```
 
 
 
-
+```{r}
+data_month <- recode(data_month$nbhd_car, "1" = "Carondelet")
+```
 
 
 
