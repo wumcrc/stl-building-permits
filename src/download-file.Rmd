@@ -4,7 +4,7 @@ author: "Jes Stevens"
 date: "12/20/2019"
 output: html_document
 params: 
-  date: "12-21-19"
+  date: "12-20-19"
 ---
 
 # Load Libraries 
@@ -19,24 +19,34 @@ library(sp)
 library(sf)
 library(ggplot2)
 library(here)
-library(unzip)
+library(utils)
+
 ```
 
 # Download Access Database
 
 ```{r}
+# Creates Temporary Location
 temp <- tempfile()
+
+# Downloads file to Temporary Location 
 download.file("https://www.stlouis-mo.gov/data/upload/data-files/prmbdo.zip",temp)
-test <- dir.exists(here("data", params$date))
+
+# Tests to see if the Folder Exsists
+test <- dir.exists(here("data", "access-db", params$date))
+
+# Creates folder if test returns a FALSE value
 if(test == FALSE) {
-   dir.create(here("data", params$date))
+   dir.create(here("data", "access-db", params$date))
 }
 
-copy
-#channel <- odbcConnectAccess(temp)
-#data <- sqlQuery(channel, paste("select *
-# from PrmBldg"))
-#data <- read.table(unz(temp, "bldg-permit.dat"))
-#unlink(temp)
+# Tests to see if the folder is empty
+files <- list.files(path = here("data", "access-db", params$date))
+is_empty(files) -> test
+
+# Unzips Downloaded file from temporary location to current working directory 
+if(test == TRUE) {
+   unzip(temp, exdir = here("data", "access-db", params$date))
+}
 ```
 
