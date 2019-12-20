@@ -4,7 +4,7 @@ author: "Jes Stevens"
 date: "12/20/2019"
 output: html_document
 params: 
-  
+  date: "12-21-19"
 ---
 
 # Load Libraries 
@@ -18,6 +18,8 @@ library(tidyverse)
 library(sp)
 library(sf)
 library(ggplot2)
+library(here)
+library(unzip)
 ```
 
 # Download Access Database
@@ -25,10 +27,16 @@ library(ggplot2)
 ```{r}
 temp <- tempfile()
 download.file("https://www.stlouis-mo.gov/data/upload/data-files/prmbdo.zip",temp)
-channel <- odbcConnectAccess(temp)
-data <- sqlQuery(channel, paste("select *
- from PrmBldg"))
-data <- read.table(unz(temp, "bldg-permit.dat"))
-unlink(temp)
+test <- dir.exists(here("data", params$date))
+if(test == FALSE) {
+   dir.create(here("data", params$date))
+}
+
+copy
+#channel <- odbcConnectAccess(temp)
+#data <- sqlQuery(channel, paste("select *
+# from PrmBldg"))
+#data <- read.table(unz(temp, "bldg-permit.dat"))
+#unlink(temp)
 ```
 
