@@ -1,0 +1,34 @@
+---
+title: "Building Permit Data Prep"
+author: "Jes Stevens"
+date: "12/20/2019"
+output: html_document
+params: 
+  
+---
+
+# Load Libraries 
+
+```{r}
+library(dplyr)
+library(RODBC)
+library(rgdal)
+library(maptools)
+library(tidyverse)
+library(sp)
+library(sf)
+library(ggplot2)
+```
+
+# Download Access Database
+
+```{r}
+temp <- tempfile()
+download.file("https://www.stlouis-mo.gov/data/upload/data-files/prmbdo.zip",temp)
+channel <- odbcConnectAccess(temp)
+data <- sqlQuery(channel, paste("select *
+ from PrmBldg"))
+data <- read.table(unz(temp, "bldg-permit.dat"))
+unlink(temp)
+```
+
