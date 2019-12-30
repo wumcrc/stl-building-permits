@@ -4,7 +4,7 @@ author: "Jes Stevens"
 date: "12/20/2019"
 output: html_document
 params: 
-  date: "12-20-19"
+  date: "12-30-19"
 ---
 
 # Load Libraries 
@@ -33,20 +33,23 @@ temp <- tempfile()
 download.file("https://www.stlouis-mo.gov/data/upload/data-files/prmbdo.zip",temp)
 
 # Tests to see if the Folder Exsists
-test <- dir.exists(here("data", "access-db", params$date))
+test <- dir.exists(here("data", "historical-dbs", params$date))
 
 # Creates folder if test returns a FALSE value
 if(test == FALSE) {
-   dir.create(here("data", "access-db", params$date))
+   dir.create(here("data", "historical-dbs", params$date))
 }
 
 # Tests to see if the folder is empty
-files <- list.files(path = here("data", "access-db", params$date))
+files <- list.files(path = here("data", "historical-dbs", params$date))
 is_empty(files) -> test
 
-# Unzips Downloaded file from temporary location to current working directory 
+# Unzips Downloaded file from temporary location to historical files archive
 if(test == TRUE) {
-   unzip(temp, exdir = here("data", "access-db", params$date))
+   unzip(temp, exdir = here("data", "historical-dbs", params$date))
 }
+
+# Unzips Downloaded files to the working directory and overwrites the file
+unzip(temp, exdir = here("data", "working-db"), overwrite = TRUE)
 ```
 
