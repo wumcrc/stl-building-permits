@@ -23,7 +23,16 @@ library(utils)
 # Access Database
 
 ```{r}
-db <- here("data", "working-db", "prmbdo.mdb")
+db_path <- here("data", "working-db", "prmbdo")
 channel <- odbcConnect(db)
+```
+
+```{r}
+channel <- odbcConnectAccess(here("data", "working-db", "prmbdo"))
+```
+
+```{r}
+data <- sqlQuery( channel , paste ("select *
+ from PrmBldg"))
 ```
 
