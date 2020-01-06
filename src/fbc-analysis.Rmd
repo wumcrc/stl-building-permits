@@ -1,0 +1,29 @@
+---
+title: "Form Based Code - Analysis"
+author: "Jes Stevens, MA"
+date: "12/30/2019"
+output: html_document
+---
+
+# Load Libraries 
+
+```{r}
+library(dplyr)
+library(RODBC)
+library(rgdal)
+library(maptools)
+library(tidyverse)
+library(sp)
+library(sf)
+library(ggplot2)
+library(here)
+library(utils)
+```
+
+# Access Database
+
+```{r}
+db <- here("data", "working-db", "prmbdo.mdb")
+channel <- odbcConnect(db)
+```
+
