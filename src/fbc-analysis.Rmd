@@ -23,13 +23,15 @@ library(utils)
 # Access Database
 
 ```{r}
-db_path <- here("data", "working-db", "prmbdo")
-channel <- odbcConnect(db)
+#db_path <- here("data", "working-db", "prmbdo")
+#channel <- odbcConnect(db_path)
+#channel <- odbcConnectAccess(here("data", "working-db", "prmbdo"))
+
+#channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/data/working-db/prmbdo")
+
+channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
 ```
 
-```{r}
-channel <- odbcConnectAccess(here("data", "working-db", "prmbdo"))
-```
 
 ```{r}
 data <- sqlQuery( channel , paste ("select *
