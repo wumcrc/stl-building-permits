@@ -4,7 +4,7 @@ author: "Jes Stevens"
 date: "12/20/2019"
 output: html_document
 params: 
-  date: "12-30-19"
+  date: "1-30-20"
 ---
 
 # Load Libraries 
@@ -32,23 +32,100 @@ temp <- tempfile()
 download.file("https://www.stlouis-mo.gov/data/upload/data-files/prmbdo.zip",temp)
 
 # Tests to see if the Folder Exsists
-test <- dir.exists(here("data", "historical-dbs", params$date))
+test <- dir.exists(here("data", "historical-dbs", "bldgpermits", params$date))
 
 # Creates folder if test returns a FALSE value
 if(test == FALSE) {
-   dir.create(here("data", "historical-dbs", params$date))
+   dir.create(here("data", "historical-dbs", "bldgpermits", params$date))
 }
 
 # Tests to see if the folder is empty
-files <- list.files(path = here("data", "historical-dbs", params$date))
+files <- list.files(path = here("data", "historical-dbs", "bldgpermits", params$date))
 is_empty(files) -> test
 
 # Unzips Downloaded file from temporary location to historical files archive
 if(test == TRUE) {
-   unzip(temp, exdir = here("data", "historical-dbs", params$date))
+   unzip(temp, exdir = here("data", "historical-dbs", "bldgpermits", params$date))
 }
 
 # Unzips Downloaded files to the working directory and overwrites the file
-unzip(temp, exdir = here("data", "working-db"), overwrite = TRUE)
+unzip(temp, exdir = here("data", "working-db", "bldgpermits"), overwrite = TRUE)
+```
+
+# Download Parcel Shapefile Database
+
+```{r}
+# Creates Temporary Location
+temp <- tempfile()
+
+# Downloads file to Temporary Location 
+download.file("https://www.stlouis-mo.gov/data/upload/data-files/prcl_shape.zip",temp)
+
+# Tests to see if the Folder Exsists
+test <- dir.exists(here("data", "historical-dbs", "parcels", params$date))
+
+# Creates folder if test returns a FALSE value
+if(test == FALSE) {
+   dir.create(here("data", "historical-dbs", "parcels", params$date))
+}
+
+# Tests to see if the folder is empty
+files <- list.files(path = here("data", "historical-dbs", "parcels", params$date))
+is_empty(files) -> test
+
+# Unzips Downloaded file from temporary location to historical files archive
+if(test == TRUE) {
+   unzip(temp, exdir = here("data", "historical-dbs", "parcels", params$date))
+}
+
+# Unzips Downloaded files to the working directory and overwrites the file
+unzip(temp, exdir = here("data", "working-db", "parcels"), overwrite = TRUE)
+```
+
+# Access Database
+
+```{r}
+#db_path <- here("data", "working-db", "prmbdo")
+#channel <- odbcConnect(db_path)
+#channel <- odbcConnectAccess(here("data", "working-db", "prmbdo"))
+#channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/data/working-db/prmbdo")
+
+
+#db <- "G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/data/working-db/bldgpermits/prmbdo"
+#con <- odbcConnectAccess2007(db)
+#sqlTables(con, tableType = "TABLE")$TABLE_NAME
+
+
+channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/data/working-db/bldgpermits/prmbdo")
+```
+
+```{r}
+data <- sqlQuery(channel , paste ("select *
+ from PrmBldg"))
+```
+
+```{r}
+select(data, AppType, CancelType, CityBlock, Parcel, OwnerCode, Handle, AddrNum, StDir,
+       StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate, IssueDate,
+       CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1, StrucType2, 
+       NbrOfUnits, NewUse, NewUseGroup1, NewUseGroup2, NewUseGroup3, OldUse, OwnerName, 
+       OwnerCo, OwnerAddr, OwnerCity, OwnerState, OwnerZIP, GeoCityBLockPart, Ward10, 
+       Ward00, Nbrhd, FirstDate, LastDate, UpDateGeo) -> bldgpermits
+```
+
+```{r}
+filter(bldgpermits, Nbrhd == 39) %>% 
+        filter(., AppDate >= as.POSIXct("2018-1-01")) %>% 
+        mutate(HANDLE = as.character(Handle)) -> fpsebldg
+
+gw_get_data("Parcels", "sf") -> stl_parcels
+```
+
+```{r}
+left_join(fpsebldg, stl_parcels, by = "HANDLE") -> fpsebldg_sf
+```
+
+```{r}
+save(stl_parcels, fpsebldg, fpsebldg_sf, bldgpermits, file = here("data", "working-db", "fbc-analysis.rda"))
 ```
 

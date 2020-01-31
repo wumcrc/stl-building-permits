@@ -18,6 +18,7 @@ library(sf)
 library(ggplot2)
 library(here)
 library(utils)
+library(gateway)
 ```
 
 # Access Database
@@ -26,15 +27,44 @@ library(utils)
 #db_path <- here("data", "working-db", "prmbdo")
 #channel <- odbcConnect(db_path)
 #channel <- odbcConnectAccess(here("data", "working-db", "prmbdo"))
-
 #channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/data/working-db/prmbdo")
 
-channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
+
+#db <- "G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/data/working-db/bldgpermits/prmbdo"
+#con <- odbcConnectAccess2007(db)
+#sqlTables(con, tableType = "TABLE")$TABLE_NAME
+
+
+channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/data/working-db/bldgpermits/prmbdo")
 ```
 
+```{r}
+data <- sqlQuery(channel , paste ("select *
+ from PrmBldg"))
+```
 
 ```{r}
-data <- sqlQuery( channel , paste ("select *
- from PrmBldg"))
+select(data, AppType, CancelType, CityBlock, Parcel, OwnerCode, Handle, AddrNum, StDir,
+       StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate, IssueDate,
+       CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1, StrucType2, 
+       NbrOfUnits, NewUse, NewUseGroup1, NewUseGroup2, NewUseGroup3, OldUse, OwnerName, 
+       OwnerCo, OwnerAddr, OwnerCity, OwnerState, OwnerZIP, GeoCityBLockPart, Ward10, 
+       Ward00, Nbrhd, FirstDate, LastDate, UpDateGeo) -> bldgpermits
+```
+
+```{r}
+filter(bldgpermits, Nbrhd == 39) %>% 
+        filter(., AppDate >= as.POSIXct("2018-1-01")) %>% 
+        mutate(HANDLE = as.character(Handle)) -> fpsebldg
+
+gw_get_data("Parcels", "sf") -> stl_parcels
+```
+
+```{r}
+left_join(fpsebldg, stl_parcels, by = "HANDLE") -> fpsebldg_sf
+```
+
+```{r}
+save(stl_parcels, fpsebldg, fpsebldg_sf, bldgpermits, file = here("data", "working-db", "fbc-analysis.rda"))
 ```
 
