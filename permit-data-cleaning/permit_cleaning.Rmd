@@ -46,21 +46,35 @@ data <- sqlQuery( channel , paste ("select *
 
 ### filter only recent permits
 
-For this next line, you will need to change the date. The dates are in the format 'YYYY-MM-DD'. The most recent data is from March of 2019. 
+For this next line, you will need to change the date. The dates are in the format 'YYYY-MM-DD'. For this code we are filtering out only data from December 2019. 
 
 
 ```{r}
-data_month <- filter(data, FirstDate > '2019-03-01'& FirstDate < '2019-10-01')
+data_month <- filter(data, FirstDate > '2019-12-01'& FirstDate < '2020-01-01')
 ```
 
 ### drop unused variables
 
 ```{r}
-data_month<- select(data_month, -'CancelType', -'OwnerCode', -'StrucType1', -'StrucType2', -'StrucType3', -'NewUseGroup1' , -'NewUseGroup2' , -'NewUseGroup3' , -'OldUseGroup1' , -'OldUseGroup2' , -'OldUseGroup3', -'CorrName' , -'CorrCo', -'CorrAddr' , -'CorrCity', -'CorrState', -'CorrZIP', -'OccName' , -'OccCo', -'OccAddr' , -'OccCity', -'OccState', -'OccZIP' , -'ContrNum', -'ContrName' , -'ContrContact', -'ContrAddr' , -'ContrCity', -'ContrState', -'ContrZIP') 
+data_month<- select(data_month, AppType, CancelType, CityBlock, Parcel, OwnerCode, Handle, AddrNum, StDir,
+       StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate, IssueDate,
+       CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1, StrucType2, 
+       NbrOfUnits, NewUse, NewUseGroup1, NewUseGroup2, NewUseGroup3, OldUse, OwnerName, 
+       OwnerCo, OwnerAddr, OwnerCity, OwnerState, OwnerZIP, GeoCityBLockPart, Ward10, 
+       Ward00, Nbrhd, FirstDate, LastDate, UpDateGeo)
 ```
 
-### Filter by Neighborhood
+### Filter Out Permits with a Cancellation Date
 
+```{r}
+data_month%>%
+  filter(is.na(CancelDate)) -> data_month
+```
+
+
+```{r}
+data_month <- filter(data_month, Nbrhd %in% c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58"))
+```
 
 
 
@@ -79,6 +93,86 @@ data_month <- mutate(data_month, nbhd_name = ifelse(grepl("38", Nbrhd), "Central
                                              ifelse(grepl("53", Nbrhd), "Fountain Park",       
                                              ifelse(grepl("54", Nbrhd), "Lewis Place",       
                                              ifelse(grepl("58", Nbrhd), "Vandeventer", NA)))))))))))
+```
+
+
+### Recode `NewUse` Variable
+
+This code chunk mutates the `NewUse` variable to the new `new_use` variable which displays either Residential, Comercial, Institutional, or Industrial new use of the property. 
+
+```{r}
+data_month <- mutate(data_month, new_use = ifelse(grepl("R2", NewUseGroup1), "Residential",
+                                             ifelse(grepl("R3", NewUseGroup1), "Residential",
+                                             ifelse(grepl("R1", NewUseGroup1), "Commercial",  
+                                             ifelse(grepl("B", NewUseGroup1), "Institutional",
+                                             ifelse(grepl("M", NewUseGroup1), "Commercial",
+                                             ifelse(grepl("E", NewUseGroup1), "Institutional",       
+                                             ifelse(grepl("I2", NewUseGroup1), "Institutional",       
+                                             ifelse(grepl("U", NewUseGroup1), "Commercial", 
+                                             ifelse(grepl("RESTAURANT", NewUse), "Commercial",
+                                             ifelse(grepl("COMM/RESIDENT", NewUse), "Residential",
+                                             ifelse(grepl("EVENT SPACE", NewUse), "Commercial",   
+                                             ifelse(grepl("CHURCH", NewUse), "Institutional",
+                                             ifelse(grepl("WAREHOUSE", NewUse), "Industrial",
+                                             ifelse(grepl("PARKING GARAGE", NewUse), "Commercial",
+                                             ifelse(grepl("PARKING LOT", NewUse), "Commercial", NA))))))))))))))))
+```
+
+### `EstProjectCost` Total
+
+This code returns the average project cost by use the `mean` function.
+
+```{r}
+mean(data_month$EstProjectCost)
+```
+
+### Number of Permits Total by Use
+
+This code uses the `table` function to return how many permits are being used in each neighborhood.
+
+```{r}
+table(data_month$nbhd_name)
+```
+
+
+###Average Project Cost by `new_use`
+
+This code chunk calculates the mean `EstProjectCost` by `new_use` variable.
+
+```{r}
+sapply(split(data_month$EstProjectCost, data_month$new_use), mean)
+```
+
+### Average Cost by `new_use` in each Neighborhood
+
+The code below is still in progress (last updated 2/3 by Logan Williams)
+
+```{r}
+temp <- filter(data_month, nbhd_name = )
+```
+
+
+### Basic Graphs
+
+This code chunk creates a bar plot that displays the number of building permits per each neighborhood.
+
+```{r}
+counts <- table(data_month$nbhd_name)
+barplot(counts, main = "Neighborhood Building Permits", xlab = "Neighborhood")
+```
+
+This graph is a count of how many buildings have a certain count of 
+
+```{r}
+counts <- table(data_month$NbrOfUnits)
+barplot(counts, main = "Neighborhood Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+This graph is a count of building permits by ward.
+
+```{r}
+counts <- table(data_month$Ward10)
+barplot(counts, main = "Building Permits by Ward", xlab = "Ward", ylab = "Number of Building Permits")
 ```
 
 
