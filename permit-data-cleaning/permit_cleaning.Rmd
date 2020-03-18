@@ -1,61 +1,71 @@
 ---
 title: "Permit Cleaning Data"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 ### Intro
-This file is complied by Andrew D. Smith for use by the WUMCRC. Project started on 3/29/2019
 
-## Dependencies and library
+This file is complied by Andrew D. Smith and Logan Williams for use by the WUMCRC. Project started on 3/29/2019
 
+## Dependencies
 
-```{r}
-library(dplyr)
+```{r, message=FALSE}
+
+#Load dependencies
+
+library(dplyr)        #data cleaning
 library(RODBC)
 library(rgdal)
 library(maptools)
 library(tidyverse)
 library(sp)
 library(sf)
-library(ggplot2)
+library(ggplot2)      #chart making
+library(ggmap)
 ```
 
 
-### set wd
+```{r, include=FALSE}
 
+# Set working directory
 
-```{r}
 setwd("G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning")
 ```
 
-### import data
 
+```{r, include=FALSE}
 
-```{r}
+#Import data
+#Use odbcDriverConnect instead of odbcConnectAcces which noly works on 32-bit
+
 channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
 
-
-#Use odbcDriverConnect instead? odbcConnnectAccess only works on 32-bit#
 ```
 
-### Run SQL Query to return data
 
-```{r}
+```{r, include=FALSE}
+
+#Run SQL query to return data
+
 data <- sqlQuery( channel , paste ("select *
  from PrmBldg"))
 ```
 
-### filter only recent permits
 
-For this next line, you will need to change the date. The dates are in the format 'YYYY-MM-DD'. For this code we are filtering out only data from December 2019. 
+```{r, include=FALSE}
 
+#Filter only recent permits
+#Change format to 'YYYY-MM-DD'
 
-```{r}
 data_month <- filter(data, FirstDate > '2019-12-01'& FirstDate < '2020-01-01')
 ```
 
-### drop unused variables
 
-```{r}
+```{r, include=FALSE}
+
+#Drop unused variables using `select` function, assign to new `data_month` data frame
+
 data_month<- select(data_month, AppType, CancelType, CityBlock, Parcel, OwnerCode, Handle, AddrNum, StDir,
        StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate, IssueDate,
        CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1, StrucType2, 
@@ -64,25 +74,29 @@ data_month<- select(data_month, AppType, CancelType, CityBlock, Parcel, OwnerCod
        Ward00, Nbrhd, FirstDate, LastDate, UpDateGeo)
 ```
 
-### Filter Out Permits with a Cancellation Date
 
-```{r}
+```{r, include=FALSE}
+
+# Use filter command to filter out permits without a cancellation date
+
 data_month%>%
   filter(is.na(CancelDate)) -> data_month
 ```
 
 
-```{r}
+```{r, include=FALSE}
+
+# Filter out 10 neighborhoods we want to study
+
 data_month <- filter(data_month, Nbrhd %in% c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58"))
 ```
 
 
+```{r, include=FALSE}
 
-### Recode values to neighborhood names
+# Recode values to neighborood names using an ifelse statement within a mutate function
+# We use an `ifelse(grepl)` statement which says that if we find the first argument in the `Nbrhd` variable to be TRUE then it returns a specified value (in this case the actual neighborhood name)
 
-This code chunk creates a new variable called `nbhd_name` that contains the names of the neighborhoods based on their `Nbrhd` number.
-
-```{r}
 data_month <- mutate(data_month, nbhd_name = ifelse(grepl("38", Nbrhd), "Central West End",
                                              ifelse(grepl("39", Nbrhd), "Forest Park South East",
                                              ifelse(grepl("46", Nbrhd), "Skinker DeBaliviere",  
@@ -96,11 +110,10 @@ data_month <- mutate(data_month, nbhd_name = ifelse(grepl("38", Nbrhd), "Central
 ```
 
 
-### Recode `NewUse` Variable
+```{r, include=FALSE}
 
-This code chunk mutates the `NewUse` variable to the new `new_use` variable which displays either Residential, Comercial, Institutional, or Industrial new use of the property. 
+#This code chunk mutates the `NewUse` variable to the new `new_use` variable which displays either Residential, Comercial, Institutional, or Industrial new use of the property
 
-```{r}
 data_month <- mutate(data_month, new_use = ifelse(grepl("R2", NewUseGroup1), "Residential",
                                              ifelse(grepl("R3", NewUseGroup1), "Residential",
                                              ifelse(grepl("R1", NewUseGroup1), "Commercial",  
@@ -118,104 +131,843 @@ data_month <- mutate(data_month, new_use = ifelse(grepl("R2", NewUseGroup1), "Re
                                              ifelse(grepl("PARKING LOT", NewUse), "Commercial", NA))))))))))))))))
 ```
 
+
+```{r, include=FALSE}
+
+# Create New Variable for Building Permits Greater Than 50,000
+
+#This code uses the `mutate` function to create 2 variables. One, `big_cost`, for building permits that are greater than or equal to an `EstProjectCost` of 50,000. It returns a value of 1 if it is true and a NA value if it is false. The same thing is done for the newly created variable `lil_cost` which is for building permits less than 50,000.
+
+data_month <- mutate(data_month, big_cost = ifelse(EstProjectCost >= 50000, 1, NA))
+data_month <- mutate(data_month, lil_cost = ifelse(EstProjectCost < 50000, 1, NA))
+
+#This variable is specifically for individual neighborhood analysis
+
+data_month <- mutate(data_month, lrgcost = ifelse(EstProjectCost >= 50000, "true", "false"))
+```
+
+
+```{r, include=FALSE}
+
+# Create Variable `count` of Building Permits By `nbhd_name` and `new_use`
+
+#This code uses the `group_by` function to group `nbhd_name` and `new_use` variables and then a `mutate` function to create a new varialbe `count` that calculates how many building permits are in each neighborhood by new use.
+
+data_month%>%
+  group_by(nbhd_name, new_use)%>%
+  mutate(count = n()) -> data_month
+```
+
+
+```{r, include=FALSE}
+
+# This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
+
+# The code uses the `group_by` function to group `nbhd_name` and `new_use` variables and then a `summarise` function to create an output of one row for each group. within this function the variables above are created using `mean` and `sum` functions.
+
+data_month %>%
+  group_by(nbhd_name, new_use) %>%
+  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
+```
+
+# Descriptive Statistics
+
 ### `EstProjectCost` Total
 
-This code returns the average project cost by use the `mean` function.
-
 ```{r}
+# This code returns the average project cost by using the `mean` function.
+
 mean(data_month$EstProjectCost)
 ```
 
+
 ### Number of Permits Total by Use
 
-This code uses the `table` function to return how many permits are being used in each neighborhood.
-
 ```{r}
+
+#This code uses the `table` function to return how many permits are being used in each neighborhood.
+
 table(data_month$nbhd_name)
 ```
 
 
-###Average Project Cost by `new_use`
-
-This code chunk calculates the mean `EstProjectCost` by `new_use` variable.
+### Average Project Cost by `new_use`
 
 ```{r}
+
+#This code chunk calculates the mean `EstProjectCost` by `new_use` variable. You can also use a `by()` command for this and get the same result.
+
 sapply(split(data_month$EstProjectCost, data_month$new_use), mean)
 ```
 
-### Average Cost by `new_use` in each Neighborhood
 
-The code below is still in progress (last updated 2/3 by Logan Williams)
+### Average Building Permit Cost by `nbhd_name`
 
 ```{r}
-temp <- filter(data_month, nbhd_name = )
+
+# This code chunk uses a `by()` command to give us the mean of `EstProjectCost` by `nbhd_name`
+
+by(data_month$EstProjectCost, list(data_month$nbhd_name), mean)
 ```
 
 
-### Basic Graphs
 
-This code chunk creates a bar plot that displays the number of building permits per each neighborhood.
 
-```{r}
-counts <- table(data_month$nbhd_name)
-barplot(counts, main = "Neighborhood Building Permits", xlab = "Neighborhood")
+# Visual analysis
+
+
+### All Neighborhoods
+
+
+```{r, echo=FALSE}
+
+# This code chunk uses ggplot to create a bar plot that displays the number of building permits per each neighborhood.
+
+ggplot(data_month, aes(nbhd_name)) +
+  geom_bar() +
+  ggtitle("Number of Building Permits by Neighborhood") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  ) +
+  coord_flip()
 ```
 
-This graph is a count of how many buildings have a certain count of 
 
-```{r}
+
+
+```{r, echo=FALSE}
+
+# This graph is a count of how many buildings have a certain number of units
+
+ggplot(data_month, aes(NbrOfUnits))+
+  geom_bar() +
+  xlab("Units in Building") +
+  ylab("Number of Buildings") +
+  ggtitle("Neighborhood Building Permits") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
 counts <- table(data_month$NbrOfUnits)
 barplot(counts, main = "Neighborhood Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
 ```
 
-This graph is a count of building permits by ward.
 
-```{r}
+
+
+```{r, echo=FALSE}
+
+# This graph is a count of building permits by ward
+
 counts <- table(data_month$Ward10)
 barplot(counts, main = "Building Permits by Ward", xlab = "Ward", ylab = "Number of Building Permits")
 ```
 
 
+
+
+```{r, echo=FALSE}
+
+# Number of permits by neighborhood and `new_use`
+# This code chunk uses the `ggplot` function to create a grouped bar chart. Included are arguments to relabel the title, legend, and x and y axes. The `stat` argument is specified as `count` because this displays the number of building permits from the variable `nbhd_name`.
+
+ggplot(data_month, aes(data_month$nbhd_name)) +
+  geom_bar(aes(fill = data_month$new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits by Neighborhood") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Neighborhood") +
+  ylab("Number of Building Permits") +
+  labs(fill = "New Use") +
+  coord_flip()
+```
+
+
+
+
+```{r, echo=FALSE}
+# Average cost by neighborhood for each `new_use`
+# This code uses the `ggplot` function to create a grouped bar plot using the `means` which contains the average building permit cost by neighborhood for each `new_use`. This code also uses `scale_y_continuous` to relabel y-axis tick markers in intervals of one million (1M).
+
+ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost By Neighborhood") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use") +
+  scale_y_continuous(breaks = seq(0, 5000000, by = 1000000), labels = function(y){paste0(y/1000000, 'M')}) +
+  coord_flip()
+```
+
+
+The plot below shows a zoomed in version of the previous plot.
+
+
+```{r, echo=FALSE, warning=FALSE}
+
+# Creates a plot that excludes the industrial and institutional cost from Forest Park South east as well as the commercial cost in Central West End. It uses the `scale_y_continuous` command to zoom in on the previous graph while also specifying labels on the y-axis in intervals of 50,000. 
+
+ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost By Neighborhood") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use") +
+  scale_y_continuous(limits = c(0,300000), breaks = seq(0, 300000, by = 50000), labels = function(y){paste0(y/1000, 'K')}) +
+  coord_flip()
+  
+```
+
+
+
+
+```{r, echo=FALSE}
+
+# Plot Building Permits by `high_cost`
+
+ggplot(means, aes(x = nbhd_name, y = high_cost, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Building Permits by high_cost") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Neighborhood") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  coord_flip()
+```
+
+
+```{r, echo=FALSE}
+
+# Plot Building Permits by `high_cost` and `low_cost`
+
+ggplot(means, aes(x = nbhd_name, y = low_cost, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Building Permits by low_cost") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Neighborhood") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  coord_flip()
+```
+
+
+
+# Individual Neighborhood Breakdown
+
+
+### Academy
+
+
+```{r, echo=FALSE}
+academy <- filter(data_month, nbhd_name == "Academy")
+counts <- table(academy$NbrOfUnits)
+barplot(counts, main = "Academy Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(academy, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in Academy by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  ylab("Number of Permits")
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(academy, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in Academy by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+academy <- filter(means, nbhd_name == "Academy")
+
+ggplot(academy, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in Academy") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) 
+  
+```
+
+
+
+
+### Central West End
+
+
+```{r, echo=FALSE}
+cwe <- filter(data_month, nbhd_name == "Central West End")
+counts <- table(cwe$NbrOfUnits)
+barplot(counts, main = "Central West End Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(cwe, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in Central West End by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(cwe, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in Central West End by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+cwe <- filter(means, nbhd_name == "Central West End")
+
+ggplot(cwe, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in Central West End") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) +
+   scale_y_continuous(breaks = seq(0, 5000000, by = 1000000), labels = function(y){paste0(y/1000000, 'M')})
+  
+```
+
+
+
+
+### DeBaliviere Place
+
+
+```{r, echo=FALSE}
+db_place <- filter(data_month, nbhd_name == "DeBaliviere Place")
+counts <- table(db_place$NbrOfUnits)
+barplot(counts, main = "DeBaliviere Place Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(db_place, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in DeBaliviere Place by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(db_place, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in DeBaliviere Place by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+db_place <- filter(means, nbhd_name == "DeBaliviere Place")
+
+ggplot(db_place, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in DeBaliviere Place") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) 
+  
+```
+
+
+
+
+### Forest Park South East
+
+
+```{r, echo=FALSE}
+frstpk_se <- filter(data_month, nbhd_name == "Forest Park South East")
+counts <- table(frstpk_se$NbrOfUnits)
+barplot(counts, main = "Forest Park South East Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(frstpk_se, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in Forest Park South East by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  scale_y_continuous(breaks=c(0:9))+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(frstpk_se, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in Forest Park South East by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+frstpk_se <- filter(means, nbhd_name == "Forest Park South East")
+
+ggplot(frstpk_se, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in Forest Park South East") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) +
+   scale_y_continuous(breaks = seq(0, 5000000, by = 1000000), labels = function(y){paste0(y/1000000, 'M')})
+  
+```
+
+
+
+
+###	Fountain Park
+
+
+```{r, echo=FALSE}
+ftn_prk <- filter(data_month, nbhd_name == "Fountain Park")
+counts <- table(ftn_prk$NbrOfUnits)
+barplot(counts, main = "Academy Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(ftn_prk, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in Fountain Park by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(ftn_prk, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in Fountain Park by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+ftn_prk <- filter(means, nbhd_name == "Fountain Park")
+
+ggplot(ftn_prk, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in Fountain Park") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) +
+  scale_y_continuous(limits = c(0,50000), breaks = seq(0, 50000, by = 10000), labels = function(y){paste0(y/1000, 'K')})
+  
+```
+
+
+
+
+###	Skinker DeBaliviere
+
+
+```{r, echo=FALSE}
+skinker_db <- filter(data_month, nbhd_name == "Skinker DeBaliviere")
+counts <- table(skinker_db$NbrOfUnits)
+barplot(counts, main = "Academy Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(skinker_db, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in Skinker DeBaliviere by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(skinker_db, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in Skinker DeBaliviere by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+skinker_db <- filter(means, nbhd_name == "Skinker DeBaliviere")
+
+ggplot(skinker_db, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in Skinker DeBaliviere") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) 
+  
+```
+
+
+
+
+###	Vandeventer
+
+
+```{r, echo=FALSE}
+vandeventer <- filter(data_month, nbhd_name == "Vandeventer")
+counts <- table(vandeventer$NbrOfUnits)
+barplot(counts, main = "Academy Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(vandeventer, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in Vandeventer by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(vandeventer, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in Vandeventer by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+vandeventer <- filter(means, nbhd_name == "Vandeventer")
+
+ggplot(vandeventer, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in Vandeventer") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) 
+  
+```
+
+
+
+
+###	West End
+
+
+```{r, echo=FALSE}
+westend <- filter(data_month, nbhd_name == "West End")
+counts <- table(westend$NbrOfUnits)
+barplot(counts, main = "West End Building Permits", xlab = "Units in Building", ylab = "Number of Buildings")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(westend, aes(nbhd_name)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Number of Building Permits in West End by Use") +
+  ylab("Number of Building Permits") +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )+
+  labs(fill = "New Use")
+```
+
+
+
+
+```{r, echo=FALSE}
+ggplot(westend, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("Cost of Building Permits in West End by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )+
+  xlab("Cost of Permit") +
+  ylab("Number of Permits") +
+  labs(fill = "New Use") +
+  scale_x_discrete(labels=c("false" = "Less Than $50,000", "true" = "Greater Than or Equal to $50,000"))
+```
+
+
+
+
+```{r, echo=FALSE}
+westend <- filter(means, nbhd_name == "West End")
+
+ggplot(westend, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost in West End") +
+  xlab("Neighborhood") +
+  ylab("Cost ($)") +
+  labs(fill = "New Use")+
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  ) 
+  
+```
+
+
+
+
+### Mapping
+
+
+
+I still need to stitch together tiles to create the map image (see mapbox-tiles.R in projects/Safety-Security/r-crime-mapping/src/R).
+
+#### The following code needs an API key from google
+
+This code converts the `OrigAddress` variable into a string.
+
+```{r}
+#data_month$OrigAddress = as.character(data_month$OrigAddress)
+```
+
+One of the options for geocoding the `OrigAddress`
+
+```{r}
+#geocode(data_month$OrigAddress, output = c("latlon"), source = ("google"))
+```
+
+Another option. The secondn line of code is for actually mapping it (again, needs stitched tiles)
+
+```{r}
+#geo_address <- mutate_geocode(data_month, OrigAddress)
+#qmplot(lon, lat, data = geo_address, colour = I('red'), size = I(3), darken = .3)
+```
+
+For loop that is yet another option for geocoding
+
+```{r}
+#for(i in 1:nrow(data_month))
+#{
+  # Print("Working...")
+#  result <- geocode(data_month$OrigAddress[i], output = "latlona", source = "google")
+#  data_month$lon[i] <- as.numeric(result[1])
+#  data_month$lat[i] <- as.numeric(result[2])
+#  data_month$geoAddress[i] <- as.character(result[3])
+#}
+```
+
+
+
+
+
+
+
 ### rename handle
 
 ```{r}
-data_month %>%
-  rename(HANDLE = Handle) -> data_month
+#data_month %>%
+ # rename(HANDLE = Handle) -> data_month
 ```
-
 
 ### import blank parcel data
 
 This line will pull in the shapefile prcl that is in the working directory
 
-
 ```{r}
-shape <- readOGR(dsn = ".", layer = "prcl")
+#shape <- readOGR(dsn = ".", layer = "prcl")
 ```
 
 ### merge data into shapefle using HANDLE
 
 ```{r}
-shape <- merge(shape, data_month, by="HANDLE", duplicateGeoms = TRUE)
+#shape <- merge(shape, data_month, by="HANDLE", duplicateGeoms = TRUE)
 ```
-
 
 ### Drop parcels with no permits
 
 
 ```{r}
-shape <- shape[!is.na(shape@data$AppType) ,]
+#shape <- shape[!is.na(shape@data$AppType) ,]
 ```
-
-
-
-
 
 ## Set WD again to send the shapefile to the correct spot
 
 
 ```{r}
-setwd("G:/Projects/Monthly-Reports/stl-building-permits/monthly-shapefiles")
+#setwd("G:/Projects/Monthly-Reports/stl-building-permits/monthly-shapefiles")
 ```
 
 
@@ -223,7 +975,7 @@ setwd("G:/Projects/Monthly-Reports/stl-building-permits/monthly-shapefiles")
 
 
 ```{r}
-writeOGR(shape, dsn =".", layer= "permits_MONTH_YEAR1", driver = "ESRI Shapefile")
+#writeOGR(shape, dsn =".", layer= "permits_MONTH_YEAR1", driver = "ESRI Shapefile")
 ```
 
 

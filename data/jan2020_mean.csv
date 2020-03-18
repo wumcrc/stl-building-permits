@@ -1,0 +1,19 @@
+nbhd_name,new_use,mean,count1,high_cost,low_cost
+Academy,Institutional,100000,1,1,0
+Academy,Residential,82990,5,2,3
+Central West End,Commercial,3230000,5,2,3
+Central West End,Industrial,21676,1,0,1
+Central West End,Institutional,2948966.625,16,4,12
+Central West End,Residential,46999.80055555556,18,6,12
+DeBaliviere Place,Institutional,8000,1,0,1
+DeBaliviere Place,Residential,3608000,5,1,4
+Forest Park South East,Commercial,17500,2,0,2
+Forest Park South East,Institutional,64145,1,1,0
+Forest Park South East,Residential,29699,10,1,9
+Lewis Place,Residential,2500,1,0,1
+Skinker DeBaliviere,Institutional,5000,2,0,2
+Skinker DeBaliviere,Residential,30500,6,1,5
+Vandeventer,Industrial,55000,1,1,0
+Vandeventer,Residential,150000,1,1,0
+West End,Commercial,14000,3,0,3
+West End,Residential,4222.222222222223,9,0,9

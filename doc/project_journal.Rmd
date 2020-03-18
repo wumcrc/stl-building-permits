@@ -1,0 +1,52 @@
+---
+title: "Research_Log"
+author: "Logan Williams"
+date: "2/24/2020"
+output: html_document
+---
+## Introduction
+
+This is an R Notebook that tracks the progress I make in the `stl-building-permits.Rproj` file. 
+
+## 1/27/20
+Today I changed the import data command from `odbcConnnectAccess` to `odbcDriverConnect` because the original command only works on 32-bit windows. The new command seemed to work. All changes made today by Logan williams.
+
+## 1/29/20
+Today I changed the `filter` command based on the `firstdate` variable to show only permits displayed in the month of December, 2020. I also filtered out the 10 neighborhoods we are interested in studying and then used a `mutate` function to create a new variable `nbhd_name` with the actual neighborhood names. 
+
+## 2/3/20
+Today I created the `new_use` variable to display either `industrial`, `residential`, `commercial`, or `institutional` corresponding to how the building permit is being used. I also did some basic statistics including the average project cost (based on the `EstProjectCost` variable), average project cost by the `new_use` variable, and the total number of permits in use. 
+
+## 2/5/20
+Today I created a grouped bar plot using `ggplot` that shows number of building permits by neighborhood. The values are colored by the `new_use` variable. I also plotted the average cost of building permits by neighborhood (also colored by `new_use`). I realized that R was displaying the sum of the cost of building permits in each neighbrhood instead of the average. I began to write separate code to create a new variable `nbhd_usecost` which would contain the average cost of building permits by neighborhood and use. Then I started to work on removing duplicates so that when I plot it it will only display the average cost as calculated in my new `nbhd_usecost` variable. 
+
+Hit a road block with my `nbhd_usecost` plan. Still working on this code chunk. There should only be, at most, four values for each `nbhd_name` variable. Should be the same `nbhd_usecost` for each `new_use` for each respective neighborhood but right now I am getting numerous values for, say, `commercial` properties in the `Central West End` neighborhood. 
+
+## 2/10/20
+Today I figured out the roadblock I hit last week. I ended up using a `group_by` and `summarise` function to create a separate dataset called `means` that contains a plethora of data broken up by `nbhd_name` and `new_use`. 
+
+I also created some new variables in `data_month` called `big_cost` and `lil_cost` that code a value of 1 depending on whether or not the `EstProjectCost` is greater than or less than 50,000. These variables were created to then be transferred into my `means` dataset where they were more appropriately named `high_cost` and `low_cost`. I used a `sum` function within my previously mentioned `summarise` function to get the sum of the number of permits for each neighborhood by use. 
+
+The other variable I created in `data_month` is called `count` and is simply the total number of permits in a neighborhood based on use. This, just like my `big_cost` and `lil_cost` variables were made primarily to be transferred into my `means` table.
+
+After I finished making the `means` dataset I plotted the average cost of building permits in each neighborhood by use as well as making two separate plots that show the number of `high_cost` and `low_cost` permits in each neighborhood by use. 
+
+## 2/12/20
+
+I cleaned up some of the plots I made, adding tick marks and more intuitive titles and labels. I tried to geocode the `OrigAddress` but kept getting the error `is.character locatoin is not TRUE`. I tried removing observations with `-` thinking that this was what was causing the issue but nothing worked. I tried using the `geocode` and `mutate_geocode` functions but both returned the same error. I also tried writing a loop but that also returned the same error. I'm not sure what the issue is but I was also trying to find a way to ignore observations that google isn't able to find, but couldn't figure it out. 
+
+I figured out that the reason it wasn't working was because the addresses were stored as integers instead of characters. I have about 3 different ways of geocoding the addresses but none will work until I get an API key. Google requires you to get one in order to enable its servies. 
+
+## 2/17/20
+
+Today I expanded on the plots that I originally made or all of the neighborhoods. I went more in depth and did analysis for each neighborhood, making plots displaying number of permits in use, average cost of permits, number of units in each building, and the number of permits greater than or equal to $50,000.
+
+I also went through my markdown file and and edited some chunks to either hide outputs, code, or both. This is just to make my final .html output cleaner and easier to read. I still need to add my notes into my code in a commented out section just so I know what each code does. I also still have a couple code chunks to finish editing in order to control output in my .html file. 
+
+## 2/24/20
+
+Today I broke up the `permit_cleaning.Rmd` file because it contained all of my code. I created three separate .Rmd files, `data_cleaning.Rmd` which pulls in my data, cleans it, and exports it as a .csv file, I created a `descriptive_stats.Rmd` which contains all of the tables with quantitative analysis of neighborhoods, and I created `visual_analysis.Rmd` which contains the code for all of the plots I created. All three are saved in the `doc` folder.
+
+## 3/2/20
+
+Today I converted my `data_cleaning.Rmd` and `descriptive_stats.Rmd` and `visual_analysis.Rmd` output to a powerpoint presentation as opposed to an HTML. I messed around with sizing my plots to the powerpoint slides as well as removed x labels when x = neighborhood. I also changed the `data_cleaning.Rmd` code slightly to return results for the month of January 2020. 
