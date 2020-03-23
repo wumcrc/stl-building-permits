@@ -27,8 +27,9 @@ library(writexl)      #write excel
 ```{r, include=FALSE}
 
 # Set working directory
-
-setwd("G:/Projects/Monthly-Reports/stl-building-permits")
+wd <- getwd()
+setwd(wd)
+#setwd("G:/Projects/Monthly-Reports/stl-building-permits")
 ```
 
 
@@ -63,6 +64,8 @@ data_month <- filter(data, FirstDate > '2019-12-31'& FirstDate < '2020-02-01')
 ```{r}
 data_month %>%
  rename(HANDLE = Handle) -> data_month
+data_month$HANDLE = as.numeric(data_month$HANDLE)
+#Above code changes HANDLE to numeric to make it easier to join for mapping
 ```
 
 

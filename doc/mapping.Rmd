@@ -1,0 +1,355 @@
+---
+title: "mapping"
+author: "Logan Williams"
+date: "3/23/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+### Dependencies
+
+```{r}
+library(rgdal)
+library(dplyr)
+library(sp)
+library(readr)
+library(here)
+library(sf)
+```
+
+### Load data
+
+```{r}
+jan <- read_csv("data/jan2020_clean.csv")
+View(jan)
+```
+
+
+### import parcel data
+
+This code imports parcel data for the city of St. Louis 
+
+```{r}
+st_read(here("/data/working-db/parcels", "prcl.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> prcl
+```
+
+### merge data into shapefle using HANDLE
+
+```{r}
+jan$HANDLE <- as.numeric(jan$HANDLE)
+prcl$HANDLE <- as.numeric(prcl$HANDLE)
+#prcl <- left_join(prcl, jan, by = c("HANDLE" = "HANDLE"))
+#This was Chris's code but it wasn't copying values from jan for some reason 
+merge <- jan%>%
+  merge(prcl, by = "HANDLE")
+```
+
+
+### write shape file
+
+This code creates shapefiles for each individual neighborhood by using the st_write and filter command. It also creates a shapefile for all neighborhoods.
+
+```{r}
+#All neighborhoods
+st_write(merge, here("data", "jan2020", "jan2020_prcl.shp"), 
+         delete_dsn = TRUE)
+
+#Academy
+academy_jan2020 <- filter(merge, nbhd_name == "Academy")
+st_write(academy_jan2020, here("data", "jan2020", "academy_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Central West End
+cwe_jan2020 <- filter(merge, nbhd_name == "Central West End")
+st_write(cwe_jan2020, here("data", "jan2020", "cwe_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#DeBaliviere Place
+dbplace_jan2020 <- filter(merge, nbhd_name == "DeBaliviere Place")
+st_write(dbplace_jan2020, here("data", "jan2020", "dbplace_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Forest Park South East
+fpse_jan2020 <- filter(merge, nbhd_name == "Forest Park South East")
+st_write(fpse_jan2020, here("data", "jan2020", "fpse_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Lewis Place
+lewis_jan2020 <- filter(merge, nbhd_name == "Lewis Place")
+st_write(lewis_jan2020, here("data", "jan2020", "lewis_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Skinker DeBaliviere
+skinker_jan2020 <- filter(merge, nbhd_name == "Skinker DeBaliviere")
+st_write(skinker_jan2020, here("data", "jan2020", "skinker_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Vandeventer
+vandy_jan2020 <- filter(merge, nbhd_name == "Vandeventer")
+st_write(vandy_jan2020, here("data", "jan2020", "vandy_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#West End
+westend_jan2020 <- filter(merge, nbhd_name == "West End")
+st_write(westend_jan2020, here("data", "jan2020", "westend_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Fountain Park
+ftnprk_jan2020 <- filter(merge, nbhd_name == "Fountain Park")
+st_write(ftnprk_jan2020, here("data", "jan2020", "ftnprk_jan2020.shp"), 
+         delete_dsn = TRUE)
+
+#Visitation Park
+visit_jan2020 <- filter(merge, nbhd_name == "Visitation Park")
+st_write(visit_jan2020, here("data", "jan2020", "visit_jan2020.shp"), 
+         delete_dsn = TRUE)
+```
+
+
+## Leaflet Maps
+
+### Master Map
+
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "jan2020_prcl.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> jan_prcl
+
+#Use leaflet to map
+jan_prcl %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(color = "#444444", 
+    weight = 1, 
+    opacity = 1.0, 
+    smoothFactor = 0.5,
+    fillOpacity = 0.5,
+    fillColor = ~pal(pop17_den),
+    highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE),
+    popup = paste("<b>Neighborhood:</b> ", jan_prcl$nbhd, "<br>",
+                  "<b>New Building Use:</b> ", jan_prcl$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      jan_prcl$EstProjCost,"<br>"))
+```
+
+
+
+### Academy
+
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "academy_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> academy
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = academy$new_use, bins = bins)
+
+#Use leaflet to map
+academy %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", academy$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      academy$EstProjectCost,"<br>")) 
+```
+
+
+### Central West End
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "cwe_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> cwe
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = cwe$new_use, bins = bins)
+
+#Use leaflet to map
+cwe %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", cwe$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      cwe$EstProjCost,"<br>")) 
+```
+
+
+### DeBaliviere Place
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "dbplace_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> dbplace
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = dbplace$new_use, bins = bins)
+
+#Use leaflet to map
+dbplace %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", dbplace$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      dbplace$EstProjCost,"<br>")) 
+```
+
+
+### Forest Park South East
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "fpse_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> fpse
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = fpse$new_use, bins = bins)
+
+#Use leaflet to map
+fpse %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", fpse$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      fpse$EstProjectCost,"<br>")) 
+```
+
+
+### Lewis Place
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "lewis_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> lewis
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = lewis$new_use, bins = bins)
+
+#Use leaflet to map
+lewis %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", lewis$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      lewis$EstProjectCost,"<br>")) 
+```
+
+
+### Skinker DeBaliviere
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "skinker_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> skinker
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = skinker$new_use, bins = bins)
+
+#Use leaflet to map
+skinker %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", skinker$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      skinker$EstProjectCost,"<br>")) 
+```
+
+
+### Vandeventer
+
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "vandy_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> vandy
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = vandy$new_use, bins = bins)
+
+#Use leaflet to map
+vandy %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", vandy$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      vandy$EstProjectCost,"<br>")) 
+```
+
+
+### West End
+
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "westend_jan2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> westend
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = westend$new_use, bins = bins)
+
+#Use leaflet to map
+westend %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", westend$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      westend$EstProjectCost,"<br>")) 
+```
+
+
+### Visitation Park
+
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "visit2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> vstprk
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = vstprk$new_use, bins = bins)
+
+#Use leaflet to map
+vstprk %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", vstprk$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      vstprk$EstProjectCost,"<br>")) 
+```
+
+
+### Fountain Park
+
+```{r}
+#Load shapefile
+st_read(here("/data/jan2020", "ftnprk2020.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> ftnprk
+
+# create color palette
+pal <- colorBin("YlGnBu", domain = ftnprk$new_use, bins = bins)
+
+#Use leaflet to map
+ftnprk %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(fillColor = ~pal(new_use),
+    popup = paste("<b>New Building Use:</b> ", ftnprk$new_use, "<br>",
+                  "<b>Estimated Permit Cost :</b> ", 
+                      ftnprk$EstProjectCost,"<br>")) 
+```
