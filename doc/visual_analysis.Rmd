@@ -3,6 +3,12 @@ title: "St. Louis Building Permit Visual Analysis"
 author: "Logan Williams"
 date: "2/24/2020"
 output: powerpoint_presentation
+params:
+  month: January
+  pastyear: 2019
+  year: 2020
+  date: "2020-01-01"
+  pastdate: "2019-01-01"
 ---
 
 ## Introduction
@@ -24,8 +30,8 @@ library(ggplot2)    #chart making
 ```{r, message=FALSE, echo=FALSE}
 #load data
 
-data <- read_csv(here("data", "clean_data.csv"))
-means <- read_csv(here("data", "mean_data.csv"))
+data <- read_csv(here("data", params$year, params$month,  "clean_data.csv"))
+means <- read_csv(here("data", params$year, params$month,  "mean_data.csv"))
 ```
 
 

@@ -3,6 +3,12 @@ title: "data_cleaning"
 author: "Logan Williams"
 date: "2/24/2020"
 output: html_document
+params:
+  month: January
+  pastyear: 2019
+  year: 2020
+  date: "2020-01-01"
+  pastdate: "2019-01-01"
 ---
 
 ### Introduction
@@ -38,8 +44,9 @@ setwd(wd)
 #Import data
 #Use odbcDriverConnect instead of odbcConnectAcces which only works on 32-bit
 
-channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
+channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=/Users/loganbogenut/Documents/GitHub/stl-building-permits/data/working-db/bldgpermits/prmdbo")
 
+#channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
 ```
 
 
@@ -74,12 +81,11 @@ data_month$HANDLE = as.numeric(data_month$HANDLE)
 
 #Drop unused variables using `select` function, assign to new `data_month` data frame
 
-data_month<- select(data_month, AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum, StDir,
-       StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate, IssueDate,
-       CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1, StrucType2, 
-       NbrOfUnits, NewUse, NewUseGroup1, NewUseGroup2, NewUseGroup3, OldUse, OwnerName, 
-       OwnerCo, OwnerAddr, OwnerCity, OwnerState, OwnerZIP, GeoCityBLockPart, Ward10, 
-       Ward00, Nbrhd, FirstDate, LastDate, UpDateGeo)
+data_month<- select(data_month, AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
+                    StDir, StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate,
+                    IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
+                    NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
+                    OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo)
 ```
 
 
@@ -185,12 +191,12 @@ data_month %>%
 
 #write new cleaned data into .csv files
 
-write_csv(data_month, here("data", "jan2020_clean.csv"))
-write_csv(means, here("data", "jan2020_mean.csv"))
+write_csv(data_month, here("data", params$year, params$month, "clean_data.csv"))
+write_csv(means, here("data", params$year, params$month, "mean_data.csv"))
 
 #write cleaned data to .xlsx file for ArcMap
 
-write_xlsx(data_month, path = here("data", "jan_2020.xlsx"))
+write_xlsx(data_month, path = here("data", params$year, params$month, "clean_data.xlsx"))
 ```
 
 

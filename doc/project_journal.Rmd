@@ -50,3 +50,15 @@ Today I broke up the `permit_cleaning.Rmd` file because it contained all of my c
 ## 3/2/20
 
 Today I converted my `data_cleaning.Rmd` and `descriptive_stats.Rmd` and `visual_analysis.Rmd` output to a powerpoint presentation as opposed to an HTML. I messed around with sizing my plots to the powerpoint slides as well as removed x labels when x = neighborhood. I also changed the `data_cleaning.Rmd` code slightly to return results for the month of January 2020. 
+
+## 3/23/20
+
+Began working on `mapping.Rmd`. Merged parcel file with data `clean_data.csv`. From there I filtered by neighborhood and wrote individual shapefiles for each neighborhood for that month. Wrote mapping code using `leaflet` but the data doesn't have an latitude and longitude data so `leaflet` doesn't work.
+
+## 3/25/20
+
+Rewrote map making code using `tmap`. Created maps for all neighborhoods by `new_use`. I tried to create maps using my `big_cost` variable but didn't know how to change the legend labels since `tmap` was making values appear in intervals of .2 for some reason. Need to try and work around this. Made all code reproducible for any month using `params$year` and `params$month`. Restructured project folder accordingly but still need to delete old files that serve no purpose and just do general clean up.
+
+## 3/30/20
+
+Wrote `ifelse` statements for all code chunks so that for any given month if a neighborhood has no building permits the code will still run and will return a result saying that there are no building permits for that neighborhood during that month. Restructured `mapping.Rmd` to make it more readable and to cut down on extraneous code. Began to combine `visual_analysis.Rmd`, `mapping.Rmd`, and `descriptive_stats.Rmd`. End goal is to have data cleaning file and a report file that will produce results for each neighborhood no matter what month of the year.
