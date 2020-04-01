@@ -1,5 +1,5 @@
 ---
-title: "Building Permit Mapping"
+title: "St. Louis Building Permits"
 subtitle: "Monthly Report: January 2020" 
 author: "Washington University Medical Center"
 date: '(`r format(Sys.time(), "%B %d, %Y")`)'
@@ -8,10 +8,7 @@ output:
 always_allow_html: yes
 params:
   month: January
-  pastyear: 2019
   year: 2020
-  date: "2020-01-01"
-  pastdate: "2019-01-01"
 ---
 
 ```{r setup, include=FALSE}
@@ -35,6 +32,7 @@ library(sf)           # spatial data tools
 library(RColorBrewer) # cynthia brewer color palettes
 library(viridis)      # color palettes
 library(knitr)
+library(ggplot2)      # plot making
 ```
 
 
@@ -45,7 +43,7 @@ setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 #read_csv(here("data", params$year, params$month,  "clean_data.csv"))
 df <- read_csv("data/jan2020_clean.csv")
 
-#read_csv(here("data", params$year, params$month,  "clean_data.csv"))
+#read_csv(here("data", params$year, params$month,  "mean_data.csv"))
 avg <- read_csv("data/jan2020_mean.csv")
 
 load(file = here("data", "basemap_tiles", "mapbox-tiles.rda"))
@@ -72,34 +70,38 @@ merge <- df%>%
   merge(prcl, by = "HANDLE")
 ```
 
+### Neighborhood Summary
+
+```{r, echo=FALSE, out.width= "20%"}
+# Average cost by neighborhood for each `new_use`
+
+ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost By Neighborhood") +
+  theme(plot.title = element_text(hjust = 0.5),
+    axis.title.y = element_blank()) +
+  ylab("Cost ($)") +
+  labs(fill = "New Use") +
+  coord_flip()
+```
 
 ### Academy
 
-```{r, include=FALSE}
+```{r, echo=FALSE}
+#calculate number of permits
 bp_academy <- nrow(df[df$Nbrhd == 51,])
 
 sprint_1 <- sprintf("%s building permits in Academy in %s %s",
                     bp_academy, params$month, params$year)
-
-cost <- filter(df, nbhd_name == "Academy")
-
-cost%>%
-kable()%>%
-  by(cost$EstProjectCost, list(cost$new_use), mean)%>%
-  kable_styling(full_width = FALSE)
 ```
 
 - **`r sprint_1`**
 
-
 ```{r Academy Building Permit Mapping, include = FALSE}
-academy_shp <- filter(merge, nbhd_name == "Academy")
-
-if(nrow(academy_shp) == 0){
-  print("No building permits for this neighborhood")
-}else{
+if("Academy" %in% df$nbhd_name){
   
 #write shapefile  
+  academy_shp <- filter(merge, nbhd_name == "Academy")
   st_write(academy_shp, here("data", params$year, params$month, "shapefiles", "academy.shp"), 
          delete_dsn = TRUE)
 
@@ -139,13 +141,45 @@ tmap_save(academy_map, file = here("results", params$year, params$month, "academ
 }
 ```
 
-### Academy: Building Permit Type
+```{r Academy summary table, echo=FALSE}
+if("Academy" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Academy")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r Academy Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(academy_shp) == 0){
-  print("No building permits for this neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_use.jpeg"))
+#display map
+if("Academy" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_use.jpeg"))
+}
+```
+
+```{r Academy plot, echo=FALSE, message=FALSE}
+if("Academy" %in% df$nbhd_name){
+academy <- filter(df, nbhd_name == "Academy")
+ggplot(academy, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in Academy by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> ac_plot
+
+ggsave(here("results",  params$year, params$month, "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_cost.png"))
 }
 ```
 
@@ -162,12 +196,11 @@ sprint_2 <- sprintf("%s building permits in Central West End in %s %s",
 - **`r sprint_2`**
 
 ```{r CWE Building Permit Mapping, include = FALSE}
-cwe_shp <- filter(merge, nbhd_name == "Central West End")
-if(nrow(cwe_shp) == 0){
-  print("No building permits for Central West End neighborhood")
-}else{
+
+if("Central West End" %in% df$nbhd_name){
 
 #write shapefile  
+cwe_shp <- filter(merge, nbhd_name == "Central West End")
 st_write(cwe_shp, here("data", params$year, params$month, "shapefiles", "cwe.shp"), 
          delete_dsn = TRUE)
 
@@ -203,16 +236,49 @@ tm_shape(cwe_tiles) +
 
 #save map as .jpeg
 tmap_save(cwe_map, file = here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), dpi = 500)
+}else{
+  print("No building permits for Central West End neighborhood")
 }
 ```
 
-### Central West End: Building Permit Type
+```{r CWE summary table, echo = FALSE}
+if("Central West End" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Central West End")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r CWE Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(cwe_shp) == 0){
-  print("No building permits for Central West End neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "cwe", "cwe_use.jpeg"))
+if("Central West End" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "cwe", "cwe_use.jpeg"))
+}
+```
+
+```{r CWE plot, echo=FALSE, message=FALSE}
+if("Central West End" %in% df$nbhd_name){
+cwe <- filter(df, nbhd_name == "Central West End")
+ggplot(cwe, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nCentral West End by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> cwe_plot
+
+ggsave(here("results",  params$year, params$month, "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "cwe", "cwe_cost.png"))
 }
 ```
 
@@ -228,12 +294,10 @@ sprint_3 <- sprintf("%s building permits in DeBaliviere Place in %s %s",
 - **`r sprint_3`**
 
 ```{r DeBaliviere Place Building Permit Mapping, include = FALSE}
-dbplace_shp <- filter(merge, nbhd_name == "DeBaliviere Place")
-if(nrow(dbplace_shp) == 0){
-  print("No building permits for DeBaliviere Place neighborhood")
-}else{
-  
+if("DeBaliviere Place" %in% df$nbhd_name){
+
 #write shapefile  
+dbplace_shp <- filter(merge, nbhd_name == "DeBaliviere Place")
 st_write(dbplace_shp, here("data", params$year, params$month, "shapefiles", "dbplace.shp"), 
          delete_dsn = TRUE)
 
@@ -272,13 +336,45 @@ tmap_save(dbplace_map, file = here("results", params$year, params$month, "dbplac
 }
 ```
 
-### DeBaliviere Place: Building Permit Type
+```{r dbplace summary table, echo = FALSE}
+if("DeBaliviere Place" %in% df$nbhd_name){
+  
+ #create summary table
+  df%>%
+  filter(nbhd_name == "DeBaliviere Place")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r dbplace Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(dbplace_shp) == 0){
-  print("No building permits for DeBaliviere Place neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"))
+#display map
+if("DeBaliviere Place" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"))
+}
+```
+
+```{r dbplace plot, echo=FALSE, message=FALSE}
+if("DeBaliviere Place" %in% df$nbhd_name){
+dbplace <- filter(df, nbhd_name == "DeBaliviere Place")
+ggplot(academy, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits\nin DeBaliviere Place by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> dbplace_plot
+
+ggsave(here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "dbplace", "dbplace_cost.png"))
 }
 ```
 
@@ -294,12 +390,11 @@ sprint_4 <- sprintf("%s building permits in Forest Park South East %s %s",
 - **`r sprint_4`**
 
 ```{r FPSE Building Permit Mapping, include = FALSE}
-fpse_shp <- filter(merge, nbhd_name == "Forest Park South East")
-if(nrow(fpse_shp) == 0){
-  print("No building permits for Forest Park South East neighborhood")
-}else{
+
+if("Forest Park South East" %in% df$nbhd_name){
 
 #write shapefile
+fpse_shp <- filter(merge, nbhd_name == "Forest Park South East")
 st_write(fpse_shp, here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
          delete_dsn = TRUE)
 
@@ -335,16 +430,50 @@ tm_shape(fpse_tiles) +
 
 #save map as .jpeg
 tmap_save(fpse_map, file = here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), dpi = 500)
+}else{
+  print("No building permits for Forest Park South East neighborhood")
 }
 ```
 
-### Forest Park South East: Building Permit Type
+```{r, echo=FALSE}
+if("Forest Park South East" %in% df$nbhd_name){
+  
+    #create summary table
+  df%>%
+  filter(nbhd_name == "Forest Park South East")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r FPSE Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(fpse_shp) == 0){
-  print("No building permits for Forest Park South East neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_use.jpeg"))
+#display map
+if("Forest Park South East" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_use.jpeg"))
+}
+```
+
+```{r fpse plot, echo=FALSE, message=FALSE}
+if("Forest Park South East" %in% df$nbhd_name){
+dbplace <- filter(df, nbhd_name == "Forest Park South East")
+ggplot(dbplace, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nForest Park South East by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> fpse_plot
+
+ggsave(here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_cost.png"))
 }
 ```
 
@@ -359,13 +488,11 @@ sprint_5 <- sprintf("%s building permits in Fountain Park %s %s",
 
 - **`r sprint_5`**
 
-```{r Fountain Park Building Permit Mapping, include = FALSE, eval=FALSE}
-ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
-if(nrow(ftnprk_shp) == 0){
-  print("No building permits for Fountain Park neighborhood")
-}else{
-  
+```{r Fountain Park Building Permit Mapping, include = FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+
 #write shapefile
+ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
 st_write(ftnprk_shp, here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
          delete_dsn = TRUE)
 
@@ -404,13 +531,45 @@ tmap_save(ftnprk_map, file = here("results", params$year, params$month, "ftnprk"
 }
 ```
 
-### Fountain Park: Building Permit Type
+```{r, echo=FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Fountain Park")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r ftnprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
-if(nrow(ftnprk_shp) == 0){
-  print("No building permits for Fountain Park neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"))
+#display map
+if("Forest Park South East" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"))
+}
+```
+
+```{r ftnprk plot, echo=FALSE, message=FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+ftnprk <- filter(df, nbhd_name == "Fountain Park")
+ggplot(ftnprk, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in Fountain Park by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> ftnprk_plot
+
+ggsave(here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_cost.png"))
 }
 ```
 
@@ -426,12 +585,11 @@ sprint_6 <- sprintf("%s building permits in Fountain Park %s %s",
 - **`r sprint_6`**
 
 ```{r Lewis Place Building Permit Mapping, include = FALSE}
-lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
-if(nrow(lewis_shp) == 0){
-  print("No building permits for Lewis Place neighborhood")
-}else{
-  
+
+if("Lewis Place" %in% df$nbhd_name){
+
 #write shapefile
+lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
 st_write(lewis_shp, here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
          delete_dsn = TRUE)
 
@@ -470,13 +628,45 @@ tmap_save(lewis_map, file = here("results", params$year, params$month, "lewis", 
 }
 ```
 
-### Lewis Place: Building Permit Type
+```{r, echo=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+  
+    #create summary table
+  df%>%
+  filter(nbhd_name == "Lewis Place")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r Lewis Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(lewis_shp) == 0){
-  print("No building permits for Lewis Place neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_use.jpeg"))
+#display map
+if("Lewis Place" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_use.jpeg"))
+}
+```
+
+```{r Lewis plot, echo=FALSE, message=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+lewis <- filter(df, nbhd_name == "Lewis Place")
+ggplot(lewis, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in Lewis by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> lewis_plot
+
+ggsave(here("results",  params$year, params$month, "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_cost.png"))
 }
 ```
 
@@ -492,12 +682,10 @@ sprint_7 <- sprintf("%s building permits in Fountain Park %s %s",
 - **`r sprint_7`**
 
 ```{r Skinker DeBaliviere Building Permit Mapping, include = FALSE}
-skinker_shp <- filter(merge, nbhd_name == "Skinker DeBaliviere")
-if(nrow(skinker_shp) == 0){
-  print("No building permits for Skinker DeBaliviere neighborhood")
-}else{
-  
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+
 #write shapefile
+skinker_shp <- filter(merge, nbhd_name == "Skinker DeBaliviere")
 st_write(skinker_shp, here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"), 
          delete_dsn = TRUE)
 
@@ -536,13 +724,44 @@ tmap_save(skinker_map, file = here("results", params$year, params$month, "skinke
 }
 ```
 
-### Skinker DeBaliviere: Building Permit Type
+```{r, echo=FALSE}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Skinker DeBaliviere")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r Skinker Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(skinker_shp) == 0){
-  print("No building permits for Skinker DeBaliviere neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "skinker", "skinker_use.jpeg"))
+#display map
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "skinker", "skinker_use.jpeg"))
+}
+```
+
+```{r skinker plot, echo=FALSE, message=FALSE}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+skinker <- filter(df, nbhd_name == "Skinker DeBaliviere")
+ggplot(skinker, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nSkinker DeBaliviere by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> skinker_plot
+
+ggsave(here("results",  params$year, params$month, "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "skinker", "skinker_cost.png"))
 }
 ```
 
@@ -558,12 +777,10 @@ sprint_8 <- sprintf("%s building permits in Fountain Park %s %s",
 - **`r sprint_8`**
 
 ```{r Vandeventer Building Permit Mapping, include = FALSE}
-vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
-if(nrow(vandy_shp) == 0){
-  print("No building permits for Vandeventer neighborhood")
-}else{
+if("Vandeventer" %in% df$nbhd_name){
   
 #write shapefile
+vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
 st_write(vandy_shp, here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
          delete_dsn = TRUE)
 
@@ -602,13 +819,44 @@ tmap_save(vandy_map, file = here("results", params$year, params$month, "vandy", 
 }
 ```
 
-### Vandeventer: Building Permit Type
+```{r, echo=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Vandeventer")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r Vandeventer Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(vandy_shp) == 0){
-  print("No building permits for Vandeventer neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_use.jpeg"))
+#display map
+if("Vandeventer" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_use.jpeg"))
+}
+```
+
+```{r vandy plot, echo=FALSE, message=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+vandy <- filter(df, nbhd_name == "Vandeventer")
+ggplot(vandy, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nVandeventer by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> vandy_plot
+
+ggsave(here("results",  params$year, params$month, "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_cost.png"))
 }
 ```
 
@@ -623,13 +871,11 @@ sprint_9 <- sprintf("%s building permits in Fountain Park %s %s",
 
 - **`r sprint_9`**
 
-```{r Visitation Park Building Permit Mapping, include = FALSE, eval=FALSE}
-visit_shp <- filter(merge, nbhd_name == "Visitation Park")
-if(nrow(visit_shp) == 0){
-  print("No building permits for Visitation Park neighborhood")
-}else{
+```{r Visitation Park Building Permit Mapping, include = FALSE}
+if("Visitation Park" %in% df$nbhd_name){
   
 #write shapefile
+visit_shp <- filter(merge, nbhd_name == "Visitation Park")
 st_write(visit_shp, here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
          delete_dsn = TRUE)
   
@@ -668,13 +914,45 @@ tmap_save(fpse_map, file = here("results", params$year, params$month, "vstprk", 
 }
 ```
 
-### Visitation Park: Building Permit Type
+```{r, echo=FALSE}
+if("Visitation Park" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Visitation Park")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
+}
+```
 
 ```{r vstprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
-if(nrow(visit_shp) == 0){
-  print("No building permits for Visitation Park neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
+#display map
+if("Visitation Park" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
+}
+```
+
+```{r vstprk plot, echo=FALSE, message=FALSE}
+if("Visit Park" %in% df$nbhd_name){
+vstprk <- filter(df, nbhd_name == "Visit Park")
+ggplot(vstprk, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nVisit Park by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> vstprk_plot
+
+ggsave(here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_cost.png"))
 }
 ```
 
@@ -690,12 +968,11 @@ sprint_10 <- sprintf("%s building permits in Fountain Park %s %s",
 - **`r sprint_10`**
 
 ```{r West End Building Permit Mapping, include = FALSE}
-westend_shp <- filter(merge, nbhd_name == "West End")
-if(nrow(westend_shp) == 0){
-  print("No building permits for West End neighborhood")
-}else{
-  
+
+if("West End" %in% df$nbhd_name){
+
 #write shapefile
+westend_shp <- filter(merge, nbhd_name == "West End")
 st_write(westend_shp, here("data", params$year, params$month, "shapefiles", "westend.shp"), 
          delete_dsn = TRUE)
 
@@ -734,15 +1011,45 @@ tmap_save(westend_map, file = here("results", params$year, params$month, "westen
 }
 ```
 
-### West End: Building Permit Type
-
-```{r West End Permit Use Knit, echo = FALSE, out.width = "20%"}
-if(nrow(westend_shp) == 0){
-  print("No building permits for West End neighborhood")
-}else{
-knitr::include_graphics(here("results", params$year, params$month, "westend", "westend_use.jpeg"))
+```{r, echo=FALSE}
+if("West End" %in% df$nbhd_name){
+  
+  #create summary table
+  df%>%
+  filter(nbhd_name == "West End")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+  #print summary table
+  knitr::kable(table, format="markdown")
 }
 ```
 
+```{r West End Permit Use Knit, echo = FALSE, out.width = "20%"}
+#display map
+if("West End" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "westend", "westend_use.jpeg"))
+}
+```
 
+```{r westend plot, echo=FALSE, message=FALSE}
+if("West End" %in% df$nbhd_name){
+westend <- filter(df, nbhd_name == "West End")
+ggplot(westend, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permitsin\nWest End by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> westend_plot
+
+ggsave(here("results",  params$year, params$month, "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "westend", "westend_cost.png"))
+}
+```
 

@@ -25,7 +25,7 @@ library(readr)      #read csv
 
 ```{r, message=FALSE, echo=FALSE}
 #load data
-data <- read_csv(here("data", params$year, params$month, "bldprmt_clean.csv"))
+data <- read_csv(here("data", params$year, params$month, "clean_data.csv"))
 ```
 
 

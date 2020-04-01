@@ -5,10 +5,8 @@ date: "2/24/2020"
 output: html_document
 params:
   month: January
-  pastyear: 2019
   year: 2020
-  date: "2020-01-01"
-  pastdate: "2019-01-01"
+
 ---
 
 ### Introduction
@@ -44,9 +42,7 @@ setwd(wd)
 #Import data
 #Use odbcDriverConnect instead of odbcConnectAcces which only works on 32-bit
 
-channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=/Users/loganbogenut/Documents/GitHub/stl-building-permits/data/working-db/bldgpermits/prmdbo")
-
-#channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
+channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
 ```
 
 
@@ -158,7 +154,8 @@ data_month <- mutate(data_month, lil_cost = ifelse(EstProjectCost < 50000, 1, NA
 
 #This variable is specifically for individual neighborhood analysis
 
-data_month <- mutate(data_month, lrgcost = ifelse(EstProjectCost >= 50000, "true", "false"))
+data_month%>%
+  mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000")) -> data_month
 ```
 
 
