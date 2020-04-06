@@ -40,9 +40,9 @@ setwd(wd)
 ```{r, include=FALSE}
 
 #Import data
-#Use odbcDriverConnect instead of odbcConnectAcces which only works on 32-bit
 
-channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
+channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=/data/working-db/bldgpermits/prmdbo
+                             #G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
 ```
 
 
@@ -108,7 +108,7 @@ data_month <- filter(data_month, Nbrhd %in% c("38", "39", "46", "47", "48", "49"
 # We use an `ifelse(grepl)` statement which says that if we find the first argument in the `Nbrhd` variable to be TRUE then it returns a specified value (in this case the actual neighborhood name)
 
 data_month <- mutate(data_month, nbhd_name = ifelse(grepl("38", Nbrhd), "Central West End",
-                                             ifelse(grepl("39", Nbrhd), "Forest Park South East",
+                                             ifelse(grepl("39", Nbrhd), "Forest Park Southeast",
                                              ifelse(grepl("46", Nbrhd), "Skinker DeBaliviere",  
                                              ifelse(grepl("47", Nbrhd), "DeBaliviere Place",
                                              ifelse(grepl("48", Nbrhd), "West End",

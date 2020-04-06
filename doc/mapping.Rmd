@@ -33,6 +33,7 @@ library(RColorBrewer) # cynthia brewer color palettes
 library(viridis)      # color palettes
 library(knitr)
 library(ggplot2)      # plot making
+library(formattable)  # currency values
 ```
 
 
@@ -40,11 +41,9 @@ library(ggplot2)      # plot making
 #load data
 setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
-#read_csv(here("data", params$year, params$month,  "clean_data.csv"))
-df <- read_csv("data/jan2020_clean.csv")
+df <- read_csv(here("data", params$year, params$month,  "clean_data.csv"))
 
-#read_csv(here("data", params$year, params$month,  "mean_data.csv"))
-avg <- read_csv("data/jan2020_mean.csv")
+avg <- read_csv(here("data", params$year, params$month,  "mean_data.csv"))
 
 load(file = here("data", "basemap_tiles", "mapbox-tiles.rda"))
 load(file = here("data", "basemap_tiles", "boundaries.rda"))
@@ -75,7 +74,7 @@ df%>%
 
 ### Neighborhood Summary
 
-```{r, echo=FALSE, out.width= "20%"}
+```{r, include=FALSE}
 # Average cost by neighborhood for each `new_use`
 
 ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
@@ -83,49 +82,56 @@ ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
   ggtitle("Average Building Permit Cost By Neighborhood") +
   theme(plot.title = element_text(hjust = 0.5),
     axis.title.y = element_blank()) +
-  ylab("Cost ($)") +
+  ylab("Cost") +
   labs(fill = "New Use") +
+  scale_y_continuous(labels = scales::dollar_format())+
   coord_flip()
-```
 
-### Academy
+ggsave(here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+```
 
 ```{r, echo=FALSE}
-#calculate number of permits
-bp_academy <- nrow(df[df$Nbrhd == 51,])
-
-sprint_1 <- sprintf("%s building permits in Academy in %s %s",
-                    bp_academy, params$month, params$year)
+knitr::include_graphics(here("results", params$year, params$month, "allnbhd_plot.png"))
 ```
 
-- **`r sprint_1`**
 
-```{r Academy Building Permit Mapping, include = FALSE}
-if("Academy" %in% df$nbhd_name){
-  
-#write shapefile  
-  academy_shp <- filter(merge, nbhd_name == "Academy")
-  st_write(academy_shp, here("data", params$year, params$month, "shapefiles", "academy.shp"), 
+### Forest Park Southeast
+
+```{r, include=FALSE}
+bp_fpse <- nrow(df[df$Nbrhd == 39,])
+
+sprint_4 <- sprintf("%s building permits in Forest Park Southeast in %s %s",
+                    bp_fpse, params$month, params$year)
+```
+
+- **`r sprint_4`**
+
+```{r FPSE Building Permit Mapping, include = FALSE}
+
+if("Forest Park Southeast" %in% df$nbhd_name){
+
+#write shapefile
+fpse_shp <- filter(merge, nbhd_name == "Forest Park Southeast")
+st_write(fpse_shp, here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
          delete_dsn = TRUE)
 
-
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "academy.shp"),
+st_read(here("data", params$year, params$month, "shapefiles", "fpse.shp"),
         stringsAsFactors = FALSE) %>%
-  st_transform(crs = 32615) -> academy
+  st_transform(crs = 32615) -> fpse
 
-#tm mapping
-tm_shape(ac_tiles) +
+#mapping
+tm_shape(fpse_tiles) +
   tm_rgb() +
   nhoods_sf %>%
-  filter(., neighborhood == 51) %>%
+  filter(., neighborhood == 39) %>%
   tm_shape() +
     tm_fill(col = "#9ecae1",
             alpha = .5) +
     tm_borders(col = "black",
                lwd = 2,
                lty = "dashed") +
-  academy%>%
+  fpse%>%
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
@@ -137,51 +143,92 @@ tm_shape(ac_tiles) +
     legend.bg.color = "white",
     legend.frame=TRUE,
     legend.outside = TRUE,
-    legend.position = c("right", "bottom")) -> academy_map
+    legend.position = c("right", "bottom")) -> fpse_map
 
 #save map as .jpeg
-tmap_save(academy_map, file = here("results", params$year, params$month, "academy", "ac_use.jpeg"), dpi = 500)
-}
+tmap_save(fpse_map, file = here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), dpi = 500)
+  }
 ```
 
-```{r Academy summary table, echo=FALSE}
-if("Academy" %in% df$nbhd_name){
-  
-  #create summary table
+```{r, echo=FALSE}
+if("Forest Park Southeast" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 39,]) < 15){
+    
+    #create in depth summary table
   df%>%
-  filter(nbhd_name == "Academy")%>%
+  filter(nbhd_name == "Forest Park Southeast")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Forest Park Southeast")
+}}else{
+    #create summary table
+  df%>%
+  filter(nbhd_name == "Forest Park Southeast")%>%
   group_by(new_use)%>%
   summarize(avg_cost = mean(EstProjectCost),
             permit_count = n()) -> table
   
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
 #print summary table
-  knitr::kable(table, format="markdown")
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Forest Park Southeast")
 }
 ```
 
-```{r Academy Permit Use Knit, echo = FALSE, out.width = "20%"}
+```{r, echo=FALSE}
+if("Forest Park Southeast" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 39,]) < 15){
+    
+    #create summary table
+  df%>%
+  filter(nbhd_name == "Forest Park Southeast")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Forest Park Southeast")
+}}
+```
+
+
+```{r FPSE Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
-if("Academy" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_use.jpeg"))
+if("Forest Park Southeast" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_use.jpeg"))
 }
 ```
 
-```{r Academy plot, echo=FALSE, message=FALSE}
-if("Academy" %in% df$nbhd_name){
-academy <- filter(df, nbhd_name == "Academy")
-ggplot(academy, aes(lrgcost)) +
+```{r fpse plot, echo=FALSE, message=FALSE}
+if("Forest Park Southeast" %in% df$nbhd_name){
+fpse <- filter(df, nbhd_name == "Forest Park Southeast")
+ggplot(fpse, aes(lrgcost)) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits in Academy by Use") +
+  ggtitle("High Cost Building Permits in\nForest Park Southeast by Use") +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> ac_plot
+  labs(fill = "New Use") -> fpse_plot
 
-ggsave(here("results",  params$year, params$month, "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
+ggsave(here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_cost.png"))
+knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_cost.png"))
 }
 ```
 
@@ -238,13 +285,12 @@ tm_shape(cwe_tiles) +
 
 #save map as .jpeg
 tmap_save(cwe_map, file = here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), dpi = 500)
-}else{
-  print("No building permits for Central West End neighborhood")
 }
 ```
 
 ```{r CWE summary table, echo = FALSE}
 if("Central West End" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 38,]) > 15){
   
   #create summary table
   df%>%
@@ -253,10 +299,51 @@ if("Central West End" %in% df$nbhd_name){
   summarize(avg_cost = mean(EstProjectCost),
             permit_count = n()) -> table
   
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Central West End")
+}else{
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Central West End")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Central West End")
+}}
 ```
+
+```{r, echo=FALSE}
+if("Central West End" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 38,]) < 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Central West End")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Central West End")
+  }}
+```
+
+
 
 ```{r CWE Permit Use Knit, echo = FALSE, out.width = "20%"}
 if("Central West End" %in% df$nbhd_name){
@@ -339,7 +426,8 @@ tmap_save(dbplace_map, file = here("results", params$year, params$month, "dbplac
 
 ```{r dbplace summary table, echo = FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
-  
+  if(nrow(df[df$Nbrhd == 47,]) > 15){
+    
  #create summary table
   df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
@@ -347,10 +435,51 @@ if("DeBaliviere Place" %in% df$nbhd_name){
   summarize(avg_cost = mean(EstProjectCost),
             permit_count = n()) -> table
   
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "DeBaliviere Place")
+  }else{
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "DeBaliviere Place")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "DeBaliviere Place")
+}}
 ```
+
+```{r, echo=FALSE}
+if("DeBaliviere Place" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 47,]) < 15){
+    
+ #create summary table
+  df%>%
+  filter(nbhd_name == "DeBaliviere Place")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "DeBaliviere Place")
+  }}
+```
+
+
 
 ```{r dbplace Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
@@ -362,7 +491,7 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 ```{r dbplace plot, echo=FALSE, message=FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
 dbplace <- filter(df, nbhd_name == "DeBaliviere Place")
-ggplot(academy, aes(lrgcost)) +
+ggplot(dbplace, aes(lrgcost)) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   ggtitle("High Cost Building Permits\nin DeBaliviere Place by Use") +
   theme(
@@ -378,301 +507,12 @@ knitr::include_graphics(here("results", params$year, params$month, "dbplace", "d
 }
 ```
 
-### Forest Park South East
-
-```{r, include=FALSE}
-bp_fpse <- nrow(df[df$Nbrhd == 39,])
-
-sprint_4 <- sprintf("%s building permits in Forest Park South East %s %s",
-                    bp_fpse, params$month, params$year)
-```
-
-- **`r sprint_4`**
-
-```{r FPSE Building Permit Mapping, include = FALSE}
-
-if("Forest Park South East" %in% df$nbhd_name){
-
-#write shapefile
-fpse_shp <- filter(merge, nbhd_name == "Forest Park South East")
-st_write(fpse_shp, here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
-         delete_dsn = TRUE)
-
-#Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "fpse.shp"),
-        stringsAsFactors = FALSE) %>%
-  st_transform(crs = 32615) -> fpse
-
-#mapping
-tm_shape(fpse_tiles) +
-  tm_rgb() +
-  nhoods_sf %>%
-  filter(., neighborhood == 39) %>%
-  tm_shape() +
-    tm_fill(col = "#9ecae1",
-            alpha = .5) +
-    tm_borders(col = "black",
-               lwd = 2,
-               lty = "dashed") +
-  fpse%>%
-  tm_shape() +
-    tm_bubbles(size = .25,
-               col = "new_use",
-               palette = "Set1",
-               title.col = "Building Permit Type") +
-  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
-  tm_layout(
-    frame = FALSE,
-    legend.bg.color = "white",
-    legend.frame=TRUE,
-    legend.outside = TRUE,
-    legend.position = c("right", "bottom")) -> fpse_map
-
-#save map as .jpeg
-tmap_save(fpse_map, file = here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), dpi = 500)
-}else{
-  print("No building permits for Forest Park South East neighborhood")
-}
-```
-
-```{r, echo=FALSE}
-if("Forest Park South East" %in% df$nbhd_name){
-  
-    #create summary table
-  df%>%
-  filter(nbhd_name == "Forest Park South East")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
-```
-
-```{r FPSE Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Forest Park South East" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_use.jpeg"))
-}
-```
-
-```{r fpse plot, echo=FALSE, message=FALSE}
-if("Forest Park South East" %in% df$nbhd_name){
-dbplace <- filter(df, nbhd_name == "Forest Park South East")
-ggplot(dbplace, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits in\nForest Park South East by Use") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> fpse_plot
-
-ggsave(here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
-
-knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_cost.png"))
-}
-```
-
-### Fountain Park
-
-```{r, include=FALSE}
-bp_ftnprk <- nrow(df[df$Nbrhd == 53,])
-
-sprint_5 <- sprintf("%s building permits in Fountain Park %s %s",
-                    bp_ftnprk, params$month, params$year)
-```
-
-- **`r sprint_5`**
-
-```{r Fountain Park Building Permit Mapping, include = FALSE}
-if("Fountain Park" %in% df$nbhd_name){
-
-#write shapefile
-ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
-st_write(ftnprk_shp, here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
-         delete_dsn = TRUE)
-
-#Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "ftnprk.shp"),
-        stringsAsFactors = FALSE) %>%
-  st_transform(crs = 32615) -> ftnprk
-
-#map shapefile
-tm_shape(fp_tiles) +
-  tm_rgb() +
-  nhoods_sf %>%
-  filter(., neighborhood == 53) %>%
-  tm_shape() +
-    tm_fill(col = "#9ecae1",
-            alpha = .5) +
-    tm_borders(col = "black",
-               lwd = 2,
-               lty = "dashed") +
-  ftnprk%>%
-  tm_shape() +
-    tm_bubbles(size = .25,
-               col = "new_use",
-               palette = "Set1",
-               title.col = "Building Permit Type") +
-  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
-  tm_layout(
-    frame = FALSE,
-    legend.bg.color = "white",
-    legend.frame=TRUE,
-    legend.outside = TRUE,
-    legend.position = c("right", "bottom")) -> ftnprk_map
-
-#save map as .jpeg
-tmap_save(ftnprk_map, file = here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
-}
-```
-
-```{r, echo=FALSE}
-if("Fountain Park" %in% df$nbhd_name){
-  
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Fountain Park")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
-```
-
-```{r ftnprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
-#display map
-if("Forest Park South East" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"))
-}
-```
-
-```{r ftnprk plot, echo=FALSE, message=FALSE}
-if("Fountain Park" %in% df$nbhd_name){
-ftnprk <- filter(df, nbhd_name == "Fountain Park")
-ggplot(ftnprk, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits in Fountain Park by Use") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> ftnprk_plot
-
-ggsave(here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
-
-knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_cost.png"))
-}
-```
-
-### Lewis Place
-
-```{r, include=FALSE}
-bp_lewis <- nrow(df[df$Nbrhd == 54,])
-
-sprint_6 <- sprintf("%s building permits in Fountain Park %s %s",
-                    bp_lewis, params$month, params$year)
-```
-
-- **`r sprint_6`**
-
-```{r Lewis Place Building Permit Mapping, include = FALSE}
-
-if("Lewis Place" %in% df$nbhd_name){
-
-#write shapefile
-lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
-st_write(lewis_shp, here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
-         delete_dsn = TRUE)
-
-#Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "lewis.shp"),
-        stringsAsFactors = FALSE) %>%
-  st_transform(crs = 32615) -> lewis
-
-#map shapefile
-tm_shape(lp_tiles) +
-  tm_rgb() +
-  nhoods_sf %>%
-  filter(., neighborhood == 54) %>%
-  tm_shape() +
-    tm_fill(col = "#9ecae1",
-            alpha = .5) +
-    tm_borders(col = "black",
-               lwd = 2,
-               lty = "dashed") +
-  lewis%>%
-  tm_shape() +
-    tm_bubbles(size = .25,
-               col = "new_use",
-               palette = "Set1",
-               title.col = "Building Permit Type") +
-  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
-  tm_layout(
-    frame = FALSE,
-    legend.bg.color = "white",
-    legend.frame=TRUE,
-    legend.outside = TRUE,
-    legend.position = c("right", "bottom")) -> lewis_map
-
-#save map as .jpeg
-tmap_save(lewis_map, file = here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), dpi = 500)
-}
-```
-
-```{r, echo=FALSE}
-if("Lewis Place" %in% df$nbhd_name){
-  
-    #create summary table
-  df%>%
-  filter(nbhd_name == "Lewis Place")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
-```
-
-```{r Lewis Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Lewis Place" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_use.jpeg"))
-}
-```
-
-```{r Lewis plot, echo=FALSE, message=FALSE}
-if("Lewis Place" %in% df$nbhd_name){
-lewis <- filter(df, nbhd_name == "Lewis Place")
-ggplot(lewis, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits in Lewis by Use") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> lewis_plot
-
-ggsave(here("results",  params$year, params$month, "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
-
-knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_cost.png"))
-}
-```
-
 ### Skinker DeBaliviere
 
 ```{r, include=FALSE}
 bp_skinker <- nrow(df[df$Nbrhd == 46,])
 
-sprint_7 <- sprintf("%s building permits in Fountain Park %s %s",
+sprint_7 <- sprintf("%s building permits in Skinker DeBaliviere in %s %s",
                     bp_skinker, params$month, params$year)
 ```
 
@@ -723,7 +563,8 @@ tmap_save(skinker_map, file = here("results", params$year, params$month, "skinke
 
 ```{r, echo=FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
-  
+  if(nrow(df[df$Nbrhd == 46,]) > 15){
+    
   #create summary table
   df%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
@@ -731,10 +572,51 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
   summarize(avg_cost = mean(EstProjectCost),
             permit_count = n()) -> table
   
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Skinker DeBaliviere")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Skinker DeBaliviere")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Skinker DeBaliviere")
+}}
 ```
+
+```{r, echo = FALSE}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 46,]) < 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Skinker DeBaliviere")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Skinker DeBaliviere")
+}}
+```
+
 
 ```{r Skinker Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
@@ -762,202 +644,13 @@ knitr::include_graphics(here("results", params$year, params$month, "skinker", "s
 }
 ```
 
-### Vandeventer
-
-```{r, include=FALSE}
-bp_vandy <- nrow(df[df$Nbrhd == 58,])
-
-sprint_8 <- sprintf("%s building permits in Fountain Park %s %s",
-                    bp_vandy, params$month, params$year)
-```
-
-- **`r sprint_8`**
-
-```{r Vandeventer Building Permit Mapping, include = FALSE}
-if("Vandeventer" %in% df$nbhd_name){
-  
-#write shapefile
-vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
-st_write(vandy_shp, here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
-         delete_dsn = TRUE)
-
-#Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "vandy.shp"),
-        stringsAsFactors = FALSE) %>%
-  st_transform(crs = 32615) -> vandy
-
-#mapping
-tm_shape(vd_tiles) +
-  tm_rgb() +
-  nhoods_sf %>%
-  filter(., neighborhood == 58) %>%
-  tm_shape() +
-    tm_fill(col = "#9ecae1",
-            alpha = .5) +
-    tm_borders(col = "black",
-               lwd = 2,
-               lty = "dashed") +
-  vandy%>%
-  tm_shape() +
-    tm_bubbles(size = .25,
-               col = "new_use",
-               palette = "Set1",
-               title.col = "Building Permit Type") +
-  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
-  tm_layout(
-    frame = FALSE,
-    legend.bg.color = "white",
-    legend.frame=TRUE,
-    legend.outside = TRUE,
-    legend.position = c("right", "bottom")) -> vandy_map
-
-#save map as .jpeg
-tmap_save(vandy_map, file = here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), dpi = 500)
-}
-```
-
-```{r, echo=FALSE}
-if("Vandeventer" %in% df$nbhd_name){
-  
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Vandeventer")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
-```
-
-```{r Vandeventer Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Vandeventer" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_use.jpeg"))
-}
-```
-
-```{r vandy plot, echo=FALSE, message=FALSE}
-if("Vandeventer" %in% df$nbhd_name){
-vandy <- filter(df, nbhd_name == "Vandeventer")
-ggplot(vandy, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits in\nVandeventer by Use") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> vandy_plot
-
-ggsave(here("results",  params$year, params$month, "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
-
-knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_cost.png"))
-}
-```
-
-### Visitation Park
-
-```{r, include=FALSE}
-bp_ftnprk <- nrow(df[df$Nbrhd == 53,])
-
-sprint_9 <- sprintf("%s building permits in Fountain Park %s %s",
-                    bp_ftnprk, params$month, params$year)
-```
-
-- **`r sprint_9`**
-
-```{r Visitation Park Building Permit Mapping, include = FALSE}
-if("Visitation Park" %in% df$nbhd_name){
-  
-#write shapefile
-visit_shp <- filter(merge, nbhd_name == "Visitation Park")
-st_write(visit_shp, here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
-         delete_dsn = TRUE)
-  
-#Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
-        stringsAsFactors = FALSE) %>%
-  st_transform(crs = 32615) -> vstprk
-
-#map shapefile
-tm_shape(vp_tiles) +
-  tm_rgb() +
-  nhoods_sf %>%
-  filter(., neighborhood == 49) %>%
-  tm_shape() +
-    tm_fill(col = "#9ecae1",
-            alpha = .5) +
-    tm_borders(col = "black",
-               lwd = 2,
-               lty = "dashed") +
-  vstprk%>%
-  tm_shape() +
-    tm_bubbles(size = .25,
-               col = "new_use",
-               palette = "Set1",
-               title.col = "Building Permit Type") +
-  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
-  tm_layout(
-    frame = FALSE,
-    legend.bg.color = "white",
-    legend.frame=TRUE,
-    legend.outside = TRUE,
-    legend.position = c("right", "bottom")) -> vstprk_map
-
-#save map as .jpeg
-tmap_save(fpse_map, file = here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), dpi = 500)
-}
-```
-
-```{r, echo=FALSE}
-if("Visitation Park" %in% df$nbhd_name){
-  
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Visitation Park")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
-```
-
-```{r vstprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
-#display map
-if("Visitation Park" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
-}
-```
-
-```{r vstprk plot, echo=FALSE, message=FALSE}
-if("Visit Park" %in% df$nbhd_name){
-vstprk <- filter(df, nbhd_name == "Visit Park")
-ggplot(vstprk, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits in\nVisit Park by Use") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> vstprk_plot
-
-ggsave(here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
-
-knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_cost.png"))
-}
-```
 
 ### West End
 
 ```{r, include=FALSE}
 bp_westend <- nrow(df[df$Nbrhd == 48,])
 
-sprint_10 <- sprintf("%s building permits in Fountain Park %s %s",
+sprint_10 <- sprintf("%s building permits in West End in %s %s",
                     bp_westend, params$month, params$year)
 ```
 
@@ -1009,7 +702,7 @@ tmap_save(westend_map, file = here("results", params$year, params$month, "westen
 
 ```{r, echo=FALSE}
 if("West End" %in% df$nbhd_name){
-  
+  if(nrow(df[df$Nbrhd == 48,]) > 15){
   #create summary table
   df%>%
   filter(nbhd_name == "West End")%>%
@@ -1017,10 +710,50 @@ if("West End" %in% df$nbhd_name){
   summarize(avg_cost = mean(EstProjectCost),
             permit_count = n()) -> table
   
-  #print summary table
-  knitr::kable(table, format="markdown")
-}
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "West End")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "West End")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "West End")
+}}
 ```
+
+```{r, echo=FALSE}
+if("West End" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 48,]) < 15){
+  #create summary table
+  df%>%
+  filter(nbhd_name == "West End")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "West End")
+}}
+```
+
 
 ```{r West End Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
@@ -1047,4 +780,695 @@ ggsave(here("results",  params$year, params$month, "westend", "westend_cost.png"
 knitr::include_graphics(here("results", params$year, params$month, "westend", "westend_cost.png"))
 }
 ```
+
+
+### Visitation Park
+
+```{r, include=FALSE}
+bp_vstprk <- nrow(df[df$Nbrhd == 49,])
+
+sprint_9 <- sprintf("%s building permits in Visitation Park in %s %s",
+                    bp_vstprk, params$month, params$year)
+```
+
+- **`r sprint_9`**
+
+```{r Visitation Park Building Permit Mapping, include = FALSE}
+if("Visitation Park" %in% df$nbhd_name){
+  
+#write shapefile
+visit_shp <- filter(merge, nbhd_name == "Visitation Park")
+st_write(visit_shp, here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
+         delete_dsn = TRUE)
+  
+#Load shapefile
+st_read(here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> vstprk
+
+#map shapefile
+tm_shape(vp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 49) %>%
+  tm_shape() +
+    tm_fill(col = "#9ecae1",
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  vstprk%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> vstprk_map
+
+#save map as .jpeg
+tmap_save(vstprk_map, file = here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), dpi = 500)
+}
+```
+
+```{r, echo=FALSE}
+if("Visitation Park" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 49,]) > 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Visitation Park")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Visitation Park")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Visitation Park")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Visitation Park")
+}}
+```
+
+```{r, echo = FALSE}
+if("Visitation Park" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 49,]) < 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Visitation Park")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Visitation Park")
+}}
+```
+
+
+```{r vstprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
+#display map
+if("Visitation Park" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
+}
+```
+
+```{r vstprk plot, echo=FALSE, message=FALSE}
+if("Visit Park" %in% df$nbhd_name){
+vstprk <- filter(df, nbhd_name == "Visitation Park")
+ggplot(vstprk, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nVisitation Park by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> vstprk_plot
+
+ggsave(here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_cost.png"))
+}
+```
+
+
+### Academy
+
+```{r, echo=FALSE}
+#calculate number of permits
+bp_academy <- nrow(df[df$Nbrhd == 51,])
+
+sprint_1 <- sprintf("%s building permits in Academy in %s %s",
+                    bp_academy, params$month, params$year)
+```
+
+- **`r sprint_1`**
+
+```{r Academy Building Permit Mapping, include = FALSE}
+if("Academy" %in% df$nbhd_name){
+  
+#write shapefile  
+  academy_shp <- filter(merge, nbhd_name == "Academy")
+  st_write(academy_shp, here("data", params$year, params$month, "shapefiles", "academy.shp"), 
+         delete_dsn = TRUE)
+
+
+#Load shapefile
+st_read(here("data", params$year, params$month, "shapefiles", "academy.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> academy
+
+#tm mapping
+tm_shape(ac_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 51) %>%
+  tm_shape() +
+    tm_fill(col = "#9ecae1",
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  academy%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> academy_map
+
+#save map as .jpeg
+tmap_save(academy_map, file = here("results", params$year, params$month, "academy", "ac_use.jpeg"), dpi = 500)
+}
+```
+
+```{r Academy summary table, echo=FALSE}
+if("Academy" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 51,]) > 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Academy")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n())-> table
+  
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Academy")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Academy")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Academy")
+}}
+```
+
+```{r, echo = FALSE}
+if("Academy" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 51,]) < 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Academy")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n())-> table
+  
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Academy")
+}}
+```
+
+
+```{r Academy Permit Use Knit, echo = FALSE, out.width = "20%"}
+#display map
+if("Academy" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_use.jpeg"))
+}
+```
+
+```{r Academy plot, echo=FALSE, message=FALSE}
+if("Academy" %in% df$nbhd_name){
+academy <- filter(df, nbhd_name == "Academy")
+ggplot(academy, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in Academy by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> ac_plot
+
+ggsave(here("results",  params$year, params$month, "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_cost.png"))
+}
+```
+
+
+### Fountain Park
+
+```{r, include=FALSE}
+bp_ftnprk <- nrow(df[df$Nbrhd == 53,])
+
+sprint_5 <- sprintf("%s building permits in Fountain Park in %s %s",
+                    bp_ftnprk, params$month, params$year)
+```
+
+- **`r sprint_5`**
+
+```{r Fountain Park Building Permit Mapping, include = FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+
+#write shapefile
+ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
+st_write(ftnprk_shp, here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
+         delete_dsn = TRUE)
+
+#Load shapefile
+st_read(here("data", params$year, params$month, "shapefiles", "ftnprk.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> ftnprk
+
+#map shapefile
+tm_shape(fp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 53) %>%
+  tm_shape() +
+    tm_fill(col = "#9ecae1",
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  ftnprk%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> ftnprk_map
+
+#save map as .jpeg
+tmap_save(ftnprk_map, file = here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
+}
+```
+
+```{r, echo=FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 53,]) > 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Fountain Park")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Fountain Park")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Fountain Park")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Fountain Park")
+}}
+```
+
+```{r, echo = FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 53,]) < 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Fountain Park")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Fountain Park")
+}}
+```
+
+
+```{r ftnprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
+#display map
+if("Fountain Park" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"))
+}
+```
+
+```{r ftnprk plot, echo=FALSE, message=FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+ftnprk <- filter(df, nbhd_name == "Fountain Park")
+ggplot(ftnprk, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in Fountain Park by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> ftnprk_plot
+
+ggsave(here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_cost.png"))
+}
+```
+
+### Lewis Place
+
+```{r, include=FALSE}
+bp_lewis <- nrow(df[df$Nbrhd == 54,])
+
+sprint_6 <- sprintf("%s building permits in Lewis Place in %s %s",
+                    bp_lewis, params$month, params$year)
+```
+
+- **`r sprint_6`**
+
+```{r Lewis Place Building Permit Mapping, include = FALSE}
+
+if("Lewis Place" %in% df$nbhd_name){
+
+#write shapefile
+lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
+st_write(lewis_shp, here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
+         delete_dsn = TRUE)
+
+#Load shapefile
+st_read(here("data", params$year, params$month, "shapefiles", "lewis.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> lewis
+
+#map shapefile
+tm_shape(lp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 54) %>%
+  tm_shape() +
+    tm_fill(col = "#9ecae1",
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  lewis%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> lewis_map
+
+#save map as .jpeg
+tmap_save(lewis_map, file = here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), dpi = 500)
+}
+```
+
+```{r, echo=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 54,]) > 15){
+    
+    #create summary table
+  df%>%
+  filter(nbhd_name == "Lewis Place")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Lewis Place")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Lewis Place")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Lewis Place")
+}}
+```
+
+```{r, echo=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 54,]) < 15){
+    
+    #create summary table
+  df%>%
+  filter(nbhd_name == "Lewis Place")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Lewis Place")
+}}
+```
+
+
+```{r Lewis Permit Use Knit, echo = FALSE, out.width = "20%"}
+#display map
+if("Lewis Place" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_use.jpeg"))
+}
+```
+
+```{r Lewis plot, echo=FALSE, message=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+lewis <- filter(df, nbhd_name == "Lewis Place")
+ggplot(lewis, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in Lewis Place by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> lewis_plot
+
+ggsave(here("results",  params$year, params$month, "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_cost.png"))
+}
+```
+
+
+### Vandeventer
+
+```{r, include=FALSE}
+bp_vandy <- nrow(df[df$Nbrhd == 58,])
+
+sprint_8 <- sprintf("%s building permits in Vandeventer in %s %s",
+                    bp_vandy, params$month, params$year)
+```
+
+- **`r sprint_8`**
+
+```{r Vandeventer Building Permit Mapping, include = FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+  
+#write shapefile
+vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
+st_write(vandy_shp, here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
+         delete_dsn = TRUE)
+
+#Load shapefile
+st_read(here("data", params$year, params$month, "shapefiles", "vandy.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> vandy
+
+#mapping
+tm_shape(vd_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 58) %>%
+  tm_shape() +
+    tm_fill(col = "#9ecae1",
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  vandy%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> vandy_map
+
+#save map as .jpeg
+tmap_save(vandy_map, file = here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), dpi = 500)
+}
+```
+
+```{r, echo=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 58,]) > 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Vandeventer")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Vandeventer")
+}else{
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Vandeventer")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Vandeventer")
+}}
+```
+
+```{r, echo=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 58,]) < 15){
+    
+  #create summary table
+  df%>%
+  filter(nbhd_name == "Vandeventer")%>%
+  group_by(new_use)%>%
+  summarize(avg_cost = mean(EstProjectCost),
+            permit_count = n()) -> table
+  
+#make avg_cost a currency value
+table$avg_cost <- currency(table$avg_cost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("New Use", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Vandeventer")
+}}
+```
+
+
+```{r Vandeventer Permit Use Knit, echo = FALSE, out.width = "20%"}
+#display map
+if("Vandeventer" %in% df$nbhd_name){
+  knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_use.jpeg"))
+}
+```
+
+```{r vandy plot, echo=FALSE, message=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+vandy <- filter(df, nbhd_name == "Vandeventer")
+ggplot(vandy, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits in\nVandeventer by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> vandy_plot
+
+ggsave(here("results",  params$year, params$month, "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
+
+knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_cost.png"))
+}
+```
+
 

@@ -62,3 +62,7 @@ Rewrote map making code using `tmap`. Created maps for all neighborhoods by `new
 ## 3/30/20
 
 Wrote `ifelse` statements for all code chunks so that for any given month if a neighborhood has no building permits the code will still run and will return a result saying that there are no building permits for that neighborhood during that month. Restructured `mapping.Rmd` to make it more readable and to cut down on extraneous code. Began to combine `visual_analysis.Rmd`, `mapping.Rmd`, and `descriptive_stats.Rmd`. End goal is to have data cleaning file and a report file that will produce results for each neighborhood no matter what month of the year.
+
+## 4/1/20
+
+Created summary tables for each neighborhood using kable 
