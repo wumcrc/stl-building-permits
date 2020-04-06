@@ -68,6 +68,9 @@ prcl$HANDLE <- as.numeric(prcl$HANDLE)
 #merge by handle
 merge <- df%>%
   merge(prcl, by = "HANDLE")
+
+df%>%
+  mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000")) -> df
 ```
 
 ### Neighborhood Summary
@@ -172,7 +175,6 @@ ggplot(academy, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ac_plot
@@ -271,7 +273,6 @@ ggplot(cwe, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> cwe_plot
@@ -367,7 +368,6 @@ ggplot(academy, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> dbplace_plot
@@ -466,7 +466,6 @@ ggplot(dbplace, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> fpse_plot
@@ -562,7 +561,6 @@ ggplot(ftnprk, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ftnprk_plot
@@ -659,7 +657,6 @@ ggplot(lewis, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> lewis_plot
@@ -945,7 +942,6 @@ ggplot(vstprk, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vstprk_plot
@@ -1042,7 +1038,6 @@ ggplot(westend, aes(lrgcost)) +
   theme(
     plot.title = element_text(hjust = 0.5),
   )+
-  scale_x_discrete(labels=c("< $50,000", "> $50,000 "))+
   ylab("Number of Permits") +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> westend_plot
