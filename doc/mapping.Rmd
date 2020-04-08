@@ -152,21 +152,7 @@ tmap_save(fpse_map, file = here("results", params$year, params$month, "fpse", "f
 
 ```{r, echo=FALSE}
 if("Forest Park Southeast" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 39,]) < 15){
     
-    #create in depth summary table
-  df%>%
-  filter(nbhd_name == "Forest Park Southeast")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
-#make a currency value
-table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Forest Park Southeast")
-}}else{
     #create summary table
   df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
@@ -188,19 +174,17 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 if("Forest Park Southeast" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 39,]) < 15){
     
-    #create summary table
+    #create in depth summary table
   df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
   knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
+               col.names = c("Owner", "New Use", "Cost", "Address"),
                format="markdown", caption = "Forest Park Southeast")
 }}
 ```
@@ -288,43 +272,8 @@ tmap_save(cwe_map, file = here("results", params$year, params$month, "cwe", "cwe
 }
 ```
 
-```{r CWE summary table, echo = FALSE}
-if("Central West End" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 38,]) > 15){
-  
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Central West End")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Central West End")
-}else{
-  #create in depth summary table
-  df%>%
-  filter(nbhd_name == "Central West End")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
-#make a currency value
-table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Central West End")
-}}
-```
-
 ```{r, echo=FALSE}
 if("Central West End" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 38,]) < 15){
     
   #create summary table
   df%>%
@@ -340,9 +289,27 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Central West End")
-  }}
+  }
 ```
 
+```{r CWE summary table, echo = FALSE}
+if("Central West End" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 38,]) < 15){
+  
+  #create in depth summary table
+  df%>%
+  filter(nbhd_name == "Central West End")%>%
+    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+  
+#make a currency value
+table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Owner", "New Use", "Cost", "Address"),
+               format="markdown", caption = "Central West End")
+}}
+```
 
 
 ```{r CWE Permit Use Knit, echo = FALSE, out.width = "20%"}
@@ -424,9 +391,8 @@ tmap_save(dbplace_map, file = here("results", params$year, params$month, "dbplac
 }
 ```
 
-```{r dbplace summary table, echo = FALSE}
+```{r, echo=FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 47,]) > 15){
     
  #create summary table
   df%>%
@@ -442,7 +408,13 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "DeBaliviere Place")
-  }else{
+  }
+```
+
+```{r dbplace summary table, echo = FALSE}
+if("DeBaliviere Place" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 47,]) < 15){
+    
   #create in depth summary table
   df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
@@ -457,28 +429,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
                format="markdown", caption = "DeBaliviere Place")
 }}
 ```
-
-```{r, echo=FALSE}
-if("DeBaliviere Place" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 47,]) < 15){
-    
- #create summary table
-  df%>%
-  filter(nbhd_name == "DeBaliviere Place")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "DeBaliviere Place")
-  }}
-```
-
 
 
 ```{r dbplace Permit Use Knit, echo = FALSE, out.width = "20%"}
@@ -561,9 +511,8 @@ tmap_save(skinker_map, file = here("results", params$year, params$month, "skinke
 }
 ```
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 46,]) > 15){
     
   #create summary table
   df%>%
@@ -579,7 +528,12 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Skinker DeBaliviere")
-}else{
+}
+```
+
+```{r, echo=FALSE}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 46,]) < 15){
   
   #create in depth summary table
   df%>%
@@ -592,27 +546,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Skinker DeBaliviere")
-}}
-```
-
-```{r, echo = FALSE}
-if("Skinker DeBaliviere" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 46,]) < 15){
-    
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Skinker DeBaliviere")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Skinker DeBaliviere")
 }}
 ```
@@ -702,7 +635,7 @@ tmap_save(westend_map, file = here("results", params$year, params$month, "westen
 
 ```{r, echo=FALSE}
 if("West End" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 48,]) > 15){
+  
   #create summary table
   df%>%
   filter(nbhd_name == "West End")%>%
@@ -717,9 +650,14 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "West End")
-}else{
-  
-  #create in depth summary table
+}
+```
+
+```{r, echo=FALSE}
+if("West End" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 48,]) < 15){
+
+    #create in depth summary table
   df%>%
   filter(nbhd_name == "West End")%>%
     select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
@@ -730,26 +668,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "West End")
-}}
-```
-
-```{r, echo=FALSE}
-if("West End" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 48,]) < 15){
-  #create summary table
-  df%>%
-  filter(nbhd_name == "West End")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "West End")
 }}
 ```
@@ -836,9 +754,8 @@ tmap_save(vstprk_map, file = here("results", params$year, params$month, "vstprk"
 }
 ```
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 49,]) > 15){
     
   #create summary table
   df%>%
@@ -854,7 +771,12 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Visitation Park")
-}else{
+}
+```
+
+```{r, echo=FALSE}
+if("Visitation Park" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 49,]) < 15){
   
   #create in depth summary table
   df%>%
@@ -867,27 +789,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Visitation Park")
-}}
-```
-
-```{r, echo = FALSE}
-if("Visitation Park" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 49,]) < 15){
-    
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Visitation Park")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Visitation Park")
 }}
 ```
@@ -976,9 +877,8 @@ tmap_save(academy_map, file = here("results", params$year, params$month, "academ
 }
 ```
 
-```{r Academy summary table, echo=FALSE}
+```{r, echo = FALSE}
 if("Academy" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 51,]) > 15){
     
   #create summary table
   df%>%
@@ -993,7 +893,12 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Academy")
-}else{
+}
+```
+
+```{r Academy summary table, echo=FALSE}
+if("Academy" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 51,]) < 15){
   
   #create in depth summary table
   df%>%
@@ -1006,26 +911,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Academy")
-}}
-```
-
-```{r, echo = FALSE}
-if("Academy" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 51,]) < 15){
-    
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Academy")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n())-> table
-  
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Academy")
 }}
 ```
@@ -1112,9 +997,8 @@ tmap_save(ftnprk_map, file = here("results", params$year, params$month, "ftnprk"
 }
 ```
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 53,]) > 15){
     
   #create summary table
   df%>%
@@ -1130,7 +1014,12 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Fountain Park")
-}else{
+}
+```
+
+```{r, echo=FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 53,]) < 15){
   
   #create in depth summary table
   df%>%
@@ -1143,27 +1032,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Fountain Park")
-}}
-```
-
-```{r, echo = FALSE}
-if("Fountain Park" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 53,]) < 15){
-    
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Fountain Park")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Fountain Park")
 }}
 ```
@@ -1252,7 +1120,6 @@ tmap_save(lewis_map, file = here("results", params$year, params$month, "lewis", 
 
 ```{r, echo=FALSE}
 if("Lewis Place" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 54,]) > 15){
     
     #create summary table
   df%>%
@@ -1268,7 +1135,12 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Lewis Place")
-}else{
+}
+```
+
+```{r, echo=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 54,]) < 15){
   
   #create in depth summary table
   df%>%
@@ -1281,27 +1153,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Lewis Place")
-}}
-```
-
-```{r, echo=FALSE}
-if("Lewis Place" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 54,]) < 15){
-    
-    #create summary table
-  df%>%
-  filter(nbhd_name == "Lewis Place")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Lewis Place")
 }}
 ```
@@ -1390,7 +1241,6 @@ tmap_save(vandy_map, file = here("results", params$year, params$month, "vandy", 
 
 ```{r, echo=FALSE}
 if("Vandeventer" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 58,]) > 15){
     
   #create summary table
   df%>%
@@ -1406,7 +1256,12 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Vandeventer")
-}else{
+}
+```
+
+```{r, echo=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+  if(nrow(df[df$Nbrhd == 58,]) < 15){
   
   #create in depth summary table
   df%>%
@@ -1419,27 +1274,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 #print summary table
   knitr::kable(table,
                col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Vandeventer")
-}}
-```
-
-```{r, echo=FALSE}
-if("Vandeventer" %in% df$nbhd_name){
-  if(nrow(df[df$Nbrhd == 58,]) < 15){
-    
-  #create summary table
-  df%>%
-  filter(nbhd_name == "Vandeventer")%>%
-  group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
-  
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
-  
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Vandeventer")
 }}
 ```
