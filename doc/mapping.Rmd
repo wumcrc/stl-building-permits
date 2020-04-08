@@ -1,5 +1,5 @@
 ---
-title: "St. Louis Building Permits"
+title: "St. Louis Central Corridor West Building Permits"
 subtitle: "Monthly Report: January 2020" 
 author: "Washington University Medical Center"
 date: '(`r format(Sys.time(), "%B %d, %Y")`)'
@@ -9,6 +9,9 @@ always_allow_html: yes
 params:
   month: January
   year: 2020
+  pastyear: 2019
+  date: "2020-01-01"   
+  enddate: "2020-01-31"
 ---
 
 ```{r setup, include=FALSE}
@@ -34,6 +37,9 @@ library(viridis)      # color palettes
 library(knitr)
 library(ggplot2)      # plot making
 library(formattable)  # currency values
+library(lubridate)    # manipulate date time data
+library(officer)      # powerpoint manipulation
+library(flextable)
 ```
 
 
@@ -41,13 +47,19 @@ library(formattable)  # currency values
 #load data
 setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
-df <- read_csv(here("data", params$year, params$month,  "clean_data.csv"))
+df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
+#ytd <- read_csv(here("data", params$year, params$month,  "ytd.csv"))
+#lastyear <- read_csv(here::here("data", params$year, "lastyear.csv")
+#lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv")
+#lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv")
+avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
 
-avg <- read_csv(here("data", params$year, params$month,  "mean_data.csv"))
+load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
+load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
+load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
 
-load(file = here("data", "basemap_tiles", "mapbox-tiles.rda"))
-load(file = here("data", "basemap_tiles", "boundaries.rda"))
-load(file = here("data", "basemap_tiles", "nbhd-boundaries.rda"))
+#create powerpoint
+report <- read_pptx()
 ```
 
 
@@ -72,6 +84,15 @@ df%>%
   mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000")) -> df
 ```
 
+### Introduction
+
+- Data retreived from https://www.stlouis-mo.gov/data/
+- Building permits with a cost of $0 were dropped
+- Building permits that were cancelled were dropped
+
+
+
+
 ### Neighborhood Summary
 
 ```{r, include=FALSE}
@@ -88,23 +109,101 @@ ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
   coord_flip()
 
 ggsave(here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+
+#add to powerpoint report
+report%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Neighborhood Summary", 
+               location = ph_location_type(
+                 type = "title") )-> report
+
 ```
 
 ```{r, echo=FALSE}
 knitr::include_graphics(here("results", params$year, params$month, "allnbhd_plot.png"))
 ```
 
-
-### Forest Park Southeast
-
-```{r, include=FALSE}
-bp_fpse <- nrow(df[df$Nbrhd == 39,])
-
-sprint_4 <- sprintf("%s building permits in Forest Park Southeast in %s %s",
-                    bp_fpse, params$month, params$year)
+```{r, echo = FALSE}
+    #create in depth summary table
+  df%>%
+  group_by(nbhd_name)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(nbhd_name, mean, count) -> table
+  
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+  
+#print summary table
+  knitr::kable(table,
+               col.names = c("Neighborhood", "Average Cost", "Permit Count"),
+               format="markdown", caption = "Neighborhood Summary")
+  
+  flextable(table) %>%
+  colformat_num(.,  digits = 0) %>%
+  colformat_num(., digits = 0) %>%
+  autofit()
 ```
 
+
+### Forest Park Southeast: Summary Notes
+
+```{r, include=FALSE}
+#filter out neighborhood
+fpse20 <- filter(df, Nbrhd == 39)
+fpse19 <- filter(lastyear, Nbrhd == 39)
+tot20 <- filter(ytd, Nbrhd ==39)
+tot19 <- filter(lastytd, Nbrhd == 39)
+
+#create cost and year to date variables for each year
+bp20 <- nrow(fpse20)
+bp19 <- nrow(fpse19)
+cost20 <- mean(fpse20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(fpse19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Forest Park Southeast in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Forest Park Southeast in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total crimes in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s total crimes in %s", 
+                    bptot20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+```
+
+- **`r sprint_1`**
+- **`r sprint_2`**
+- **`r sprint_3`**
 - **`r sprint_4`**
+- **`r sprint_5`**
+- **`r sprint_6`**
+- **`r sprint_7`**
+- **`r sprint_8`**
 
 ```{r FPSE Building Permit Mapping, include = FALSE}
 
