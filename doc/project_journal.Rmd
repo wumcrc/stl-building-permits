@@ -65,4 +65,12 @@ Wrote `ifelse` statements for all code chunks so that for any given month if a n
 
 ## 4/1/20
 
-Created summary tables for each neighborhood using kable 
+Created summary tables for each neighborhood using kable.
+
+## 4/6/20
+
+Made spot cleaning changes. Corrected numerous labeling errors. Created a neighborhood summary table using Kable. Deleted extraneous kable code. Created summary table for neighborhoods with less than 15 permits.
+
+## 4/8/20
+
+Began working on year to date data. Also started using officer to format powerpoint report. Condensed my data cleaning file.
