@@ -5,8 +5,25 @@ date: "2/24/2020"
 output: html_document
 params:
   month: January
-  year: 2020
-
+  pastyear: 2019
+  year: 2020 
+                 
+  # Compiles Year to Date Dataset for this year | Leave at January 1st 2020
+  ytd: "2020-01-01" 
+               
+  # Pulls in the data for the most recent month | Change this each month
+  date: "2020-01-01"   
+  
+  enddate: "2020-01-31"
+           
+  # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
+  pastdate: "2019-01-01" 
+            
+  # Compiles Data for the most recent month of the previous year | This is the first day of the month
+  pstmonth: "2019-01-01" 
+           
+  # Compiles Data for the most recent month of the previous year | This is the last day of month |      Must be the 30th or 31st (w/exception of February)
+  pstmonth2: "2019-01-31"  
 ---
 
 ### Introduction
@@ -25,6 +42,7 @@ library(ggplot2)      #chart making
 library(here)         #file paths
 library(readr)        #Write csv
 library(writexl)      #write excel
+library(lubridate)    #manipulate date time data
 ```
 
 
@@ -56,58 +74,21 @@ data <- sqlQuery( channel , paste ("select *
 
 
 ```{r, include=FALSE}
+data%>%
+  
+  # Use filter command to filter out permits without a cancellation date and with cost of $0
+  filter(is.na(CancelDate))%>%
+  filter(EstProjectCost != 0)%>% 
 
-#Filter only recent permits
-#Change format to 'YYYY-MM-DD'
-
-data_month <- filter(data, FirstDate > '2019-12-31'& FirstDate < '2020-02-01')
-```
-
-
-```{r}
-data_month %>%
- rename(HANDLE = Handle) -> data_month
-data_month$HANDLE = as.numeric(data_month$HANDLE)
-#Above code changes HANDLE to numeric to make it easier to join for mapping
-```
-
-
-
-```{r, include=FALSE}
-
-#Drop unused variables using `select` function, assign to new `data_month` data frame
-
-data_month<- select(data_month, AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
-                    StDir, StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate,
-                    IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
-                    NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
-                    OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo)
-```
-
-
-```{r, include=FALSE}
-
-# Use filter command to filter out permits without a cancellation date
-
-data_month%>%
-  filter(is.na(CancelDate)) -> data_month
-```
-
-
-```{r, include=FALSE}
-
-# Filter out 10 neighborhoods we want to study
-
-data_month <- filter(data_month, Nbrhd %in% c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58"))
-```
-
-
-```{r, include=FALSE}
-
-# Recode values to neighborood names using an ifelse statement within a mutate function
-# We use an `ifelse(grepl)` statement which says that if we find the first argument in the `Nbrhd` variable to be TRUE then it returns a specified value (in this case the actual neighborhood name)
-
-data_month <- mutate(data_month, nbhd_name = ifelse(grepl("38", Nbrhd), "Central West End",
+  # Filter out 10 neighborhoods we want to study
+  filter(Nbrhd %in% c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58"))%>%
+  
+  #create year & month variables
+  mutate(yr = year(as.Date(data$FirstDate,  format="%d/%m/%Y")))%>%
+  mutate(month = month(as.Date(data$FirstDate, format="%d/%m/%Y")))%>%
+  
+  # Recode values to neighborood names
+  mutate(nbhd_name = ifelse(grepl("38", Nbrhd), "Central West End",
                                              ifelse(grepl("39", Nbrhd), "Forest Park Southeast",
                                              ifelse(grepl("46", Nbrhd), "Skinker DeBaliviere",  
                                              ifelse(grepl("47", Nbrhd), "DeBaliviere Place",
@@ -116,15 +97,10 @@ data_month <- mutate(data_month, nbhd_name = ifelse(grepl("38", Nbrhd), "Central
                                              ifelse(grepl("51", Nbrhd), "Academy",       
                                              ifelse(grepl("53", Nbrhd), "Fountain Park",       
                                              ifelse(grepl("54", Nbrhd), "Lewis Place",       
-                                             ifelse(grepl("58", Nbrhd), "Vandeventer", NA)))))))))))
-```
-
-
-```{r, include=FALSE}
-
-#This code chunk mutates the `NewUse` variable to the new `new_use` variable which displays either Residential, Comercial, Institutional, or Industrial new use of the property
-
-data_month <- mutate(data_month, new_use = ifelse(grepl("R2", NewUseGroup1), "Residential",
+                                             ifelse(grepl("58", Nbrhd), "Vandeventer", NA)))))))))))%>%
+  
+  #create new_use variable
+  mutate(new_use = ifelse(grepl("R2", NewUseGroup1), "Residential",
                                              ifelse(grepl("R3", NewUseGroup1), "Residential",
                                              ifelse(grepl("A2", NewUseGroup1), "Commercial",
                                              ifelse(grepl("R1", NewUseGroup1), "Commercial",  
@@ -139,61 +115,71 @@ data_month <- mutate(data_month, new_use = ifelse(grepl("R2", NewUseGroup1), "Re
                                              ifelse(grepl("CHURCH", NewUse), "Institutional",
                                              ifelse(grepl("WAREHOUSE", NewUse), "Industrial",
                                              ifelse(grepl("PARKING GARAGE", NewUse), "Commercial",
-                                             ifelse(grepl("PARKING LOT", NewUse), "Commercial", NA)))))))))))))))))
-```
+                                             ifelse(grepl("PARKING LOT", NewUse), "Commercial", NA)))))))))))))))))%>%
+  
+  # Create New Variables for Building Permits Greater/Less Than 50,000
+  mutate(big_cost = ifelse(EstProjectCost >= 50000, 1, NA))%>%
+  mutate(lil_cost = ifelse(EstProjectCost < 50000, 1, NA))%>%
 
-
-```{r, include=FALSE}
-
-# Create New Variable for Building Permits Greater Than 50,000
-
-#This code uses the `mutate` function to create 2 variables. One, `big_cost`, for building permits that are greater than or equal to an `EstProjectCost` of 50,000. It returns a value of 1 if it is true and a NA value if it is false. The same thing is done for the newly created variable `lil_cost` which is for building permits less than 50,000.
-
-data_month <- mutate(data_month, big_cost = ifelse(EstProjectCost >= 50000, 1, NA))
-data_month <- mutate(data_month, lil_cost = ifelse(EstProjectCost < 50000, 1, NA))
-
-#This variable is specifically for individual neighborhood analysis
-
-data_month%>%
-  mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000")) -> data_month
-```
-
-
-```{r, include=FALSE}
-
-# Create Variable `count` of Building Permits By `nbhd_name` and `new_use`
-
-#This code uses the `group_by` function to group `nbhd_name` and `new_use` variables and then a `mutate` function to create a new varialbe `count` that calculates how many building permits are in each neighborhood by new use.
-
-data_month%>%
+  #This variable is specifically for individual neighborhood analysis
+  mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000"))%>% 
+  
+  #create count variable
   group_by(nbhd_name, new_use)%>%
-  mutate(count = n()) -> data_month
+  mutate(count = n())%>%
+  
+  #rename handle
+  rename(HANDLE = Handle)%>%
+  
+  #Drop unused variables using `select` function, assign to new `df` data frame
+  select(AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
+                    StDir, StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate,
+                    IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
+                    NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
+                    OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo, count, big_cost, lil_cost, lrgcost, new_use, nbhd_name, yr, month) -> df
+  
+
+#Filter only recent permits
+
+data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate <= as.Date(params$enddate))
+
+data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
+
+lstyr <- filter(df, yr = params$pastyear)
+
+lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
 ```
-
-
-```{r, include=FALSE}
-
-# This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
-
-# The code uses the `group_by` function to group `nbhd_name` and `new_use` variables and then a `summarise` function to create an output of one row for each group. within this function the variables above are created using `mean` and `sum` functions.
-
-data_month %>%
-  group_by(nbhd_name, new_use) %>%
-  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
-```
-
 
 
 ```{r}
-
 #write new cleaned data into .csv files
 
+#current month
+data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate <= as.Date(params$enddate))
 write_csv(data_month, here("data", params$year, params$month, "clean_data.csv"))
+
+# This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
+data_month %>%
+  group_by(nbhd_name, new_use) %>%
+  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
 write_csv(means, here("data", params$year, params$month, "mean_data.csv"))
 
-#write cleaned data to .xlsx file for ArcMap
+#current year to date
+data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
+write_csv(data_year, here("data", params$year, params$month, "ytd.csv"))
 
-write_xlsx(data_month, path = here("data", params$year, params$month, "clean_data.xlsx"))
+#last year
+lstyr <- filter(df, yr = params$pastyear)
+write_csv(lstyr, here("data", params$year, "lastyear.csv"))
+
+
+#last year this month
+lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
+write_csv(lstmonth, here("data", params$year, params$month, "lastmonth.csv"))
+
+#last year to date
+lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
+write_csv(lastytd, here("data", params$year, params$month, "lastytd.csv"))
 ```
 
 
