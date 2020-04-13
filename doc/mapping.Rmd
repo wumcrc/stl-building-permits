@@ -12,6 +12,12 @@ params:
   pastyear: 2019
   date: "2020-01-01"   
   enddate: "2020-01-31"
+  
+  
+  ytd: "2020-01-01" 
+  pastdate: "2019-01-01"
+  pstmonth: "2019-01-01" 
+  pstmonth2: "2019-01-31"
 ---
 
 ```{r setup, include=FALSE}
@@ -62,6 +68,17 @@ load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
 report <- read_pptx()
 ```
 
+```{r}
+#makeshift ytd
+df%>%
+  mutate(yr = year(as.Date(df$FirstDate,  format="%d/%m/%Y"))) -> df
+
+ytd <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
+lastyear <- filter(df, yr == params$pastyear)
+lastmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
+lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
+```
+
 
 ```{r, include=FALSE}
 #import parcel data
@@ -97,7 +114,7 @@ report%>%
 
 ### All Neighborhoods: Summary
 
-```{r, include=FALSE}
+```{r}
 # Average cost by neighborhood for each `new_use`
 
 ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
@@ -149,19 +166,19 @@ table$mean <- currency(table$mean, digits = 0L)
 
 ### Forest Park Southeast: Summary Notes
 
-```{r FPSE ytd summary notes, include=FALSE, eval=FALSE}
+```{r FPSE ytd summary notes}
 #filter out neighborhood
-fpse20 <- filter(df, Nbrhd == 39)
-fpse19 <- filter(lastyear, Nbrhd == 39)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyear, Nbrhd == 39)
 tot20 <- filter(ytd, Nbrhd ==39)
 tot19 <- filter(lastytd, Nbrhd == 39)
 
 #create cost and year to date variables for each year
-bp20 <- nrow(fpse20)
-bp19 <- nrow(fpse19)
-cost20 <- mean(fpse20$EstProjectCost)
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
-cost19 <- mean(fpse19$EstProjectCost)
+cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
@@ -187,12 +204,12 @@ sprint_3 <- sprintf("%s : Average building permit cost in Forest Park Southeast 
                     cost20, params$month, params$year)
 sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
                     pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total crimes in %s", 
+sprint_5 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
 sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
                     pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s total crimes in %s", 
-                    bptot20, params$year)
+sprint_7 <- sprintf("%s : Average building permit cost in Forest Park Southeast in %s", 
+                    totcost20, params$year)
 sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
                     pct_chg_cost20, params$pastyear, totcost19)
 
@@ -200,7 +217,8 @@ sprint_8 <- sprintf("%s change compared to this time in %s (%s)",
 report%>%
   add_slide(layout = "Title and Content", master = "Office Theme")%>%
   ph_with(value = "Forest Park Southeast: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4 sprint_5, sprint_6, sprint_7, sprint_8), location = ph_location_type(type = "body")) -> report
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -340,11 +358,59 @@ report%>%
 
 ### Central West End: Summary Notes
 
-```{r, include=FALSE}
-bp_cwe <- nrow(df[df$Nbrhd == 38,])
+```{r CWE ytd summary notes}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 38)
+nbhd19 <- filter(lastyear, Nbrhd == 38)
+tot20 <- filter(ytd, Nbrhd ==38)
+tot19 <- filter(lastytd, Nbrhd == 38)
 
-sprint_2 <- sprintf("%s building permits in Central West End in %s %s",
-                    bp_cwe, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Central West End in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Central West End in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Central West End in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Central West End: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -488,11 +554,59 @@ report%>%
 
 ### DeBaliviere Place: Summary Notes
 
-```{r, include=FALSE}
-bp_dbplace <- nrow(df[df$Nbrhd == 47,])
+```{r dbplace ytd summary notes}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 47)
+nbhd19 <- filter(lastyear, Nbrhd == 47)
+tot20 <- filter(ytd, Nbrhd == 47)
+tot19 <- filter(lastytd, Nbrhd == 47)
 
-sprint_3 <- sprintf("%s building permits in DeBaliviere Place in %s %s",
-                    bp_dbplace, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in DeBaliviere Place in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in DeBaliviere Place in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in DeBaliviere Place in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "DeBaliviere Place: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -636,11 +750,59 @@ report%>%
 
 ### Skinker DeBaliviere: Summary Notes
 
-```{r, include=FALSE}
-bp_skinker <- nrow(df[df$Nbrhd == 46,])
+```{r skinker ytd summary notes}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 46)
+nbhd19 <- filter(lastyear, Nbrhd == 46)
+tot20 <- filter(ytd, Nbrhd == 46)
+tot19 <- filter(lastytd, Nbrhd == 46)
 
-sprint_7 <- sprintf("%s building permits in Skinker DeBaliviere in %s %s",
-                    bp_skinker, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Skinker DeBaliviere in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Skinker DeBaliviere in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Skinker DeBaliviere in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Skinker DeBaliviere: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -790,11 +952,59 @@ report%>%
 
 ### West End: Summary Notes
 
-```{r, include=FALSE}
-bp_westend <- nrow(df[df$Nbrhd == 48,])
+```{r West End ytd summary notes}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 48)
+nbhd19 <- filter(lastyear, Nbrhd == 48)
+tot20 <- filter(ytd, Nbrhd == 48)
+tot19 <- filter(lastytd, Nbrhd == 48)
 
-sprint_10 <- sprintf("%s building permits in West End in %s %s",
-                    bp_westend, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in West End in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in West End in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in West End in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "West End: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -910,13 +1120,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```
 
 
-```{r West End Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("West End" %in% df$nbhd_name){
-  knitr::include_graphics(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"))
-}
-```
-
 ```{r westend plot, echo=FALSE, message=FALSE}
 if("West End" %in% df$nbhd_name){
 westend <- filter(df, nbhd_name == "West End")
@@ -944,11 +1147,59 @@ report%>%
 
 ### Visitation Park: Summary Notes
 
-```{r, include=FALSE}
-bp_vstprk <- nrow(df[df$Nbrhd == 49,])
+```{r vstprk ytd summary notes}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 49)
+nbhd19 <- filter(lastyear, Nbrhd == 49)
+tot20 <- filter(ytd, Nbrhd == 49)
+tot19 <- filter(lastytd, Nbrhd == 49)
 
-sprint_9 <- sprintf("%s building permits in Visitation Park in %s %s",
-                    bp_vstprk, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Visitation Park in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Visitation Park in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Visitation Park in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Visitation Park: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -1093,12 +1344,59 @@ report%>%
 
 ### Academy: Summary Notes
 
-```{r, echo=FALSE}
-#calculate number of permits
-bp_academy <- nrow(df[df$Nbrhd == 51,])
+```{r Academy ytd summary}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 51)
+nbhd19 <- filter(lastyear, Nbrhd == 51)
+tot20 <- filter(ytd, Nbrhd == 51)
+tot19 <- filter(lastytd, Nbrhd == 51)
 
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
 sprint_1 <- sprintf("%s building permits in Academy in %s %s",
-                    bp_academy, params$month, params$year)
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Academy in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Academy in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Academy: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -1243,11 +1541,59 @@ report%>%
 
 ### Fountain Park: Summary Notes
 
-```{r, include=FALSE}
-bp_ftnprk <- nrow(df[df$Nbrhd == 53,])
+```{r ftnprk ytd summary}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 53)
+nbhd19 <- filter(lastyear, Nbrhd == 53)
+tot20 <- filter(ytd, Nbrhd == 53)
+tot19 <- filter(lastytd, Nbrhd == 53)
 
-sprint_5 <- sprintf("%s building permits in Fountain Park in %s %s",
-                    bp_ftnprk, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Fountain Park in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Fountain Park in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Fountain Park in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Fountain Park: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -1391,11 +1737,59 @@ report%>%
 
 ### Lewis Place: Summary Notes
 
-```{r, include=FALSE}
-bp_lewis <- nrow(df[df$Nbrhd == 54,])
+```{r Lewis Place ytd summary}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 54)
+nbhd19 <- filter(lastyear, Nbrhd == 54)
+tot20 <- filter(ytd, Nbrhd == 54)
+tot19 <- filter(lastytd, Nbrhd == 54)
 
-sprint_6 <- sprintf("%s building permits in Lewis Place in %s %s",
-                    bp_lewis, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Lewis Place in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Lewis Place in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Lewis Place in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Lewis Place: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -1533,11 +1927,59 @@ report%>%
 
 ### Vandeventer
 
-```{r, include=FALSE}
-bp_vandy <- nrow(df[df$Nbrhd == 58,])
+```{r vandy ytd summary}
+#filter out neighborhood
+nbhd20 <- filter(df, Nbrhd == 58)
+nbhd19 <- filter(lastyear, Nbrhd == 58)
+tot20 <- filter(ytd, Nbrhd == 58)
+tot19 <- filter(lastytd, Nbrhd == 58)
 
-sprint_8 <- sprintf("%s building permits in Vandeventer in %s %s",
-                    bp_vandy, params$month, params$year)
+#create cost and year to date variables for each year
+bp20 <- nrow(nbhd20)
+bp19 <- nrow(nbhd19)
+cost20 <- mean(nbhd20$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+cost19 <- mean(nbhd19$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+bptot20 <- nrow(tot20)
+bptot19 <- nrow(tot19)
+totcost20 <- mean(tot20$EstProjectCost)
+totcost19 <- mean(tot19$EstProjectCost)
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
+pct_chg_ytd20 <- percent(pct_chg_ytd20)
+pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
+pct_chg_cost20 <- percent(pct_chg_cost20)
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Vandeventer in %s %s",
+                    bp20, params$month, params$year)
+sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
+                    pct_chg_cnt, params$month, params$pastyear, bp19)
+sprint_3 <- sprintf("%s : Average building permit cost in Vandeventer in %s %s",
+                    cost20, params$month, params$year)
+sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
+                    pct_chg_cost, params$month, params$pastyear, cost19)
+sprint_5 <- sprintf("%s total building permits in %s", 
+                    bptot20, params$year)
+sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
+                    pct_chg_ytd20, params$pastyear, bptot19)
+sprint_7 <- sprintf("%s : Average building permit cost in Vandeventer in %s", 
+                    totcost20, params$year)
+sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
+                    pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Vandeventer: Summary Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4, sprint_5, sprint_6, sprint_7, sprint_8), 
+          location = ph_location_type(type = "body")) -> report
 ```
 
 

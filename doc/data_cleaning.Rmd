@@ -145,7 +145,7 @@ data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate <= as.Dat
 
 data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
 
-lstyr <- filter(df, yr = params$pastyear)
+lstyr <- filter(df, yr == params$pastyear)
 
 lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
 ```
@@ -169,7 +169,7 @@ data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(
 write_csv(data_year, here("data", params$year, params$month, "ytd.csv"))
 
 #last year
-lstyr <- filter(df, yr = params$pastyear)
+lstyr <- filter(df, yr == params$pastyear)
 write_csv(lstyr, here("data", params$year, "lastyear.csv"))
 
 
