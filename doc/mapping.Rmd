@@ -79,9 +79,6 @@ prcl$HANDLE <- as.numeric(prcl$HANDLE)
 #merge by handle
 merge <- df%>%
   merge(prcl, by = "HANDLE")
-
-df%>%
-  mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000")) -> df
 ```
 
 ```{r}
@@ -98,7 +95,7 @@ report%>%
   ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped"), location = ph_location_type(type = "body")) -> report
 ```
 
-### Neighborhood Summary
+### All Neighborhoods: Summary
 
 ```{r, include=FALSE}
 # Average cost by neighborhood for each `new_use`
@@ -202,7 +199,7 @@ sprint_8 <- sprintf("%s change compared to this time in %s (%s)",
 #write ytd sprints to powerpoint
 report%>%
   add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Introduction", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Forest Park Southeast: Summary Notes", location = ph_location_type(type = "title"))%>%
   ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4 sprint_5, sprint_6, sprint_7, sprint_8), location = ph_location_type(type = "body")) -> report
 ```
 
@@ -341,7 +338,7 @@ report%>%
 ```
 
 
-### Central West End
+### Central West End: Summary Notes
 
 ```{r, include=FALSE}
 bp_cwe <- nrow(df[df$Nbrhd == 38,])
@@ -350,7 +347,6 @@ sprint_2 <- sprintf("%s building permits in Central West End in %s %s",
                     bp_cwe, params$month, params$year)
 ```
 
-- **`r sprint_2`**
 
 ```{r CWE Building Permit Mapping, include = FALSE}
 
@@ -490,7 +486,7 @@ report%>%
 }
 ```
 
-### DeBaliviere Place
+### DeBaliviere Place: Summary Notes
 
 ```{r, include=FALSE}
 bp_dbplace <- nrow(df[df$Nbrhd == 47,])
@@ -499,7 +495,6 @@ sprint_3 <- sprintf("%s building permits in DeBaliviere Place in %s %s",
                     bp_dbplace, params$month, params$year)
 ```
 
-- **`r sprint_3`**
 
 ```{r DeBaliviere Place Building Permit Mapping, include = FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
@@ -639,7 +634,7 @@ report%>%
 }
 ```
 
-### Skinker DeBaliviere
+### Skinker DeBaliviere: Summary Notes
 
 ```{r, include=FALSE}
 bp_skinker <- nrow(df[df$Nbrhd == 46,])
@@ -648,7 +643,6 @@ sprint_7 <- sprintf("%s building permits in Skinker DeBaliviere in %s %s",
                     bp_skinker, params$month, params$year)
 ```
 
-- **`r sprint_7`**
 
 ```{r Skinker DeBaliviere Building Permit Mapping, include = FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
@@ -794,7 +788,7 @@ report%>%
 ```
 
 
-### West End
+### West End: Summary Notes
 
 ```{r, include=FALSE}
 bp_westend <- nrow(df[df$Nbrhd == 48,])
@@ -803,7 +797,6 @@ sprint_10 <- sprintf("%s building permits in West End in %s %s",
                     bp_westend, params$month, params$year)
 ```
 
-- **`r sprint_10`**
 
 ```{r West End Building Permit Mapping, include = FALSE}
 
@@ -949,7 +942,7 @@ report%>%
 ```
 
 
-### Visitation Park
+### Visitation Park: Summary Notes
 
 ```{r, include=FALSE}
 bp_vstprk <- nrow(df[df$Nbrhd == 49,])
@@ -958,7 +951,6 @@ sprint_9 <- sprintf("%s building permits in Visitation Park in %s %s",
                     bp_vstprk, params$month, params$year)
 ```
 
-- **`r sprint_9`**
 
 ```{r Visitation Park Building Permit Mapping, include = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
@@ -1099,7 +1091,7 @@ report%>%
 ```
 
 
-### Academy
+### Academy: Summary Notes
 
 ```{r, echo=FALSE}
 #calculate number of permits
@@ -1109,7 +1101,6 @@ sprint_1 <- sprintf("%s building permits in Academy in %s %s",
                     bp_academy, params$month, params$year)
 ```
 
-- **`r sprint_1`**
 
 ```{r Academy Building Permit Mapping, include = FALSE}
 if("Academy" %in% df$nbhd_name){
@@ -1250,7 +1241,7 @@ report%>%
 ```
 
 
-### Fountain Park
+### Fountain Park: Summary Notes
 
 ```{r, include=FALSE}
 bp_ftnprk <- nrow(df[df$Nbrhd == 53,])
@@ -1259,7 +1250,6 @@ sprint_5 <- sprintf("%s building permits in Fountain Park in %s %s",
                     bp_ftnprk, params$month, params$year)
 ```
 
-- **`r sprint_5`**
 
 ```{r Fountain Park Building Permit Mapping, include = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
@@ -1399,7 +1389,7 @@ report%>%
 }
 ```
 
-### Lewis Place
+### Lewis Place: Summary Notes
 
 ```{r, include=FALSE}
 bp_lewis <- nrow(df[df$Nbrhd == 54,])
@@ -1408,7 +1398,6 @@ sprint_6 <- sprintf("%s building permits in Lewis Place in %s %s",
                     bp_lewis, params$month, params$year)
 ```
 
-- **`r sprint_6`**
 
 ```{r Lewis Place Building Permit Mapping, include = FALSE}
 
@@ -1551,7 +1540,6 @@ sprint_8 <- sprintf("%s building permits in Vandeventer in %s %s",
                     bp_vandy, params$month, params$year)
 ```
 
-- **`r sprint_8`**
 
 ```{r Vandeventer Building Permit Mapping, include = FALSE}
 if("Vandeventer" %in% df$nbhd_name){
