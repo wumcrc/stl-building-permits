@@ -74,3 +74,7 @@ Made spot cleaning changes. Corrected numerous labeling errors. Created a neighb
 ## 4/8/20
 
 Began working on year to date data. Also started using officer to format powerpoint report. Condensed my data cleaning file.
+
+## 4/13/20
+
+Removed all kable tables and replaced with flextables. Added powerpoint syntax for all code chunks, no longer relying on markdown to produce powerpoint output. Removed knitr include graphic code chunks. Added title and intro slides, still working on year to date code.
