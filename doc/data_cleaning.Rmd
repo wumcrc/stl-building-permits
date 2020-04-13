@@ -122,7 +122,7 @@ data%>%
   mutate(lil_cost = ifelse(EstProjectCost < 50000, 1, NA))%>%
 
   #This variable is specifically for individual neighborhood analysis
-  mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000"))%>% 
+  mutate(lrgcost = ifelse(grepl("L", big_cost), "> $50,000", "< $50,000"))%>% 
   
   #create count variable
   group_by(nbhd_name, new_use)%>%

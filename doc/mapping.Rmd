@@ -39,7 +39,7 @@ library(ggplot2)      # plot making
 library(formattable)  # currency values
 library(lubridate)    # manipulate date time data
 library(officer)      # powerpoint manipulation
-library(flextable)
+library(flextable)    # nice tables
 ```
 
 
@@ -48,7 +48,7 @@ library(flextable)
 setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
 df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
-#ytd <- read_csv(here("data", params$year, params$month,  "ytd.csv"))
+#ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
 #lastyear <- read_csv(here::here("data", params$year, "lastyear.csv")
 #lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv")
 #lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv")
@@ -65,7 +65,7 @@ report <- read_pptx()
 
 ```{r, include=FALSE}
 #import parcel data
-st_read(here("/data/working-db/parcels", "prcl.shp"),
+st_read(here::here("/data/working-db/parcels", "prcl.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> prcl
 ```
@@ -84,14 +84,19 @@ df%>%
   mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000")) -> df
 ```
 
-### Introduction
-
-- Data retreived from https://www.stlouis-mo.gov/data/
-- Building permits with a cost of $0 were dropped
-- Building permits that were cancelled were dropped
-
-
-
+```{r}
+#title slide
+report%>%
+  add_slide(layout = "Title Slide", master = "Office Theme")%>%
+  ph_with(value = "St. Louis Central Corridor West Building Permits", location = ph_location_type(type = "ctrTitle"))%>%
+  ph_with(c(params$month, params$year), location = ph_location_type(type = "subTitle"))%>%
+  ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt"))%>%
+  
+  #introduction slide
+  add_slide()%>%
+  ph_with(value = "Introduction", location = ph_location_type(type = "title"))%>%
+  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped"), location = ph_location_type(type = "body")) -> report
+```
 
 ### Neighborhood Summary
 
@@ -108,20 +113,17 @@ ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
   scale_y_continuous(labels = scales::dollar_format())+
   coord_flip()
 
-ggsave(here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report%>%
+  add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4),
           location = ph_location_type())%>%
   ph_with("Neighborhood Summary", 
                location = ph_location_type(
                  type = "title") )-> report
 
-```
-
-```{r, echo=FALSE}
-knitr::include_graphics(here("results", params$year, params$month, "allnbhd_plot.png"))
 ```
 
 ```{r, echo = FALSE}
@@ -135,20 +137,22 @@ knitr::include_graphics(here("results", params$year, params$month, "allnbhd_plot
 table$mean <- currency(table$mean, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Neighborhood", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Neighborhood Summary")
-  
-  flextable(table) %>%
-  colformat_num(.,  digits = 0) %>%
-  colformat_num(., digits = 0) %>%
-  autofit()
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(nbhd_name = "Neighborhood", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
+
+  #add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Neighborhood Summary", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 ```
 
 
 ### Forest Park Southeast: Summary Notes
 
-```{r, include=FALSE}
+```{r FPSE ytd summary notes, include=FALSE, eval=FALSE}
 #filter out neighborhood
 fpse20 <- filter(df, Nbrhd == 39)
 fpse19 <- filter(lastyear, Nbrhd == 39)
@@ -194,28 +198,25 @@ sprint_7 <- sprintf("%s total crimes in %s",
                     bptot20, params$year)
 sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
                     pct_chg_cost20, params$pastyear, totcost19)
+
+#write ytd sprints to powerpoint
+report%>%
+  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  ph_with(value = "Introduction", location = ph_location_type(type = "title"))%>%
+  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4 sprint_5, sprint_6, sprint_7, sprint_8), location = ph_location_type(type = "body")) -> report
 ```
 
-- **`r sprint_1`**
-- **`r sprint_2`**
-- **`r sprint_3`**
-- **`r sprint_4`**
-- **`r sprint_5`**
-- **`r sprint_6`**
-- **`r sprint_7`**
-- **`r sprint_8`**
 
 ```{r FPSE Building Permit Mapping, include = FALSE}
-
 if("Forest Park Southeast" %in% df$nbhd_name){
 
 #write shapefile
 fpse_shp <- filter(merge, nbhd_name == "Forest Park Southeast")
-st_write(fpse_shp, here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
+st_write(fpse_shp, here::here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "fpse.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "fpse.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> fpse
 
@@ -245,11 +246,19 @@ tm_shape(fpse_tiles) +
     legend.position = c("right", "bottom")) -> fpse_map
 
 #save map as .jpeg
-tmap_save(fpse_map, file = here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), dpi = 500)
+tmap_save(fpse_map, file = here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Forest Park Southeast", 
+               location = ph_location_type(
+                 type = "title") )-> report
   }
 ```
 
-```{r, echo=FALSE}
+```{r FPSE summary table, echo=FALSE}
 if("Forest Park Southeast" %in% df$nbhd_name){
     
     #create summary table
@@ -263,9 +272,17 @@ if("Forest Park Southeast" %in% df$nbhd_name){
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Forest Park Southeast")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Forest Park Southeast") -> flex01
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Forest Park Southeast", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -282,19 +299,20 @@ if("Forest Park Southeast" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Forest Park Southeast")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "address")%>%
+    set_caption("Forest Park Southeast Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Forest Park Southeast Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
-
-```{r FPSE Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Forest Park Southeast" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_use.jpeg"))
-}
-```
 
 ```{r fpse plot, echo=FALSE, message=FALSE}
 if("Forest Park Southeast" %in% df$nbhd_name){
@@ -309,9 +327,16 @@ ggplot(fpse, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> fpse_plot
 
-ggsave(here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "fpse", "fpse_cost.png"))
+knitr::include_graphics(here::here("results", params$year, params$month, "fpse", "fpse_cost.png"))
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = fpse_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -333,11 +358,11 @@ if("Central West End" %in% df$nbhd_name){
 
 #write shapefile  
 cwe_shp <- filter(merge, nbhd_name == "Central West End")
-st_write(cwe_shp, here("data", params$year, params$month, "shapefiles", "cwe.shp"), 
+st_write(cwe_shp, here::here("data", params$year, params$month, "shapefiles", "cwe.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "cwe.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "cwe.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> cwe
 
@@ -367,7 +392,15 @@ tm_shape(cwe_tiles) +
     legend.position = c("right", "bottom")) -> cwe_map
 
 #save map as .jpeg
-tmap_save(cwe_map, file = here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), dpi = 500)
+tmap_save(cwe_map, file = here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Central West End", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
@@ -385,10 +418,18 @@ if("Central West End" %in% df$nbhd_name){
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Central West End")
-  }
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Central West End") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Central West End", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+}
 ```
 
 ```{r CWE summary table, echo = FALSE}
@@ -404,16 +445,24 @@ if("Central West End" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Central West End")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "address")%>%
+    set_caption("Central West End Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Central West End Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
 
 ```{r CWE Permit Use Knit, echo = FALSE, out.width = "20%"}
 if("Central West End" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "cwe", "cwe_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"))
 }
 ```
 
@@ -430,9 +479,14 @@ ggplot(cwe, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> cwe_plot
 
-ggsave(here("results",  params$year, params$month, "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "cwe", "cwe_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = cwe_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -452,11 +506,11 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 
 #write shapefile  
 dbplace_shp <- filter(merge, nbhd_name == "DeBaliviere Place")
-st_write(dbplace_shp, here("data", params$year, params$month, "shapefiles", "dbplace.shp"), 
+st_write(dbplace_shp, here::here("data", params$year, params$month, "shapefiles", "dbplace.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "dbplace.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "dbplace.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> dbplace
 
@@ -486,7 +540,15 @@ tm_shape(dbp_tiles) +
     legend.position = c("right", "bottom")) -> dbplace_map
 
 #save map as .jpeg
-tmap_save(dbplace_map, file = here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), dpi = 500)
+tmap_save(dbplace_map, file = here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("DeBaliviere Place", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
@@ -504,10 +566,18 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "DeBaliviere Place")
-  }
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("DeBaliviere Place") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "DeBaliviere Place", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+}
 ```
 
 ```{r dbplace summary table, echo = FALSE}
@@ -523,9 +593,17 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "DeBaliviere Place")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("DeBaliviere Place Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "DeBaliviere Place Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
@@ -533,7 +611,7 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```{r dbplace Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
 if("DeBaliviere Place" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"))
 }
 ```
 
@@ -550,9 +628,14 @@ ggplot(dbplace, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> dbplace_plot
 
-ggsave(here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "dbplace", "dbplace_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = dbplace_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -572,11 +655,11 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
 
 #write shapefile
 skinker_shp <- filter(merge, nbhd_name == "Skinker DeBaliviere")
-st_write(skinker_shp, here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"), 
+st_write(skinker_shp, here::here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> skinker
 
@@ -606,11 +689,19 @@ tm_shape(sdb_tiles) +
     legend.position = c("right", "bottom")) -> skinker_map
 
 #save map as .jpeg
-tmap_save(skinker_map, file = here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), dpi = 500)
+tmap_save(skinker_map, file = here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Skinker DeBaliviere", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
-```{r, echo = FALSE}
+```{r Skinker DeBaliviere summary table, echo = FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
     
   #create summary table
@@ -627,6 +718,19 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "Skinker DeBaliviere")
+  
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Skinker DeBaliviere") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Skinker DeBaliviere", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -641,11 +745,19 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Skinker DeBaliviere")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("Skinker DeBaliviere Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Skinker DeBaliviere Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
@@ -653,7 +765,7 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```{r Skinker Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
 if("Skinker DeBaliviere" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "skinker", "skinker_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"))
 }
 ```
 
@@ -670,9 +782,14 @@ ggplot(skinker, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> skinker_plot
 
-ggsave(here("results",  params$year, params$month, "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "skinker", "skinker_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = skinker_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -694,11 +811,11 @@ if("West End" %in% df$nbhd_name){
 
 #write shapefile
 westend_shp <- filter(merge, nbhd_name == "West End")
-st_write(westend_shp, here("data", params$year, params$month, "shapefiles", "westend.shp"), 
+st_write(westend_shp, here::here("data", params$year, params$month, "shapefiles", "westend.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "westend.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "westend.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> westend
 
@@ -728,11 +845,19 @@ tm_shape(we_tiles) +
     legend.position = c("right", "bottom")) -> westend_map
 
 #save map as .jpeg
-tmap_save(westend_map, file = here("results", params$year, params$month, "westend", "westend_use.jpeg"), dpi = 500) 
+tmap_save(westend_map, file = here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), dpi = 500) 
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("West End", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
-```{r, echo=FALSE}
+```{r West End summary table, echo=FALSE}
 if("West End" %in% df$nbhd_name){
   
   #create summary table
@@ -749,10 +874,22 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   knitr::kable(table,
                col.names = c("New Use", "Average Cost", "Permit Count"),
                format="markdown", caption = "West End")
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("West End") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "West End", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
-```{r, echo=FALSE}
+```{r West End summary table, echo=FALSE}
 if("West End" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 48,]) < 15){
 
@@ -765,9 +902,17 @@ if("West End" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "West End")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("West End Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "West End Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
@@ -775,7 +920,7 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```{r West End Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
 if("West End" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "westend", "westend_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"))
 }
 ```
 
@@ -792,9 +937,14 @@ ggplot(westend, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> westend_plot
 
-ggsave(here("results",  params$year, params$month, "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "westend", "westend_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = westend_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -815,11 +965,11 @@ if("Visitation Park" %in% df$nbhd_name){
   
 #write shapefile
 visit_shp <- filter(merge, nbhd_name == "Visitation Park")
-st_write(visit_shp, here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
+st_write(visit_shp, here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
          delete_dsn = TRUE)
   
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> vstprk
 
@@ -849,7 +999,15 @@ tm_shape(vp_tiles) +
     legend.position = c("right", "bottom")) -> vstprk_map
 
 #save map as .jpeg
-tmap_save(vstprk_map, file = here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), dpi = 500)
+tmap_save(vstprk_map, file = here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Visitation Park", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
@@ -866,10 +1024,18 @@ if("Visitation Park" %in% df$nbhd_name){
 #make avg_cost a currency value
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Visitation Park")
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Visitation Park") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Visitation Park", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -886,9 +1052,17 @@ if("Visitation Park" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Visitation Park")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("Visitation Park Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Visitation Park Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
@@ -896,7 +1070,7 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```{r vstprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
 #display map
 if("Visitation Park" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
 }
 ```
 
@@ -913,9 +1087,14 @@ ggplot(vstprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vstprk_plot
 
-ggsave(here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "vstprk", "vstprk_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = vstprk_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -937,12 +1116,12 @@ if("Academy" %in% df$nbhd_name){
   
 #write shapefile  
   academy_shp <- filter(merge, nbhd_name == "Academy")
-  st_write(academy_shp, here("data", params$year, params$month, "shapefiles", "academy.shp"), 
+  st_write(academy_shp, here::here("data", params$year, params$month, "shapefiles", "academy.shp"), 
          delete_dsn = TRUE)
 
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "academy.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "academy.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> academy
 
@@ -972,11 +1151,19 @@ tm_shape(ac_tiles) +
     legend.position = c("right", "bottom")) -> academy_map
 
 #save map as .jpeg
-tmap_save(academy_map, file = here("results", params$year, params$month, "academy", "ac_use.jpeg"), dpi = 500)
+tmap_save(academy_map, file = here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Academy", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
-```{r, echo = FALSE}
+```{r Academy summary table, echo = FALSE}
 if("Academy" %in% df$nbhd_name){
     
   #create summary table
@@ -988,10 +1175,18 @@ if("Academy" %in% df$nbhd_name){
   
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Academy")
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Academy") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Academy", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -1008,9 +1203,17 @@ if("Academy" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Academy")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("Academy Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Academy Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
@@ -1018,7 +1221,7 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```{r Academy Permit Use Knit, echo = FALSE, out.width = "20%"}
 #display map
 if("Academy" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "academy", "ac_use.jpeg"))
 }
 ```
 
@@ -1035,9 +1238,14 @@ ggplot(academy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ac_plot
 
-ggsave(here("results",  params$year, params$month, "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "academy", "ac_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = ac_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -1058,11 +1266,11 @@ if("Fountain Park" %in% df$nbhd_name){
 
 #write shapefile
 ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
-st_write(ftnprk_shp, here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
+st_write(ftnprk_shp, here::here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "ftnprk.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "ftnprk.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> ftnprk
 
@@ -1092,11 +1300,19 @@ tm_shape(fp_tiles) +
     legend.position = c("right", "bottom")) -> ftnprk_map
 
 #save map as .jpeg
-tmap_save(ftnprk_map, file = here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
+tmap_save(ftnprk_map, file = here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Fountain Park", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
-```{r, echo = FALSE}
+```{r Fountain Park summary table, echo = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
     
   #create summary table
@@ -1109,10 +1325,18 @@ if("Fountain Park" %in% df$nbhd_name){
 #make avg_cost a currency value
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Fountain Park")
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Fountain Park") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Fountain Park", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -1129,9 +1353,17 @@ if("Fountain Park" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Fountain Park")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("Fountain Park Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Fountain Park Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
 ```
 
@@ -1139,7 +1371,7 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 ```{r ftnprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
 #display map
 if("Fountain Park" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"))
+  knitr::include_graphics(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"))
 }
 ```
 
@@ -1156,9 +1388,14 @@ ggplot(ftnprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ftnprk_plot
 
-ggsave(here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "ftnprk", "ftnprk_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = ftnprk_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -1179,11 +1416,11 @@ if("Lewis Place" %in% df$nbhd_name){
 
 #write shapefile
 lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
-st_write(lewis_shp, here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
+st_write(lewis_shp, here::here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "lewis.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "lewis.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> lewis
 
@@ -1213,7 +1450,15 @@ tm_shape(lp_tiles) +
     legend.position = c("right", "bottom")) -> lewis_map
 
 #save map as .jpeg
-tmap_save(lewis_map, file = here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), dpi = 500)
+tmap_save(lewis_map, file = here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Lewis Place", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
@@ -1230,10 +1475,18 @@ if("Lewis Place" %in% df$nbhd_name){
 #make avg_cost a currency value
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Lewis Place")
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Lewis Place") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Lewis Place", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -1250,18 +1503,18 @@ if("Lewis Place" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Lewis Place")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("Lewis Place Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Lewis Place Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
-```
-
-
-```{r Lewis Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Lewis Place" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_use.jpeg"))
-}
 ```
 
 ```{r Lewis plot, echo=FALSE, message=FALSE}
@@ -1277,9 +1530,14 @@ ggplot(lewis, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> lewis_plot
 
-ggsave(here("results",  params$year, params$month, "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "lewis", "lewis_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = lewis_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
@@ -1300,11 +1558,11 @@ if("Vandeventer" %in% df$nbhd_name){
   
 #write shapefile
 vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
-st_write(vandy_shp, here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
+st_write(vandy_shp, here::here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here("data", params$year, params$month, "shapefiles", "vandy.shp"),
+st_read(here::here("data", params$year, params$month, "shapefiles", "vandy.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> vandy
 
@@ -1334,7 +1592,15 @@ tm_shape(vd_tiles) +
     legend.position = c("right", "bottom")) -> vandy_map
 
 #save map as .jpeg
-tmap_save(vandy_map, file = here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), dpi = 500)
+tmap_save(vandy_map, file = here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Vandeventer", 
+               location = ph_location_type(
+                 type = "title") )-> report
 }
 ```
 
@@ -1351,10 +1617,18 @@ if("Vandeventer" %in% df$nbhd_name){
 #make avg_cost a currency value
 table$avg_cost <- currency(table$avg_cost, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Vandeventer")
+  #print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(new_use = "New Use", 
+    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
+    set_caption("Vandeventer") -> flex01
+
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Vandeventer", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 }
 ```
 
@@ -1371,18 +1645,18 @@ if("Vandeventer" %in% df$nbhd_name){
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   
 #print summary table
-  knitr::kable(table,
-               col.names = c("Owner", "New Use", "Cost", "Address"),
-               format="markdown", caption = "Vandeventer")
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+    EstProjectCost = "Cost", OrigAddress = "Address")%>%
+    set_caption("Vandeventer Individual Permit Breakdown") -> flex02
+  
+#add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Vandeventer Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
+    ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
-```
-
-
-```{r Vandeventer Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Vandeventer" %in% df$nbhd_name){
-  knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_use.jpeg"))
-}
 ```
 
 ```{r vandy plot, echo=FALSE, message=FALSE}
@@ -1398,10 +1672,20 @@ ggplot(vandy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vandy_plot
 
-ggsave(here("results",  params$year, params$month, "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
 
-knitr::include_graphics(here("results", params$year, params$month, "vandy", "vandy_cost.png"))
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = vandy_plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report
 }
 ```
 
+
+```{r}
+#save powerpoint
+print(report, target = here::here("results", params$year, params$month, "finalreport.pptx"))
+```
 
