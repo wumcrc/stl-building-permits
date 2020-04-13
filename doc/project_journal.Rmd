@@ -77,4 +77,4 @@ Began working on year to date data. Also started using officer to format powerpo
 
 ## 4/13/20
 
-Removed all kable tables and replaced with flextables. Added powerpoint syntax for all code chunks, no longer relying on markdown to produce powerpoint output. Removed knitr include graphic code chunks. Added title and intro slides, still working on year to date code.
+Removed all kable tables and replaced with flextables. Added powerpoint syntax for all code chunks, no longer relying on markdown to produce powerpoint output. Removed knitr include graphic code chunks. Added title and intro slides, still working on year to date code. Just kidding, the code runs in my mapping.Rmd but because I can't use obdcDriverconnect on my mac I just ran it with data from January 2020 (which doesn't produce helpful numbers, but the code runs and just needs the available data to give what we need)
