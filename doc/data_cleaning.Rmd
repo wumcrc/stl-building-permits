@@ -14,7 +14,8 @@ params:
   # Pulls in the data for the most recent month | Change this each month
   date: "2020-01-01"   
   
-  enddate: "2020-01-31"
+  # Needs to be the first day of the next month
+  enddate: "2020-02-01"
            
   # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
   pastdate: "2019-01-01" 
@@ -22,8 +23,8 @@ params:
   # Compiles Data for the most recent month of the previous year | This is the first day of the month
   pstmonth: "2019-01-01" 
            
-  # Compiles Data for the most recent month of the previous year | This is the last day of month |      Must be the 30th or 31st (w/exception of February)
-  pstmonth2: "2019-01-31"  
+  # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
+  pstmonth2: "2019-02-01"  
 ---
 
 ### Introduction
@@ -156,30 +157,30 @@ lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.D
 
 #current month
 data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate <= as.Date(params$enddate))
-write_csv(data_month, here("data", params$year, params$month, "clean_data.csv"))
+write_csv(data_month, here::here("data", params$year, params$month, "clean_data.csv"))
 
 # This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
 data_month %>%
   group_by(nbhd_name, new_use) %>%
   summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
-write_csv(means, here("data", params$year, params$month, "mean_data.csv"))
+write_csv(means, here::here("data", params$year, params$month, "mean_data.csv"))
 
 #current year to date
 data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
-write_csv(data_year, here("data", params$year, params$month, "ytd.csv"))
+write_csv(data_year, here::here("data", params$year, params$month, "ytd.csv"))
 
 #last year
 lstyr <- filter(df, yr == params$pastyear)
-write_csv(lstyr, here("data", params$year, "lastyear.csv"))
+write_csv(lstyr, here::here("data", params$year, "lastyear.csv"))
 
 
 #last year this month
 lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
-write_csv(lstmonth, here("data", params$year, params$month, "lastmonth.csv"))
+write_csv(lstmonth, here::here("data", params$year, params$month, "lastmonth.csv"))
 
 #last year to date
 lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
-write_csv(lastytd, here("data", params$year, params$month, "lastytd.csv"))
+write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 ```
 
 

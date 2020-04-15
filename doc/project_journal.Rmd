@@ -78,3 +78,7 @@ Began working on year to date data. Also started using officer to format powerpo
 ## 4/13/20
 
 Removed all kable tables and replaced with flextables. Added powerpoint syntax for all code chunks, no longer relying on markdown to produce powerpoint output. Removed knitr include graphic code chunks. Added title and intro slides, still working on year to date code. Just kidding, the code runs in my mapping.Rmd but because I can't use obdcDriverconnect on my mac I just ran it with data from January 2020 (which doesn't produce helpful numbers, but the code runs and just needs the available data to give what we need)
+
+## 4/15/20
+
+Split up year to date summary's into two seperate slides so that the information isn't cut off. Edited params because using the <= function doesn't include anything equal to for some reason. From now on the enddate will need to be the first day of the next month to make sure that all data from the desired month is accounted for. Made sure all numbers are in currency value (if they need to be). Cleaned up some of the folders and added here::here statements to all of my .Rmd because lubridate also has a here function that interferes with the here package. 
