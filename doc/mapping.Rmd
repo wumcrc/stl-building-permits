@@ -11,13 +11,24 @@ params:
   year: 2020
   pastyear: 2019
   date: "2020-01-01"   
-  enddate: "2020-02-01"
-  
-  
+
+# Compiles Year to Date Dataset for this year | Leave at January 1st 2020
   ytd: "2020-01-01" 
-  pastdate: "2019-01-01"
+               
+  # Pulls in the data for the most recent month | Change this each month
+  date: "2020-01-01"   
+  
+  # Needs to be the first day of the next month
+  enddate: "2020-02-01"
+           
+  # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
+  pastdate: "2019-01-01" 
+            
+  # Compiles Data for the most recent month of the previous year | This is the first day of the month
   pstmonth: "2019-01-01" 
-  pstmonth2: "2019-02-01"
+           
+  # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
+  pstmonth2: "2019-02-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -54,10 +65,10 @@ library(flextable)    # nice tables
 setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
 df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
-#ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
-#lastyear <- read_csv(here::here("data", params$year, "lastyear.csv")
-#lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv")
-#lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv")
+ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
+lastyear <- read_csv(here::here("data", params$year, "lastyear.csv"))
+lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv"))
+lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv"))
 avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
 
 load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))

@@ -4,7 +4,7 @@ author: "Logan Williams"
 date: "2/24/2020"
 output: html_document
 params:
-  month: January
+  month: March
   pastyear: 2019
   year: 2020 
                  
@@ -12,19 +12,19 @@ params:
   ytd: "2020-01-01" 
                
   # Pulls in the data for the most recent month | Change this each month
-  date: "2020-01-01"   
+  date: "2020-03-01"   
   
   # Needs to be the first day of the next month
-  enddate: "2020-02-01"
+  enddate: "2020-04-01"
            
   # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
   pastdate: "2019-01-01" 
             
   # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-01-01" 
+  pstmonth: "2019-03-01" 
            
   # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-02-01"  
+  pstmonth2: "2019-04-01"  
 ---
 
 ### Introduction
@@ -46,6 +46,12 @@ library(writexl)      #write excel
 library(lubridate)    #manipulate date time data
 ```
 
+### Temperary Code
+```{r}
+library(readxl)
+data <- read_excel(here::here("data", "PrmBldg.xlsx"))
+```
+
 
 ```{r, include=FALSE}
 
@@ -60,7 +66,7 @@ setwd(wd)
 
 #Import data
 
-channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=/data/working-db/bldgpermits/prmdbo
+#channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=/data/working-db/bldgpermits/prmdbo
                              #G:/Projects/Monthly-Reports/stl-building-permits/permit-data-cleaning/prmbdo/prmbdo")
 ```
 
@@ -69,13 +75,17 @@ channel <- odbcDriverConnect("Driver={Microsoft Access Driver (*.mdb, *.accdb)};
 
 #Run SQL query to return data
 
-data <- sqlQuery( channel , paste ("select *
- from PrmBldg"))
+#data <- sqlQuery( channel , paste ("select *
+# from PrmBldg"))
 ```
 
 
 ```{r, include=FALSE}
 data%>%
+  
+  #create year & month variables
+  mutate(yr = format(as.Date(data$FirstDate,  format="%d/%m/%Y"), "%Y"))%>%
+  mutate(month = format(as.Date(data$FirstDate, format="%d/%m/%Y"), "%m"))%>%
   
   # Use filter command to filter out permits without a cancellation date and with cost of $0
   filter(is.na(CancelDate))%>%
@@ -84,9 +94,6 @@ data%>%
   # Filter out 10 neighborhoods we want to study
   filter(Nbrhd %in% c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58"))%>%
   
-  #create year & month variables
-  mutate(yr = year(as.Date(data$FirstDate,  format="%d/%m/%Y")))%>%
-  mutate(month = month(as.Date(data$FirstDate, format="%d/%m/%Y")))%>%
   
   # Recode values to neighborood names
   mutate(nbhd_name = ifelse(grepl("38", Nbrhd), "Central West End",
@@ -138,17 +145,6 @@ data%>%
                     IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
                     NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
                     OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo, count, big_cost, lil_cost, lrgcost, new_use, nbhd_name, yr, month) -> df
-  
-
-#Filter only recent permits
-
-data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate <= as.Date(params$enddate))
-
-data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
-
-lstyr <- filter(df, yr == params$pastyear)
-
-lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
 ```
 
 
@@ -156,7 +152,7 @@ lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.D
 #write new cleaned data into .csv files
 
 #current month
-data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate <= as.Date(params$enddate))
+data_month <- filter(df, FirstDate >= as.Date(params$date) & FirstDate < as.Date(params$enddate))
 write_csv(data_month, here::here("data", params$year, params$month, "clean_data.csv"))
 
 # This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
@@ -166,7 +162,7 @@ data_month %>%
 write_csv(means, here::here("data", params$year, params$month, "mean_data.csv"))
 
 #current year to date
-data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
+data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate < as.Date(params$enddate))
 write_csv(data_year, here::here("data", params$year, params$month, "ytd.csv"))
 
 #last year
@@ -175,11 +171,11 @@ write_csv(lstyr, here::here("data", params$year, "lastyear.csv"))
 
 
 #last year this month
-lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
+lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate < as.Date(params$pstmonth2))
 write_csv(lstmonth, here::here("data", params$year, params$month, "lastmonth.csv"))
 
 #last year to date
-lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
+lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate < as.Date(params$pstmonth2))
 write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 ```
 
