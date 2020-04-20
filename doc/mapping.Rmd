@@ -10,7 +10,6 @@ params:
   month: January
   year: 2020
   pastyear: 2019
-  date: "2020-01-01"   
 
 # Compiles Year to Date Dataset for this year | Leave at January 1st 2020
   ytd: "2020-01-01" 
@@ -66,7 +65,6 @@ setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
 df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
 ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
-lastyear <- read_csv(here::here("data", params$year, "lastyear.csv"))
 lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv"))
 lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv"))
 avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
@@ -78,18 +76,6 @@ load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
 #create powerpoint
 report <- read_pptx()
 ```
-
-```{r}
-#makeshift ytd
-df%>%
-  mutate(yr = year(as.Date(df$FirstDate,  format="%d/%m/%Y"))) -> df
-
-ytd <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
-lastyear <- filter(df, yr == params$pastyear)
-lastmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
-lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
-```
-
 
 ```{r, include=FALSE}
 #import parcel data
@@ -180,7 +166,7 @@ table$mean <- currency(table$mean, digits = 0L)
 ```{r FPSE ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 39)
-nbhd19 <- filter(lastyear, Nbrhd == 39)
+nbhd19 <- filter(lastmonth, Nbrhd == 39)
 tot20 <- filter(ytd, Nbrhd ==39)
 tot19 <- filter(lastytd, Nbrhd == 39)
 
@@ -380,7 +366,7 @@ report%>%
 ```{r CWE ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 38)
-nbhd19 <- filter(lastyear, Nbrhd == 38)
+nbhd19 <- filter(lastmonth, Nbrhd == 38)
 tot20 <- filter(ytd, Nbrhd ==38)
 tot19 <- filter(lastytd, Nbrhd == 38)
 
@@ -585,7 +571,7 @@ report%>%
 ```{r dbplace ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 47)
-nbhd19 <- filter(lastyear, Nbrhd == 47)
+nbhd19 <- filter(lastmonth, Nbrhd == 47)
 tot20 <- filter(ytd, Nbrhd == 47)
 tot19 <- filter(lastytd, Nbrhd == 47)
 
@@ -789,7 +775,7 @@ report%>%
 ```{r skinker ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 46)
-nbhd19 <- filter(lastyear, Nbrhd == 46)
+nbhd19 <- filter(lastmonth, Nbrhd == 46)
 tot20 <- filter(ytd, Nbrhd == 46)
 tot19 <- filter(lastytd, Nbrhd == 46)
 
@@ -999,7 +985,7 @@ report%>%
 ```{r West End ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 48)
-nbhd19 <- filter(lastyear, Nbrhd == 48)
+nbhd19 <- filter(lastmonth, Nbrhd == 48)
 tot20 <- filter(ytd, Nbrhd == 48)
 tot19 <- filter(lastytd, Nbrhd == 48)
 
@@ -1202,7 +1188,7 @@ report%>%
 ```{r vstprk ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 49)
-nbhd19 <- filter(lastyear, Nbrhd == 49)
+nbhd19 <- filter(lastmonth, Nbrhd == 49)
 tot20 <- filter(ytd, Nbrhd == 49)
 tot19 <- filter(lastytd, Nbrhd == 49)
 
@@ -1407,7 +1393,7 @@ report%>%
 ```{r Academy ytd summary}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 51)
-nbhd19 <- filter(lastyear, Nbrhd == 51)
+nbhd19 <- filter(lastmonth, Nbrhd == 51)
 tot20 <- filter(ytd, Nbrhd == 51)
 tot19 <- filter(lastytd, Nbrhd == 51)
 
@@ -1612,7 +1598,7 @@ report%>%
 ```{r ftnprk ytd summary}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 53)
-nbhd19 <- filter(lastyear, Nbrhd == 53)
+nbhd19 <- filter(lastmonth, Nbrhd == 53)
 tot20 <- filter(ytd, Nbrhd == 53)
 tot19 <- filter(lastytd, Nbrhd == 53)
 
@@ -1816,7 +1802,7 @@ report%>%
 ```{r Lewis Place ytd summary}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 54)
-nbhd19 <- filter(lastyear, Nbrhd == 54)
+nbhd19 <- filter(lastmonth, Nbrhd == 54)
 tot20 <- filter(ytd, Nbrhd == 54)
 tot19 <- filter(lastytd, Nbrhd == 54)
 
@@ -2014,7 +2000,7 @@ report%>%
 ```{r vandy ytd summary}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 58)
-nbhd19 <- filter(lastyear, Nbrhd == 58)
+nbhd19 <- filter(lastmonth, Nbrhd == 58)
 tot20 <- filter(ytd, Nbrhd == 58)
 tot19 <- filter(lastytd, Nbrhd == 58)
 
