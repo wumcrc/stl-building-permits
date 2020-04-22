@@ -1,0 +1,154 @@
+---
+title: "Yearly Report"
+author: "Logan Williams"
+date: "4/22/2020"
+output: html_document
+params: 
+  year: 2020
+  pastyear: 2019
+---
+
+```{r}
+#load dependencies
+library(ggplot2)      # plot making
+library(flextable)    # pretty tables
+library(here)         # file path management
+library(dplyr)        # data cleaning
+library(officer)      # powerpoint output
+library(formattable)  # currency values
+
+#spatial packages
+library(sf)           # spatial data tools
+library(tmap)         # map layouts
+library(tmaptools)    # tools for handeling spatial
+```
+
+```{r}
+#load data
+df <- read_csv(here::here("data", params$pastyear, "summary", "clean_year.csv"))
+
+# load basemap tiles
+load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
+load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
+load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
+
+# create dataframe of means
+df %>%
+  group_by(nbhd_name, new_use) %>%
+  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
+
+# create powerpoint
+report1 <- read_pptx()
+```
+
+```{r, include=FALSE}
+#import parcel data
+st_read(here::here("/data/working-db/parcels", "prcl.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> prcl
+
+#merge by handle
+merge <- df%>%
+  merge(prcl, by = "HANDLE")
+
+#write shapefile
+st_write(merge, here::here("data", params$pastyear, "summary", "all_nbhd.shp"), 
+         delete_dsn = TRUE)
+```
+
+```{r}
+# Average cost by neighborhood for each `new_use`
+
+ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  geom_bar(position = "dodge", stat="identity") +
+  ggtitle("Average Building Permit Cost By Neighborhood") +
+  theme(plot.title = element_text(hjust = 0.5),
+    axis.title.y = element_blank()) +
+  ylab("Cost") +
+  labs(fill = "New Use") +
+  scale_y_continuous(labels = scales::dollar_format())+
+  coord_flip()
+
+ggsave(here::here("results", params$pastyear, "yr_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yr_plot.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Neighborhood Summary", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+```
+
+```{r}
+    #create in depth summary table
+  df%>%
+  group_by(nbhd_name)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(nbhd_name, mean, count) -> table
+  
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+  
+#print summary table
+  flextable(table)%>%
+  autofit()%>%
+  set_header_labels(nbhd_name = "Neighborhood", 
+    mean = "Average Cost", count = "# of Permits")
+  
+  #add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = "Neighborhood Summary", location = ph_location_type(type = "title"))%>%
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report1
+```
+
+```{r}
+ggplot(df, aes(lrgcost)) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  ggtitle("High Cost Building Permits by Use") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> plot
+
+ggsave(here::here("results",  params$pastyear, "yr_cost.png"), plot = plot, dpi = 300)
+
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(value = plot,
+                 location = ph_location_fullsize(),
+                 bg = "transparent") -> report1
+```
+
+```{r}
+#load shapefile
+st_read(here::here("data", params$pastyear, "summary", "all_nbhd.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> tot
+
+###
+### Fix code below!!!
+###
+tm_shape(nhoods_sf) +
+  tm_rgb() +
+  tot%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> map
+```
+

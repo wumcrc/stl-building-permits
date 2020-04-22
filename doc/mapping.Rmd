@@ -349,8 +349,6 @@ ggplot(fpse, aes(lrgcost)) +
 
 ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
 
-knitr::include_graphics(here::here("results", params$year, params$month, "fpse", "fpse_cost.png"))
-
 #add to powerpoint report
 report%>%
   add_slide()%>%
