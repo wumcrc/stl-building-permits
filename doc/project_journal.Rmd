@@ -82,3 +82,11 @@ Removed all kable tables and replaced with flextables. Added powerpoint syntax f
 ## 4/15/20
 
 Split up year to date summary's into two seperate slides so that the information isn't cut off. Edited params because using the <= function doesn't include anything equal to for some reason. From now on the enddate will need to be the first day of the next month to make sure that all data from the desired month is accounted for. Made sure all numbers are in currency value (if they need to be). Cleaned up some of the folders and added here::here statements to all of my .Rmd because lubridate also has a here function that interferes with the here package. 
+
+## 4/20/20
+
+Corrected errors within cleaning file as well as problems with mapping.Rmd. Removed double "date" param in mapping.Rmd. Created reports for the months of January-March. Still need to figure out how to resize map images
+
+## 4/23/20
+
+Resized map images in powerpoint output. Added additional code to make sure all building permits have a "new use". This may be something that will need constant updating based on what permits are in each month. Removed old knitr code. 

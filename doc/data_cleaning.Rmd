@@ -4,7 +4,10 @@ author: "Logan Williams"
 date: "2/24/2020"
 output: html_document
 params:
-  month: January
+  
+  #Change Every month
+  month: March
+  
   pastyear: 2019
   year: 2020 
                  
@@ -12,19 +15,19 @@ params:
   ytd: "2020-01-01" 
                
   # Pulls in the data for the most recent month | Change this each month
-  date: "2020-01-01"   
+  date: "2020-03-01"   
   
-  # Needs to be the first day of the next month
-  enddate: "2020-02-01"
+  # Needs to be the first day of the next month | Change this each month
+  enddate: "2020-04-01"
            
   # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
   pastdate: "2019-01-01" 
             
   # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-01-01" 
+  pstmonth: "2019-03-01" 
            
   # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-02-01"  
+  pstmonth2: "2019-04-01"  
 ---
 
 ### Introduction
@@ -123,7 +126,11 @@ data%>%
                                              ifelse(grepl("CHURCH", NewUse), "Institutional",
                                              ifelse(grepl("WAREHOUSE", NewUse), "Industrial",
                                              ifelse(grepl("PARKING GARAGE", NewUse), "Commercial",
-                                             ifelse(grepl("PARKING LOT", NewUse), "Commercial", NA)))))))))))))))))%>%
+                                             ifelse(grepl("PARKING LOT", NewUse), "Commercial",
+                                             ifelse(grepl("CAFE", NewUse), "Commercial",
+                                             ifelse(grepl("LOUNGE", NewUse), "Commercial",
+                                             ifelse(grepl("NURSING HOME", NewUse), "Residential",
+                                                    NA))))))))))))))))))))%>%
   
   # Create New Variables for Building Permits Greater/Less Than 50,000
   mutate(big_cost = ifelse(EstProjectCost >= 50000, 1, NA))%>%

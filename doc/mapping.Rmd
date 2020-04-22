@@ -7,7 +7,7 @@ output:
   powerpoint_presentation
 always_allow_html: yes
 params:
-  month: January
+  month: March
   year: 2020
   pastyear: 2019
 
@@ -15,19 +15,19 @@ params:
   ytd: "2020-01-01" 
                
   # Pulls in the data for the most recent month | Change this each month
-  date: "2020-01-01"   
+  date: "2020-03-01"   
   
-  # Needs to be the first day of the next month
-  enddate: "2020-02-01"
+  # Needs to be the first day of the next month | Change this each month
+  enddate: "2020-04-01"
            
   # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
   pastdate: "2019-01-01" 
             
   # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-01-01" 
+  pstmonth: "2019-03-01" 
            
   # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-02-01"  
+  pstmonth2: "2019-04-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -271,7 +271,7 @@ tmap_save(fpse_map, file = here::here("results", params$year, params$month, "fps
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9.24, height = 7.47), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("Forest Park Southeast", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -473,7 +473,7 @@ tmap_save(cwe_map, file = here::here("results", params$year, params$month, "cwe"
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type="title"), use_loc_size = FALSE)%>%
   ph_with("Central West End", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -533,13 +533,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
     ph_with(value = "Central West End Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
     ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
-```
-
-
-```{r CWE Permit Use Knit, echo = FALSE, out.width = "20%"}
-if("Central West End" %in% df$nbhd_name){
-  knitr::include_graphics(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"))
-}
 ```
 
 ```{r CWE plot, echo=FALSE, message=FALSE}
@@ -676,7 +669,7 @@ tmap_save(dbplace_map, file = here::here("results", params$year, params$month, "
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 6.97, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("DeBaliviere Place", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -736,14 +729,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
     ph_with(value = "DeBaliviere Place Individual Permit Breakdown", location = ph_location_type(type = "title"))%>%
     ph_with(flex02, location = ph_location_type(type = "body")) -> report
 }}
-```
-
-
-```{r dbplace Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("DeBaliviere Place" %in% df$nbhd_name){
-  knitr::include_graphics(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"))
-}
 ```
 
 ```{r dbplace plot, echo=FALSE, message=FALSE}
@@ -947,14 +932,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 }}
 ```
 
-
-```{r Skinker Permit Use Knit, echo = FALSE, out.width = "20%"}
-#display map
-if("Skinker DeBaliviere" %in% df$nbhd_name){
-  knitr::include_graphics(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"))
-}
-```
-
 ```{r skinker plot, echo=FALSE, message=FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
 skinker <- filter(df, nbhd_name == "Skinker DeBaliviere")
@@ -1091,7 +1068,7 @@ tmap_save(westend_map, file = here::here("results", params$year, params$month, "
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("West End", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1293,7 +1270,7 @@ tmap_save(vstprk_map, file = here::here("results", params$year, params$month, "v
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 5.31, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("Visitation Park", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1355,16 +1332,8 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 }}
 ```
 
-
-```{r vstprk Permit Use Knit, echo = FALSE, out.width = "20%", eval=FALSE}
-#display map
-if("Visitation Park" %in% df$nbhd_name){
-  knitr::include_graphics(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"))
-}
-```
-
 ```{r vstprk plot, echo=FALSE, message=FALSE}
-if("Visit Park" %in% df$nbhd_name){
+if("Visitation Park" %in% df$nbhd_name){
 vstprk <- filter(df, nbhd_name == "Visitation Park")
 ggplot(vstprk, aes(lrgcost)) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
@@ -1499,7 +1468,7 @@ tmap_save(academy_map, file = here::here("results", params$year, params$month, "
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 5.21, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("Academy", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1703,7 +1672,7 @@ tmap_save(ftnprk_map, file = here::here("results", params$year, params$month, "f
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 4.06, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("Fountain Park", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1908,7 +1877,7 @@ tmap_save(lewis_map, file = here::here("results", params$year, params$month, "le
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 6.18, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("Lewis Place", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2105,7 +2074,7 @@ tmap_save(vandy_map, file = here::here("results", params$year, params$month, "va
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 8.27, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
   ph_with("Vandeventer", 
                location = ph_location_type(
                  type = "title") )-> report
