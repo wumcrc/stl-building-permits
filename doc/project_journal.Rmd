@@ -89,4 +89,8 @@ Corrected errors within cleaning file as well as problems with mapping.Rmd. Remo
 
 ## 4/23/20
 
-Resized map images in powerpoint output. Added additional code to make sure all building permits have a "new use". This may be something that will need constant updating based on what permits are in each month. Removed old knitr code. 
+Resized map images in powerpoint output. Added additional code to make sure all building permits have a "new use". This may be something that will need constant updating based on what permits are in each month. Removed old knitr code. Began working on my yearly_report.Rmd.
+
+## 4/27/20
+
+Added flextables, maps, and plots for all neighborhoods in my yearly_report.Rmd. Added a 5 year analysis plot. Played around with formatting powerpoint output (flextable and map on same slide). I think I'm going to change it to have the plot and flextable on the same slide though it is just more visually appealing. Edited data_cleaning.Rmd to produce data from the past 5 years. Used this in my report.

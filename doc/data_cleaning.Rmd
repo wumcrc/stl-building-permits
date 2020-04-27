@@ -114,11 +114,14 @@ data%>%
   mutate(new_use = ifelse(grepl("R2", NewUseGroup1), "Residential",
                                              ifelse(grepl("R3", NewUseGroup1), "Residential",
                                              ifelse(grepl("A2", NewUseGroup1), "Commercial",
+                                             ifelse(grepl("A3", NewUseGroup1), "Commercial",
                                              ifelse(grepl("R1", NewUseGroup1), "Commercial",  
                                              ifelse(grepl("B", NewUseGroup1), "Institutional",
                                              ifelse(grepl("M", NewUseGroup1), "Commercial",
                                              ifelse(grepl("E", NewUseGroup1), "Institutional",       
-                                             ifelse(grepl("I2", NewUseGroup1), "Institutional",       
+                                             ifelse(grepl("I2", NewUseGroup1), "Institutional", 
+                                             ifelse(grepl("I4", NewUseGroup1), "Institutional",
+                                             ifelse(grepl("F1", NewUseGroup1), "Commercial",
                                              ifelse(grepl("U", NewUseGroup1), "Commercial", 
                                              ifelse(grepl("RESTAURANT", NewUse), "Commercial",
                                              ifelse(grepl("COMM/RESIDENT", NewUse), "Residential",
@@ -130,7 +133,7 @@ data%>%
                                              ifelse(grepl("CAFE", NewUse), "Commercial",
                                              ifelse(grepl("LOUNGE", NewUse), "Commercial",
                                              ifelse(grepl("NURSING HOME", NewUse), "Residential",
-                                                    NA))))))))))))))))))))%>%
+                                                    NA)))))))))))))))))))))))%>%
   
   # Create New Variables for Building Permits Greater/Less Than 50,000
   mutate(big_cost = ifelse(EstProjectCost >= 50000, 1, NA))%>%
@@ -182,4 +185,12 @@ write_csv(lstmonth, here::here("data", params$year, params$month, "lastmonth.csv
 #last year to date
 lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
 write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
+
+#last year data
+lstyr <- filter(df, yr == params$pastyear)
+write_csv(lstyr, here::here("data", params$pastyear, "summary", "clean_year.csv"))
+
+#5 year data
+yr5 <- filter(df, yr >= (params$pastyear - 5) & yr <= params$pastyear)
+write_csv(yr5, here::here("data", params$pastyear, "summary", "5year.csv"))
 ```
