@@ -16,6 +16,7 @@ library(dplyr)        # data cleaning
 library(officer)      # powerpoint output
 library(formattable)  # currency values
 library(ggrepel)      # ggplot labels
+library(readr)        # load csv
 
 #spatial packages
 library(sf)           # spatial data tools
@@ -54,12 +55,23 @@ merge <- df%>%
 ```
 
 ```{r}
+#create custom color palette for plots
+cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#4daf4a", "Institutional" = "#984ea3")
+```
+
+```{r}
 #title slide
 report1%>%
   add_slide(layout = "Title Slide", master = "Office Theme")%>%
   ph_with(value = "St. Louis Central Corridor West Building Permits Yearly Report", location = ph_location_type(type = "ctrTitle"))%>%
   ph_with(c(params$year), location = ph_location_type(type = "subTitle"))%>%
-  ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt")) -> report1
+  ph_with(value = "Washington University Medical Center", 
+          location = ph_location_type(type = "dt"))%>%
+
+ #introduction slide
+  add_slide()%>%
+  ph_with(value = "Introduction", location = ph_location_type(type = "title"))%>%
+  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped"), location = ph_location_type(type = "body")) -> report1
 ```
 
 
@@ -78,8 +90,8 @@ ggplot(data = yr, aes(x = yr, y = count))+
   geom_line()+
   geom_label_repel(aes(label = mean),
                   box.padding   = 0.35, 
-                  point.padding = 0.5,
                   segment.color = 'grey50')+
+  theme(axis.title.x = element_blank()) +
   ylab("Number of Building Permits")
 
 # save plot
@@ -103,10 +115,12 @@ report1%>%
 
 ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
   geom_bar(position = "dodge", stat="identity") +
-  ggtitle("Average Building Permit Cost By Neighborhood") +
-  theme(plot.title = element_text(hjust = 0.5),
-    axis.title.y = element_blank()) +
-  ylab("Cost") +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  theme(axis.title.y = element_blank(), 
+        axis.title.x = element_blank()) +
   labs(fill = "New Use") +
   scale_y_continuous(labels = scales::dollar_format())+
   coord_flip()
@@ -117,11 +131,39 @@ ggsave(here::here("results", params$year, "summary", "yr_plot.png"), width = 7, 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "yr_plot.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
-  ph_with("Neighborhood Summary", 
+  ph_with(external_img(here::here("results", params$year, "summary", "yr_plot.png"), 
+                       width = 7, height = 4), location = ph_location_type())%>%
+  ph_with("Neighborhood Summary: Average Building Permit Cost", 
                location = ph_location_type(
                  type = "title") )-> report1
+```
+
+```{r}
+# plot high cost permits
+ggplot(df, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> plot
+
+ggsave(here::here("results",  params$year, "summary",  "yr_cost.png"), plot = plot, dpi = 300)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "yr_cost.png"), 
+                       width = 6.15, height = 5.75), location = ph_location_type(), 
+                       use_loc_size = FALSE)%>%
+  ph_with("Neighborhood Summary: Average Building Permit Cost", 
+               location = ph_location_type(
+                 type = "title"))-> report1
 ```
 
 ```{r}
@@ -147,31 +189,56 @@ table$mean <- currency(table$mean, digits = 0L)
     ph_with(flex01, location = ph_location_type(type = "body")) -> report1
 ```
 
+### Forest Park Southeast
+
 ```{r}
-ggplot(df, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  ggtitle("High Cost Building Permits by Use") +
+if("Forest Park Southeast" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Forest Park Southeast")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
   theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> plot
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
 
-ggsave(here::here("results",  params$year, "summary",  "yr_cost.png"), plot = plot, dpi = 300)
-
+# save plot
+ggsave(here::here("results", params$year, "summary", "fpse", "fpse5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(value = plot,
-                 location = ph_location_fullsize(),
-                 bg = "transparent") -> report1
+  ph_with(external_img(here::here("results", params$year, "summary", "fpse", "fpse5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Forest Park Southeast 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
 ```
 
-### Forest Park Southeast
+```{r}
+#create fpse color palette
+sub <- filter(df, nbhd_name == "Forest Park Southeast")
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
+
 
 ```{r}
+if("Forest Park Southeast" %in% df$nbhd_name){
+
 #write shapefile
 fpse_shp <- filter(merge, nbhd_name == "Forest Park Southeast")
 st_write(fpse_shp, here::here("data", params$year, "summary", "shapefiles", "fpse.shp"), 
@@ -197,7 +264,7 @@ tm_shape(fpse_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -209,9 +276,40 @@ tm_shape(fpse_tiles) +
 
 #save map as .jpeg
 tmap_save(fpse_map, file = here::here("results", params$year, "summary", "fpse", "fpse_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "fpse", "fpse_use.jpeg"), width = 9.24, height = 7.47), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("Forest Park Southeast", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r fpse plot, echo=FALSE, message=FALSE}
+if("Forest Park Southeast" %in% df$nbhd_name){
+fpse <- filter(df, nbhd_name == "Forest Park Southeast")
+ggplot(fpse, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> fpse_plot
+
+ggsave(here::here("results",  params$year, "summary", "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
+}
 ```
 
 ```{r}
+if("Forest Park Southeast" %in% df$nbhd_name){
+
     #create summary table
   df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
@@ -233,38 +331,62 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Forest Park Southeast", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "fpse",  "fpse_use.jpeg"), width = 6.63, height = 5.36), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "fpse",  "fpse_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1
+}
 ```
 
-```{r fpse plot, echo=FALSE, message=FALSE}
-if("Forest Park Southeast" %in% df$nbhd_name){
-fpse <- filter(df, nbhd_name == "Forest Park Southeast")
-ggplot(fpse, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> fpse_plot
 
-ggsave(here::here("results",  params$year, "summary", "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
+### Central West End
+
+```{r}
+if("Central West End" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Central West End")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "cwe", "cwe5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "fpse", "fpse_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE)%>%
-  ph_with(value = "Forest Park Southeast High Cost Permits", 
-          location = ph_location_type(type = "title")) -> report1
+  ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Central West End 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
 }
 ```
 
-### Central West End
+```{r}
+#create cwe color palette
+sub <- filter(df, nbhd_name == "Central West End")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r, warning=FALSE}
+if("Central West End" %in% df$nbhd_name){
+
 #write shapefile  
 cwe_shp <- filter(merge, nbhd_name == "Central West End")
 st_write(cwe_shp, here::here("data", params$year, "summary", "shapefiles", "cwe.shp"), 
@@ -290,7 +412,7 @@ tm_shape(cwe_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -302,9 +424,40 @@ tm_shape(cwe_tiles) +
 
 #save map as .jpeg
 tmap_save(cwe_map, file = here::here("results", params$year, "summary", "cwe", "cwe_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type="title"), use_loc_size = FALSE)%>%
+  ph_with("Central West End", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r CWE plot, echo=FALSE, message=FALSE}
+if("Central West End" %in% df$nbhd_name){
+cwe <- filter(df, nbhd_name == "Central West End")
+ggplot(cwe, aes(lrgcost, fill = new_use)) +
+  geom_bar(position = "dodge", stat="count") +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> cwe_plot
+
+ggsave(here::here("results",  params$year, "summary", "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
+}
 ```
 
 ```{r}
+if("Central West End" %in% df$nbhd_name){
+  
   #create summary table
   df%>%
   filter(nbhd_name == "Central West End")%>%
@@ -326,35 +479,57 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Central West End", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe_use.jpeg"), width = 6.02, height = 5.46), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1
-```
-
-```{r CWE plot, echo=FALSE, message=FALSE}
-if("Central West End" %in% df$nbhd_name){
-cwe <- filter(df, nbhd_name == "Central West End")
-ggplot(cwe, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> cwe_plot
-
-ggsave(here::here("results",  params$year, "summary", "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
-
-#add to powerpoint report1
-report1%>%
-  add_slide()%>%
-  ph_with(value = "Cental West End High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
 }
 ```
 
 ### DeBaliviere Place
+
+```{r}
+if("DeBaliviere Place" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "DeBaliviere Place")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "dbplace", "dbplace5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("DeBaliviere Place 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r}
+#create dbplace color palette
+sub <- filter(df, nbhd_name == "DeBaliviere Place")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r}
 if("DeBaliviere Place" %in% df$nbhd_name){
@@ -384,7 +559,7 @@ tm_shape(dbp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -396,7 +571,35 @@ tm_shape(dbp_tiles) +
 
 #save map as .jpeg
 tmap_save(dbplace_map, file = here::here("results", params$year, "summary", "dbplace", "dbplace_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace_use.jpeg"), width = 6.97, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("DeBaliviere Place", 
+               location = ph_location_type(
+                 type = "title") )-> report1
 } 
+```
+
+```{r dbplace plot, echo=FALSE, message=FALSE}
+if("DeBaliviere Place" %in% df$nbhd_name){
+dbplace <- filter(df, nbhd_name == "DeBaliviere Place")
+ggplot(dbplace, aes(lrgcost, fill = new_use)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) + 
+  geom_bar(position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> dbplace_plot
+
+ggsave(here::here("results",  params$year, "summary", "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
+}
 ```
 
 ```{r}
@@ -418,47 +621,62 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   set_header_labels(new_use = "New Use", 
     avg_cost = "Average Cost", permit_count = "# of Permits")%>%
     set_caption("DeBaliviere Place") -> flex01
-
-#add powerpoint slide
-  report1%>%
-    add_slide()%>%
-    ph_with(value = "DeBaliviere Place", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report1
   
 # add powerpoint slide
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "DeBaliviere Place", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace_use.jpeg"), width = 6.11, height = 5.68), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1
 }
 ```
 
-```{r dbplace plot, echo=FALSE, message=FALSE}
-if("DeBaliviere Place" %in% df$nbhd_name){
-dbplace <- filter(df, nbhd_name == "DeBaliviere Place")
-ggplot(dbplace, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> dbplace_plot
+### Skinker DeBaliviere
 
-ggsave(here::here("results",  params$year, "summary", "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
+```{r}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Skinker DeBaliviere")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "skinker", "skinker5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(value = "DeBaliviere Place High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
+  ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Skinker DeBaliviere 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
 }
 ```
 
-### Skinker DeBaliviere
+```{r}
+#create skinker color palette
+sub <- filter(df, nbhd_name == "Skinker DeBaliviere")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
@@ -488,7 +706,7 @@ tm_shape(sdb_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -500,6 +718,34 @@ tm_shape(sdb_tiles) +
 
 #save map as .jpeg
 tmap_save(skinker_map, file = here::here("results", params$year, "summary", "skinker", "skinker_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with("Skinker DeBaliviere", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r skinker plot, echo=FALSE, message=FALSE}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+skinker <- filter(df, nbhd_name == "Skinker DeBaliviere")
+ggplot(skinker, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> skinker_plot
+
+ggsave(here::here("results",  params$year, "summary", "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
 }
 ```
 
@@ -532,39 +778,59 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Skinker DeBaliviere", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker_use.jpeg"), width = 6.35, height = 4.87), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1 
-}
-```
-
-```{r skinker plot, echo=FALSE, message=FALSE}
-if("Skinker DeBaliviere" %in% df$nbhd_name){
-skinker <- filter(df, nbhd_name == "Skinker DeBaliviere")
-ggplot(skinker, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> skinker_plot
-
-ggsave(here::here("results",  params$year, "summary", "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
-
-#add to powerpoint report
-report1%>%
-  add_slide()%>%
-  ph_with(value = "Skinker DeBaliviere High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
 }
 ```
 
 ### West End
 
 ```{r}
+if("West End" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "West End")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
 
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "westend", "westend5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("West End 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r}
+#create West End color palette
+sub <- filter(df, nbhd_name == "West End")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
+
+```{r, message=FALSE}
 if("West End" %in% df$nbhd_name){
 
 #write shapefile
@@ -592,7 +858,7 @@ tm_shape(we_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -604,6 +870,34 @@ tm_shape(we_tiles) +
 
 #save map as .jpeg
 tmap_save(westend_map, file = here::here("results", params$year, "summary", "westend", "westend_use.jpeg"), dpi = 500) 
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("West End", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r westend plot, echo=FALSE, message=FALSE}
+if("West End" %in% df$nbhd_name){
+westend <- filter(df, nbhd_name == "West End")
+ggplot(westend, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> westend_plot
+
+ggsave(here::here("results",  params$year, "summary", "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
 }
 ```
 
@@ -635,36 +929,58 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "West End", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend_use.jpeg"), width = 6.68, height = 5.27), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1 
 }
 ```
 
-```{r westend plot, echo=FALSE, message=FALSE}
-if("West End" %in% df$nbhd_name){
-westend <- filter(df, nbhd_name == "West End")
-ggplot(westend, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> westend_plot
 
-ggsave(here::here("results",  params$year, "summary", "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
+### Visitation Park: Summary Notes
+
+```{r}
+if("Visitation Park" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Visitation Park")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "vstprk", "vstprk5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(value = "West End High Cost Permits", location = ph_location_type(type = "title"))%>%
- ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
+  ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Visitation Park 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
 }
 ```
 
-### Visitation Park: Summary Notes
+```{r}
+#create Visitation Park color palette
+sub <- filter(df, nbhd_name == "Visitation Park")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Visitation Park Building Permit Mapping, include = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
@@ -694,7 +1010,7 @@ tm_shape(vp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -706,6 +1022,34 @@ tm_shape(vp_tiles) +
 
 #save map as .jpeg
 tmap_save(vstprk_map, file = here::here("results", params$year, "summary", "vstprk", "vstprk_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk_use.jpeg"), width = 5.31, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("Visitation Park", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r vstprk plot, echo=FALSE, message=FALSE}
+if("Visitation Park" %in% df$nbhd_name){
+vstprk <- filter(df, nbhd_name == "Visitation Park")
+ggplot(vstprk, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> vstprk_plot
+
+ggsave(here::here("results",  params$year, "summary", "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
 }
 ```
 
@@ -733,37 +1077,58 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Visitation Park", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk_use.jpeg"), width = 5.31, height = 7.5), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1 
-}
-```
-
-```{r vstprk plot, echo=FALSE, message=FALSE}
-if("Visitation Park" %in% df$nbhd_name){
-vstprk <- filter(df, nbhd_name == "Visitation Park")
-ggplot(vstprk, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> vstprk_plot
-
-ggsave(here::here("results",  params$year, "summary", "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
-
-#add to powerpoint report
-report1%>%
-  add_slide()%>%
-  ph_with(value = "Visitation Park High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
 }
 ```
 
 
 ### Academy: Summary Notes
+
+```{r}
+if("Academy" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Academy")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "academy", "ac5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Academy 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r}
+#create Academy color palette
+sub <- filter(df, nbhd_name == "Academy")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Academy Building Permit Mapping, include = FALSE}
 if("Academy" %in% df$nbhd_name){
@@ -794,7 +1159,7 @@ tm_shape(ac_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -806,6 +1171,34 @@ tm_shape(ac_tiles) +
 
 #save map as .jpeg
 tmap_save(academy_map, file = here::here("results", params$year, "summary", "academy", "ac_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac_use.jpeg"), width = 5.21, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("Academy", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r Academy plot, echo=FALSE, message=FALSE}
+if("Academy" %in% df$nbhd_name){
+academy <- filter(df, nbhd_name == "Academy")
+ggplot(academy, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> ac_plot
+
+ggsave(here::here("results",  params$year, "summary", "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
 }
 ```
 
@@ -832,37 +1225,58 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Academy", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac_use.jpeg"), width = 4.48, height = 6.44), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1 
-}
-```
-
-```{r Academy plot, echo=FALSE, message=FALSE}
-if("Academy" %in% df$nbhd_name){
-academy <- filter(df, nbhd_name == "Academy")
-ggplot(academy, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> ac_plot
-
-ggsave(here::here("results",  params$year, "summary", "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
-
-#add to powerpoint report
-report1%>%
-  add_slide()%>%
-  ph_with(value = "Academy High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
 }
 ```
 
 
 ### Fountain Park: Summary Notes
+
+```{r}
+if("Fountain Park" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Fountain Park")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "ftnprk", "ftnprk5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Fountain Park 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r}
+#create Fountain Park color palette
+sub <- filter(df, nbhd_name == "Fountain Park")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Fountain Park Building Permit Mapping, include = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
@@ -892,7 +1306,7 @@ tm_shape(fp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -904,6 +1318,34 @@ tm_shape(fp_tiles) +
 
 #save map as .jpeg
 tmap_save(ftnprk_map, file = here::here("results", params$year, "summary", "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk_use.jpeg"), width = 4.06, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("Fountain Park", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r ftnprk plot, echo=FALSE, message=FALSE}
+if("Fountain Park" %in% df$nbhd_name){
+ftnprk <- filter(df, nbhd_name == "Fountain Park")
+ggplot(ftnprk, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> ftnprk_plot
+
+ggsave(here::here("results",  params$year, "summary", "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
 }
 ```
 
@@ -931,36 +1373,57 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Fountain Park", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk_use.jpeg"), width = 3.16, height = 5.84), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1 
 }
 ```
 
-```{r ftnprk plot, echo=FALSE, message=FALSE}
-if("Fountain Park" %in% df$nbhd_name){
-ftnprk <- filter(df, nbhd_name == "Fountain Park")
-ggplot(ftnprk, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> ftnprk_plot
+### Lewis Place: Summary Notes
 
-ggsave(here::here("results",  params$year, "summary", "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
+```{r}
+if("Lewis Place" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Lewis Place")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "lewis", "lewis5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(value = "Fountain Park High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
+  ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Lewis Place 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
 }
 ```
 
-### Lewis Place: Summary Notes
+```{r}
+#create Lewis Place color palette
+sub <- filter(df, nbhd_name == "Lewis Place")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Lewis Place Building Permit Mapping, include = FALSE}
 
@@ -991,7 +1454,7 @@ tm_shape(lp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -1003,6 +1466,34 @@ tm_shape(lp_tiles) +
 
 #save map as .jpeg
 tmap_save(lewis_map, file = here::here("results", params$year, "summary", "lewis", "lewis_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis_use.jpeg"), width = 6.18, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("Lewis Place", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+}
+```
+
+```{r Lewis plot, echo=FALSE, message=FALSE}
+if("Lewis Place" %in% df$nbhd_name){
+lewis <- filter(df, nbhd_name == "Lewis Place")
+ggplot(lewis, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> lewis_plot
+
+ggsave(here::here("results",  params$year, "summary", "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
 }
 ```
 
@@ -1030,36 +1521,57 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
 report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Lewis Place", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis_use.jpeg"), width = 5.76, height = 6.2), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1 
 }
 ```
 
-```{r Lewis plot, echo=FALSE, message=FALSE}
-if("Lewis Place" %in% df$nbhd_name){
-lewis <- filter(df, nbhd_name == "Lewis Place")
-ggplot(lewis, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> lewis_plot
+### Vandeventer
 
-ggsave(here::here("results",  params$year, "summary", "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
+```{r}
+if("Vandeventer" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Vandeventer")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")
+
+# save plot
+ggsave(here::here("results", params$year, "summary", "vandy", "vandy5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
 
 #add to powerpoint report
 report1%>%
   add_slide()%>%
-  ph_with(value = "Lewis Place High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
+  ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy5yr.png"), width = 7, height = 4),
+          location = ph_location_type())%>%
+  ph_with("Vandeventer 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report1
 }
 ```
 
-### Vandeventer
+```{r}
+#create Vandeventer color palette
+sub <- filter(df, nbhd_name == "Vandeventer")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r}
 #write shapefile
@@ -1087,7 +1599,7 @@ tm_shape(vd_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -1099,6 +1611,34 @@ tm_shape(vd_tiles) +
 
 #save map as .jpeg
 tmap_save(vandy_map, file = here::here("results", params$year, "summary", "vandy", "vandy_use.jpeg"), dpi = 500)
+
+#add to powerpoint report
+report1%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy_use.jpeg"), width = 8.27, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with("Vandeventer", 
+               location = ph_location_type(
+                 type = "title") )-> report1
+```
+
+```{r vandy plot, echo=FALSE, message=FALSE}
+if("Vandeventer" %in% df$nbhd_name){
+vandy <- filter(df, nbhd_name == "Vandeventer")
+ggplot(vandy, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> vandy_plot
+
+ggsave(here::here("results",  params$year, "summary", "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
+}
 ```
 
 ```{r}
@@ -1123,34 +1663,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
   report1%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Vandeventer", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy_use.jpeg"), width = 6.02, height = 5.46), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
     ph_with(flex01, location = ph_location_right()) -> report1
 ```
 
-```{r vandy plot, echo=FALSE, message=FALSE}
-if("Vandeventer" %in% df$nbhd_name){
-vandy <- filter(df, nbhd_name == "Vandeventer")
-ggplot(vandy, aes(lrgcost)) +
-  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
-  theme(
-    plot.title = element_text(hjust = 0.5),
-  )+
-  ylab("Number of Permits") +
-  xlab("Building Permit Cost") +
-  labs(fill = "New Use") -> vandy_plot
-
-ggsave(here::here("results",  params$year, "summary", "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
-
-#add to powerpoint report
-report1%>%
-  add_slide()%>%
-  ph_with(value = "Vandeventer High Cost Permits", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
-                       use_loc_size = FALSE) -> report1
-}
-```
-
 ```{r}
+#save powerpoint output
 print(report1, target = here::here("results", params$year, "summary", "finalreport.pptx"))
 ```

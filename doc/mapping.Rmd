@@ -9,7 +9,7 @@ always_allow_html: yes
 params:
   
   #change EVERY month
-  month: February
+  month: March
   year: 2020
   pastyear: 2019
 
@@ -17,19 +17,19 @@ params:
   ytd: "2020-01-01" 
                
   # Pulls in the data for the most recent month | Change this each month
-  date: "2020-02-01"   
+  date: "2020-03-01"   
   
   # Needs to be the first day of the next month | Change this each month
-  enddate: "2020-03-01"
+  enddate: "2020-04-01"
            
   # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
   pastdate: "2019-01-01" 
             
   # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-02-01" 
+  pstmonth: "2019-03-01" 
            
   # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-03-01"  
+  pstmonth2: "2019-04-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -98,6 +98,11 @@ merge <- df%>%
 ```
 
 ```{r}
+#create custom color palette for plots
+cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#4daf4a", "Institutional" = "#984ea3")
+```
+
+```{r}
 #title slide
 report%>%
   add_slide(layout = "Title Slide", master = "Office Theme")%>%
@@ -117,6 +122,10 @@ report%>%
 # Average cost by neighborhood for each `new_use`
 
 ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(position = "dodge", stat="identity") +
   theme(plot.title = element_text(hjust = 0.5),
     axis.title.y = element_blank()) +
@@ -238,6 +247,15 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create fpse color palette
+sub <- filter(df, nbhd_name == "Forest Park Southeast")
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r FPSE Building Permit Mapping, include = FALSE}
 if("Forest Park Southeast" %in% df$nbhd_name){
@@ -267,7 +285,7 @@ tm_shape(fpse_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -350,6 +368,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Forest Park Southeast" %in% df$nbhd_name){
 fpse <- filter(df, nbhd_name == "Forest Park Southeast")
 ggplot(fpse, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -449,6 +471,16 @@ report%>%
 
 ```
 
+```{r}
+#create cwe color palette
+sub <- filter(df, nbhd_name == "Central West End")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r CWE Building Permit Mapping, include = FALSE}
 
@@ -479,7 +511,7 @@ tm_shape(cwe_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -561,6 +593,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Central West End" %in% df$nbhd_name){
 cwe <- filter(df, nbhd_name == "Central West End")
 ggplot(cwe, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -657,6 +693,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create DeBaliviere Place color palette
+sub <- filter(df, nbhd_name == "DeBaliviere Place")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r DeBaliviere Place Building Permit Mapping, include = FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
@@ -686,7 +732,7 @@ tm_shape(dbp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -768,6 +814,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("DeBaliviere Place" %in% df$nbhd_name){
 dbplace <- filter(df, nbhd_name == "DeBaliviere Place")
 ggplot(dbplace, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -864,6 +914,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create Skinker DeBaliviere color palette
+sub <- filter(df, nbhd_name == "Skinker DeBaliviere")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Skinker DeBaliviere Building Permit Mapping, include = FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
@@ -893,7 +953,7 @@ tm_shape(sdb_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -980,6 +1040,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Skinker DeBaliviere" %in% df$nbhd_name){
 skinker <- filter(df, nbhd_name == "Skinker DeBaliviere")
 ggplot(skinker, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -1077,6 +1141,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create West End color palette
+sub <- filter(df, nbhd_name == "West End")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r West End Building Permit Mapping, include = FALSE}
 
@@ -1107,7 +1181,7 @@ tm_shape(we_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -1194,6 +1268,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("West End" %in% df$nbhd_name){
 westend <- filter(df, nbhd_name == "West End")
 ggplot(westend, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -1291,6 +1369,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create Visitation Park color palette
+sub <- filter(df, nbhd_name == "Visitation Park")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Visitation Park Building Permit Mapping, include = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
@@ -1320,7 +1408,7 @@ tm_shape(vp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -1402,6 +1490,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Visitation Park" %in% df$nbhd_name){
 vstprk <- filter(df, nbhd_name == "Visitation Park")
 ggplot(vstprk, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -1499,6 +1591,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create Academy color palette
+sub <- filter(df, nbhd_name == "Academy")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Academy Building Permit Mapping, include = FALSE}
 if("Academy" %in% df$nbhd_name){
@@ -1529,7 +1631,7 @@ tm_shape(ac_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -1611,6 +1713,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Academy" %in% df$nbhd_name){
 academy <- filter(df, nbhd_name == "Academy")
 ggplot(academy, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -1709,6 +1815,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create Fountain Park color palette
+sub <- filter(df, nbhd_name == "Fountain Park")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Fountain Park Building Permit Mapping, include = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
@@ -1738,7 +1854,7 @@ tm_shape(fp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -1821,6 +1937,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Fountain Park" %in% df$nbhd_name){
 ftnprk <- filter(df, nbhd_name == "Fountain Park")
 ggplot(ftnprk, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -1917,6 +2037,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create Lewis Place color palette
+sub <- filter(df, nbhd_name == "Lewis Place")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Lewis Place Building Permit Mapping, include = FALSE}
 
@@ -1947,7 +2077,7 @@ tm_shape(lp_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -2029,6 +2159,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Lewis Place" %in% df$nbhd_name){
 lewis <- filter(df, nbhd_name == "Lewis Place")
 ggplot(lewis, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
@@ -2126,6 +2260,16 @@ report%>%
           location = ph_location_type(type = "body")) -> report
 ```
 
+```{r}
+#create Vandeventer color palette
+sub <- filter(df, nbhd_name == "Vandeventer")
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+```
 
 ```{r Vandeventer Building Permit Mapping, include = FALSE}
 if("Vandeventer" %in% df$nbhd_name){
@@ -2155,7 +2299,7 @@ tm_shape(vd_tiles) +
   tm_shape() +
     tm_bubbles(size = .25,
                col = "new_use",
-               palette = "Set1",
+               palette = col,
                title.col = "Building Permit Type") +
   tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
   tm_layout(
@@ -2237,6 +2381,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 if("Vandeventer" %in% df$nbhd_name){
 vandy <- filter(df, nbhd_name == "Vandeventer")
 ggplot(vandy, aes(lrgcost)) +
+  scale_colour_manual(
+    values = cols,
+    aesthetics = c("colour", "fill")
+  ) +
   geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
   theme(
     plot.title = element_text(hjust = 0.5),
