@@ -9,7 +9,7 @@ always_allow_html: yes
 params:
   
   #change EVERY month
-  month: March
+  month: January
   year: 2020
   pastyear: 2019
 
@@ -17,19 +17,19 @@ params:
   ytd: "2020-01-01" 
                
   # Pulls in the data for the most recent month | Change this each month
-  date: "2020-03-01"   
+  date: "2020-01-01"   
   
   # Needs to be the first day of the next month | Change this each month
-  enddate: "2020-04-01"
+  enddate: "2020-02-01"
            
   # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
   pastdate: "2019-01-01" 
             
   # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-03-01" 
+  pstmonth: "2019-01-01" 
            
   # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-04-01"  
+  pstmonth2: "2019-02-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -193,6 +193,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -416,6 +417,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -639,6 +641,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -860,6 +863,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -1087,6 +1091,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -1315,6 +1320,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -1537,6 +1543,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -1983,6 +1990,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
@@ -2206,6 +2214,7 @@ bptot20 <- nrow(tot20)
 bptot19 <- nrow(tot19)
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
+if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
 totcost19 <- mean(tot19$EstProjectCost)
 totcost19 <- currency(totcost19, digits = 0L)
 if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}

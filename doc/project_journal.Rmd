@@ -94,3 +94,7 @@ Resized map images in powerpoint output. Added additional code to make sure all 
 ## 4/27/20
 
 Added flextables, maps, and plots for all neighborhoods in my yearly_report.Rmd. Added a 5 year analysis plot. Played around with formatting powerpoint output (flextable and map on same slide). I think I'm going to change it to have the plot and flextable on the same slide though it is just more visually appealing. Edited data_cleaning.Rmd to produce data from the past 5 years. Used this in my report.
+
+## 4/29/20
+
+Made flextable and ggplot on same slide for powerpoint output. Added 5 year analysis plot to each individual neighborhood. Made colors uniform for all plots and maps as well as across yearly and monthly reports. I made these changes to both my yearly and monthly .Rmd files. Added a title slide to my yearly report and went through powerpoint outputs for all monthly reports and yearly reports to make sure code was running properly and there were no typos.
