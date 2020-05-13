@@ -26,8 +26,8 @@ library(tmaptools)    # tools for handeling spatial
 
 ```{r}
 #load data
-df <- read_csv(here::here("data", params$year, "summary", "clean_year.csv"))
-yr5 <- read_csv(here::here("data", params$year, "summary", "5year.csv"))
+df <- read_csv(here::here("data", params$year, "yearly", "clean_year.csv"))
+yr5 <- read_csv(here::here("data", params$year, "yearly", "5year.csv"))
 
 # load basemap tiles
 load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
@@ -40,7 +40,7 @@ df %>%
   summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
 
 # create powerpoint
-report1 <- read_pptx()
+report <- read_pptx()
 ```
 
 ```{r, include=FALSE}
@@ -61,17 +61,17 @@ cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#
 
 ```{r}
 #title slide
-report1%>%
+report%>%
   add_slide(layout = "Title Slide", master = "Office Theme")%>%
-  ph_with(value = "St. Louis Central Corridor West Building Permits Yearly Report", location = ph_location_type(type = "ctrTitle"))%>%
-  ph_with(c(params$year), location = ph_location_type(type = "subTitle"))%>%
+  ph_with(value = "St. Louis Central Corridor West Building Permits", location = ph_location_type(type = "ctrTitle"))%>%
+  ph_with(c(paste("Yearly Report:", params$year, sep = " ")), location = ph_location_type(type = "subTitle"))%>%
   ph_with(value = "Washington University Medical Center", 
           location = ph_location_type(type = "dt"))%>%
 
  #introduction slide
   add_slide()%>%
   ph_with(value = "Introduction", location = ph_location_type(type = "title"))%>%
-  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped"), location = ph_location_type(type = "body")) -> report1
+  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped"), location = ph_location_type(type = "body")) -> report
 ```
 
 
@@ -95,16 +95,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "5yr_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "all_nbhds", "5yr_plot.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "5yr_plot.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "all_nbhds", "5yr_plot.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 ```
 
 
@@ -126,16 +127,17 @@ ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
   coord_flip()
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "yr_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "all_nbhds", "yr_plot.png"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "yr_plot.png"), 
-                       width = 7, height = 4), location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "all_nbhds", "yr_plot.png"), 
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
+          use_loc_size = FALSE)%>%
   ph_with("Neighborhood Summary: Average Building Permit Cost", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 ```
 
 ```{r}
@@ -153,17 +155,17 @@ ggplot(df, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> plot
 
-ggsave(here::here("results",  params$year, "summary",  "yr_cost.png"), plot = plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "all_nbhds",  "yr_cost.png"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "yr_cost.png"), 
-                       width = 6.15, height = 5.75), location = ph_location_type(), 
+  ph_with(external_img(here::here("results", params$year, "yearly", "all_nbhds", "yr_cost.png"), 
+                       width = 9, height = 5), location = ph_location_type(type = "body"), 
                        use_loc_size = FALSE)%>%
   ph_with("Neighborhood Summary: Average Building Permit Cost", 
                location = ph_location_type(
-                 type = "title"))-> report1
+                 type = "title"))-> report
 ```
 
 ```{r}
@@ -183,10 +185,10 @@ table$mean <- currency(table$mean, digits = 0L)
     mean = "Average Cost", count = "# of Permits") -> flex01
   
   #add powerpoint slide
-  report1%>%
+  report%>%
     add_slide()%>%
     ph_with(value = "Neighborhood Summary", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report1
+    ph_with(flex01, location = ph_location_type(type = "body")) -> report
 ```
 
 ### Forest Park Southeast
@@ -212,16 +214,18 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "fpse", "fpse5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "fpse", "fpse5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "fpse", "fpse5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "fpse", "fpse5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Forest Park Southeast 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -241,11 +245,11 @@ if("Forest Park Southeast" %in% df$nbhd_name){
 
 #write shapefile
 fpse_shp <- filter(merge, nbhd_name == "Forest Park Southeast")
-st_write(fpse_shp, here::here("data", params$year, "summary", "shapefiles", "fpse.shp"), 
+st_write(fpse_shp, here::here("data", params$year, "yearly", "shapefiles", "fpse.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "fpse.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "fpse.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> fpse
 
@@ -275,15 +279,16 @@ tm_shape(fpse_tiles) +
     legend.position = c("right", "bottom")) -> fpse_map
 
 #save map as .jpeg
-tmap_save(fpse_map, file = here::here("results", params$year, "summary", "fpse", "fpse_use.jpeg"), dpi = 500)
+tmap_save(fpse_map, file = here::here("results", params$year, "yearly", "fpse", "fpse_use.jpeg"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "fpse", "fpse_use.jpeg"), width = 9.24, height = 7.47), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "fpse", "fpse_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Forest Park Southeast", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -303,7 +308,8 @@ ggplot(fpse, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> fpse_plot
 
-ggsave(here::here("results",  params$year, "summary", "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "fpse", "fpse_cost.png"), 
+       width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -328,11 +334,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Forest Park Southeast") -> flex01
   
 #add powerpoint slide
-  report1%>%
+  report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Forest Park Southeast", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "fpse",  "fpse_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1
+    ph_with(external_img(here::here("results", params$year, "yearly", "fpse",  "fpse_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report
 }
 ```
 
@@ -360,16 +366,18 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "cwe", "cwe5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "cwe", "cwe5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Central West End 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -389,11 +397,11 @@ if("Central West End" %in% df$nbhd_name){
 
 #write shapefile  
 cwe_shp <- filter(merge, nbhd_name == "Central West End")
-st_write(cwe_shp, here::here("data", params$year, "summary", "shapefiles", "cwe.shp"), 
+st_write(cwe_shp, here::here("data", params$year, "yearly", "shapefiles", "cwe.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "cwe.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "cwe.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> cwe
 
@@ -423,15 +431,16 @@ tm_shape(cwe_tiles) +
     legend.position = c("right", "bottom")) -> cwe_map
 
 #save map as .jpeg
-tmap_save(cwe_map, file = here::here("results", params$year, "summary", "cwe", "cwe_use.jpeg"), dpi = 500)
+tmap_save(cwe_map, file = here::here("results", params$year, "yearly", "cwe", "cwe_use.jpeg"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type="title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe_use.jpeg"), width = 9, height = 5), location = ph_location_type(type="body"), use_loc_size = FALSE)%>%
   ph_with("Central West End", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -451,7 +460,8 @@ ggplot(cwe, aes(lrgcost, fill = new_use)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> cwe_plot
 
-ggsave(here::here("results",  params$year, "summary", "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "cwe", "cwe_cost.png"), 
+       plot = cwe_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -476,11 +486,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Central West End") -> flex01
   
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Central West End", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "cwe", "cwe_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1
+    ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report
 }
 ```
 
@@ -507,16 +517,18 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "dbplace", "dbplace5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "dbplace", "dbplace5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbplace5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("DeBaliviere Place 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -536,11 +548,11 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 
 #write shapefile  
 dbplace_shp <- filter(merge, nbhd_name == "DeBaliviere Place")
-st_write(dbplace_shp, here::here("data", params$year, "summary", "shapefiles", "dbplace.shp"), 
+st_write(dbplace_shp, here::here("data", params$year, "yearly", "shapefiles", "dbplace.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "dbplace.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "dbplace.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> dbplace
 
@@ -570,15 +582,16 @@ tm_shape(dbp_tiles) +
     legend.position = c("right", "bottom")) -> dbplace_map
 
 #save map as .jpeg
-tmap_save(dbplace_map, file = here::here("results", params$year, "summary", "dbplace", "dbplace_use.jpeg"), dpi = 500)
+tmap_save(dbplace_map, file = here::here("results", params$year, "yearly", "dbplace", "dbplace_use.jpeg"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace_use.jpeg"), width = 6.97, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbplace_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("DeBaliviere Place", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 } 
 ```
 
@@ -598,7 +611,8 @@ ggplot(dbplace, aes(lrgcost, fill = new_use)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> dbplace_plot
 
-ggsave(here::here("results",  params$year, "summary", "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "dbplace", "dbplace_cost.png"),
+       plot = dbplace_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -623,11 +637,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("DeBaliviere Place") -> flex01
   
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "DeBaliviere Place", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "dbplace", "dbplace_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1
+    ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbplace_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report
 }
 ```
 
@@ -654,16 +668,18 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "skinker", "skinker5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "skinker", "skinker5yr.png"),
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "skinker5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Skinker DeBaliviere 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -683,11 +699,11 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
 
 #write shapefile
 skinker_shp <- filter(merge, nbhd_name == "Skinker DeBaliviere")
-st_write(skinker_shp, here::here("data", params$year, "summary", "shapefiles", "skinkerdb.shp"), 
+st_write(skinker_shp, here::here("data", params$year, "yearly", "shapefiles", "skinkerdb.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "skinkerdb.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "skinkerdb.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> skinker
 
@@ -717,15 +733,17 @@ tm_shape(sdb_tiles) +
     legend.position = c("right", "bottom")) -> skinker_map
 
 #save map as .jpeg
-tmap_save(skinker_map, file = here::here("results", params$year, "summary", "skinker", "skinker_use.jpeg"), dpi = 500)
+tmap_save(skinker_map, file = here::here("results", params$year, "yearly", "skinker", "skinker_use.jpeg"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "skinker_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), 
+          use_loc_size = FALSE)%>%
   ph_with("Skinker DeBaliviere", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -745,7 +763,8 @@ ggplot(skinker, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> skinker_plot
 
-ggsave(here::here("results",  params$year, "summary", "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "skinker", "skinker_cost.png"), 
+       plot = skinker_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -775,11 +794,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Skinker DeBaliviere") -> flex01
  
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Skinker DeBaliviere", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "skinker", "skinker_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1 
+    ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "skinker_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report 
 }
 ```
 
@@ -806,16 +825,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "westend", "westend5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "westend", "westend5yr.png"),
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "westend", "westend5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("West End 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -835,11 +855,11 @@ if("West End" %in% df$nbhd_name){
 
 #write shapefile
 westend_shp <- filter(merge, nbhd_name == "West End")
-st_write(westend_shp, here::here("data", params$year, "summary", "shapefiles", "westend.shp"), 
+st_write(westend_shp, here::here("data", params$year, "yearly", "shapefiles", "westend.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "westend.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "westend.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> westend
 
@@ -869,15 +889,15 @@ tm_shape(we_tiles) +
     legend.position = c("right", "bottom")) -> westend_map
 
 #save map as .jpeg
-tmap_save(westend_map, file = here::here("results", params$year, "summary", "westend", "westend_use.jpeg"), dpi = 500) 
+tmap_save(westend_map, file = here::here("results", params$year, "yearly", "westend", "westend_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "westend", "westend_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("West End", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -897,7 +917,8 @@ ggplot(westend, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> westend_plot
 
-ggsave(here::here("results",  params$year, "summary", "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "westend", "westend_cost.png"), 
+       plot = westend_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -926,11 +947,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("West End") -> flex01
 
 #add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "West End", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "westend", "westend_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1 
+    ph_with(external_img(here::here("results", params$year, "yearly", "westend", "westend_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report 
 }
 ```
 
@@ -958,16 +979,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "vstprk", "vstprk5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "vstprk", "vstprk5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vstprk5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Visitation Park 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -987,11 +1009,11 @@ if("Visitation Park" %in% df$nbhd_name){
   
 #write shapefile
 visit_shp <- filter(merge, nbhd_name == "Visitation Park")
-st_write(visit_shp, here::here("data", params$year, "summary", "shapefiles", "vstprk.shp"), 
+st_write(visit_shp, here::here("data", params$year, "yearly", "shapefiles", "vstprk.shp"), 
          delete_dsn = TRUE)
   
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "vstprk.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "vstprk.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> vstprk
 
@@ -1021,15 +1043,15 @@ tm_shape(vp_tiles) +
     legend.position = c("right", "bottom")) -> vstprk_map
 
 #save map as .jpeg
-tmap_save(vstprk_map, file = here::here("results", params$year, "summary", "vstprk", "vstprk_use.jpeg"), dpi = 500)
+tmap_save(vstprk_map, file = here::here("results", params$year, "yearly", "vstprk", "vstprk_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk_use.jpeg"), width = 5.31, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vstprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Visitation Park", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1049,7 +1071,8 @@ ggplot(vstprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vstprk_plot
 
-ggsave(here::here("results",  params$year, "summary", "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "vstprk", "vstprk_cost.png"), 
+       plot = vstprk_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -1074,11 +1097,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Visitation Park") -> flex01
 
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Visitation Park", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "vstprk", "vstprk_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1 
+    ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vstprk_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report 
 }
 ```
 
@@ -1106,16 +1129,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "academy", "ac5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "academy", "ac5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Academy 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1135,12 +1159,12 @@ if("Academy" %in% df$nbhd_name){
   
 #write shapefile  
   academy_shp <- filter(merge, nbhd_name == "Academy")
-  st_write(academy_shp, here::here("data", params$year, "summary", "shapefiles", "academy.shp"), 
+  st_write(academy_shp, here::here("data", params$year, "yearly", "shapefiles", "academy.shp"), 
          delete_dsn = TRUE)
 
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "academy.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "academy.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> academy
 
@@ -1170,15 +1194,15 @@ tm_shape(ac_tiles) +
     legend.position = c("right", "bottom")) -> academy_map
 
 #save map as .jpeg
-tmap_save(academy_map, file = here::here("results", params$year, "summary", "academy", "ac_use.jpeg"), dpi = 500)
+tmap_save(academy_map, file = here::here("results", params$year, "yearly", "academy", "ac_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac_use.jpeg"), width = 5.21, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Academy", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1198,7 +1222,8 @@ ggplot(academy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ac_plot
 
-ggsave(here::here("results",  params$year, "summary", "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "academy", "ac_cost.png"), 
+       plot = ac_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -1222,11 +1247,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Academy") -> flex01
 
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Academy", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "academy", "ac_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1 
+    ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report 
 }
 ```
 
@@ -1254,16 +1279,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "ftnprk", "ftnprk5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "ftnprk", "ftnprk5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "ftnprk5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Fountain Park 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1283,11 +1309,11 @@ if("Fountain Park" %in% df$nbhd_name){
 
 #write shapefile
 ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
-st_write(ftnprk_shp, here::here("data", params$year, "summary", "shapefiles", "ftnprk.shp"), 
+st_write(ftnprk_shp, here::here("data", params$year, "yearly", "shapefiles", "ftnprk.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "ftnprk.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "ftnprk.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> ftnprk
 
@@ -1317,15 +1343,15 @@ tm_shape(fp_tiles) +
     legend.position = c("right", "bottom")) -> ftnprk_map
 
 #save map as .jpeg
-tmap_save(ftnprk_map, file = here::here("results", params$year, "summary", "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
+tmap_save(ftnprk_map, file = here::here("results", params$year, "yearly", "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk_use.jpeg"), width = 4.06, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Fountain Park", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1345,7 +1371,8 @@ ggplot(ftnprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ftnprk_plot
 
-ggsave(here::here("results",  params$year, "summary", "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "ftnprk", "ftnprk_cost.png"), 
+       plot = ftnprk_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -1370,11 +1397,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Fountain Park") -> flex01
 
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Fountain Park", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "ftnprk", "ftnprk_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1 
+    ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "ftnprk_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report 
 }
 ```
 
@@ -1401,16 +1428,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "lewis", "lewis5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "lewis", "lewis5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lewis5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Lewis Place 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1431,11 +1459,11 @@ if("Lewis Place" %in% df$nbhd_name){
 
 #write shapefile
 lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
-st_write(lewis_shp, here::here("data", params$year, "summary", "shapefiles", "lewis.shp"), 
+st_write(lewis_shp, here::here("data", params$year, "yearly", "shapefiles", "lewis.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "lewis.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "lewis.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> lewis
 
@@ -1465,15 +1493,15 @@ tm_shape(lp_tiles) +
     legend.position = c("right", "bottom")) -> lewis_map
 
 #save map as .jpeg
-tmap_save(lewis_map, file = here::here("results", params$year, "summary", "lewis", "lewis_use.jpeg"), dpi = 500)
+tmap_save(lewis_map, file = here::here("results", params$year, "yearly", "lewis", "lewis_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis_use.jpeg"), width = 6.18, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lewis_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Lewis Place", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1493,7 +1521,8 @@ ggplot(lewis, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> lewis_plot
 
-ggsave(here::here("results",  params$year, "summary", "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "lewis", "lewis_cost.png"), 
+       plot = lewis_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -1518,11 +1547,11 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Lewis Place") -> flex01
 
 # add powerpoint slide
-report1%>%
+report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Lewis Place", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "lewis", "lewis_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1 
+    ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lewis_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report 
 }
 ```
 
@@ -1549,16 +1578,17 @@ ggplot(data = yr, aes(x = yr, y = count))+
   ylab("Number of Building Permits")
 
 # save plot
-ggsave(here::here("results", params$year, "summary", "vandy", "vandy5yr.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, "yearly", "vandy", "vandy5yr.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy5yr.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vandy5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Vandeventer 5 Year Analysis", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 }
 ```
 
@@ -1576,11 +1606,11 @@ if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
 ```{r}
 #write shapefile
 vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
-st_write(vandy_shp, here::here("data", params$year, "summary", "shapefiles", "vandy.shp"), 
+st_write(vandy_shp, here::here("data", params$year, "yearly", "shapefiles", "vandy.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, "summary", "shapefiles", "vandy.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "vandy.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> vandy
 
@@ -1610,15 +1640,15 @@ tm_shape(vd_tiles) +
     legend.position = c("right", "bottom")) -> vandy_map
 
 #save map as .jpeg
-tmap_save(vandy_map, file = here::here("results", params$year, "summary", "vandy", "vandy_use.jpeg"), dpi = 500)
+tmap_save(vandy_map, file = here::here("results", params$year, "yearly", "vandy", "vandy_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
-report1%>%
+report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy_use.jpeg"), width = 8.27, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vandy_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Vandeventer", 
                location = ph_location_type(
-                 type = "title") )-> report1
+                 type = "title") )-> report
 ```
 
 ```{r vandy plot, echo=FALSE, message=FALSE}
@@ -1637,7 +1667,8 @@ ggplot(vandy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vandy_plot
 
-ggsave(here::here("results",  params$year, "summary", "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
+ggsave(here::here("results",  params$year, "yearly", "vandy", "vandy_cost.png"), 
+       plot = vandy_plot, width = 5.45, height = 5.45, units = "in")
 }
 ```
 
@@ -1660,14 +1691,14 @@ table$avg_cost <- currency(table$avg_cost, digits = 0L)
     set_caption("Vandeventer") -> flex01
 
 #add powerpoint slide
-  report1%>%
+  report%>%
     add_slide(layout = "Two Content")%>%
     ph_with(value = "Vandeventer", location = ph_location_type(type = "title"))%>%
-    ph_with(external_img(here::here("results", params$year, "summary", "vandy", "vandy_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
-    ph_with(flex01, location = ph_location_right()) -> report1
+    ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vandy_cost.png"), width = 5.45, height = 5.45), ph_location_left(), use_loc_size = FALSE)%>%
+    ph_with(flex01, location = ph_location_right()) -> report
 ```
 
 ```{r}
-#save powerpoint output
-print(report1, target = here::here("results", params$year, "summary", "finalreport.pptx"))
+# save powerpoint report
+print(report, target = here::here("results", "presentations",  params$year, "yearly", paste("yearly_report", params$year, ".pptx", sep = "")))
 ```

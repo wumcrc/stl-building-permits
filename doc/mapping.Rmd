@@ -9,27 +9,27 @@ always_allow_html: yes
 params:
   
   #change EVERY month
-  month: January
+  month: February
   year: 2020
   pastyear: 2019
 
 # Compiles Year to Date Dataset for this year | Leave at January 1st 2020
   ytd: "2020-01-01" 
                
-  # Pulls in the data for the most recent month | Change this each month
-  date: "2020-01-01"   
+  # First day of current month | Change this each month
+  date: "2020-02-01"   
   
-  # Needs to be the first day of the next month | Change this each month
-  enddate: "2020-02-01"
+  # First day of next month | Change this each month
+  enddate: "2020-03-01"
            
-  # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
+  #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
-  # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-01-01" 
+  # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
+  pstmonth: "2019-02-01" 
            
-  # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-02-01"  
+  # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
+  pstmonth2: "2019-03-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -100,6 +100,12 @@ merge <- df%>%
 ```{r}
 #create custom color palette for plots
 cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#4daf4a", "Institutional" = "#984ea3")
+
+# summary note colors
+reg24 <- fp_text(color = 'black', font.size = 24)
+reg20 <- fp_text(color = 'black', font.size = 20)
+boldline <- fp_text(color = "black", font.size = 28, bold = TRUE, underlined = TRUE)
+bold <- fp_text(color = "black", font.size = 24, bold = TRUE)
 ```
 
 ```{r}
@@ -107,7 +113,7 @@ cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#
 report%>%
   add_slide(layout = "Title Slide", master = "Office Theme")%>%
   ph_with(value = "St. Louis Central Corridor West Building Permits", location = ph_location_type(type = "ctrTitle"))%>%
-  ph_with(c(params$month, params$year), location = ph_location_type(type = "subTitle"))%>%
+  ph_with(paste("Monthly Report:", params$month, params$year, sep = " "), location = ph_location_type(type = "subTitle"))%>%
   ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt"))%>%
   
   #introduction slide
@@ -134,13 +140,14 @@ ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
   scale_y_continuous(labels = scales::dollar_format())+
   coord_flip()
 
-ggsave(here::here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4, units = "in", dpi = 500)
+ggsave(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"), 
+       width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "allnbhd_plot.png"), width = 7, height = 4),
-          location = ph_location_type())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Neighborhood Summary: Average Building Permit Cost", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -217,35 +224,43 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Forest Park Southeast in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Forest Park Southeast in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Forest Park Southeast in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Forest Park Southeast in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Forest Park Southeast: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Forest Park Southeast: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+print(report, target = here::here("results", "test.pptx"))
 ```
 
 ```{r}
@@ -297,12 +312,12 @@ tm_shape(fpse_tiles) +
     legend.position = c("right", "bottom")) -> fpse_map
 
 #save map as .jpeg
-tmap_save(fpse_map, file = here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), dpi = 500)
+tmap_save(fpse_map, file = here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9.24, height = 7.47), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Forest Park Southeast", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -381,13 +396,14 @@ ggplot(fpse, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> fpse_plot
 
-ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"), plot = fpse_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"), 
+       plot = fpse_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE)%>%
   ph_with(value = "Forest Park Southeast High Cost Permits", 
           location = ph_location_type(type = "title")) -> report
@@ -441,36 +457,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Central West End in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Central West End in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Central West End in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Central West End in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Central West End: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Central West End: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
-
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -524,12 +545,13 @@ tm_shape(cwe_tiles) +
     legend.position = c("right", "bottom")) -> cwe_map
 
 #save map as .jpeg
-tmap_save(cwe_map, file = here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), dpi = 500)
+tmap_save(cwe_map, file = here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"),
+          width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type="title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), width = 9, height = 5), location = ph_location_type(type="body"), use_loc_size = FALSE)%>%
   ph_with("Central West End", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -607,14 +629,15 @@ ggplot(cwe, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> cwe_plot
 
-ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"), plot = cwe_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"), 
+       plot = cwe_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Cental West End High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -665,35 +688,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in DeBaliviere Place in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in DeBaliviere Place in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in DeBaliviere Place in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in DeBaliviere Place in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "DeBaliviere Place: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "DeBaliviere Place: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -746,12 +775,12 @@ tm_shape(dbp_tiles) +
     legend.position = c("right", "bottom")) -> dbplace_map
 
 #save map as .jpeg
-tmap_save(dbplace_map, file = here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), dpi = 500)
+tmap_save(dbplace_map, file = here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 6.97, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("DeBaliviere Place", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -829,14 +858,15 @@ ggplot(dbplace, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> dbplace_plot
 
-ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), plot = dbplace_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), 
+       plot = dbplace_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "DeBaliviere Place High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -887,35 +917,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Skinker DeBaliviere in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Skinker DeBaliviere in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Skinker DeBaliviere in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Skinker DeBaliviere in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Skinker DeBaliviere: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Skinker DeBaliviere: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -968,12 +1004,13 @@ tm_shape(sdb_tiles) +
     legend.position = c("right", "bottom")) -> skinker_map
 
 #save map as .jpeg
-tmap_save(skinker_map, file = here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), dpi = 500)
+tmap_save(skinker_map, file = here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg")), location = ph_location_fullsize())%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), width = 9, height = 5), 
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Skinker DeBaliviere", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1056,14 +1093,15 @@ ggplot(skinker, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> skinker_plot
 
-ggsave(here::here("results",  params$year, params$month, "skinker", "skinker_cost.png"), plot = skinker_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "skinker", "skinker_cost.png"),
+       plot = skinker_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Skinker DeBaliviere High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -1115,35 +1153,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in West End in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in West End in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in West End in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in West End in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "West End: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "West End: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -1197,12 +1241,12 @@ tm_shape(we_tiles) +
     legend.position = c("right", "bottom")) -> westend_map
 
 #save map as .jpeg
-tmap_save(westend_map, file = here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), dpi = 500) 
+tmap_save(westend_map, file = here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9.5, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("West End", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1285,14 +1329,15 @@ ggplot(westend, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> westend_plot
 
-ggsave(here::here("results",  params$year, params$month, "westend", "westend_cost.png"), plot = westend_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "westend", "westend_cost.png"), 
+       plot = westend_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "West End High Cost Permits", location = ph_location_type(type = "title"))%>%
  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -1344,35 +1389,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Visitation Park in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Visitation Park in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Visitation Park in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Visitation Park in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Visitation Park: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Visitation Park: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -1425,12 +1476,12 @@ tm_shape(vp_tiles) +
     legend.position = c("right", "bottom")) -> vstprk_map
 
 #save map as .jpeg
-tmap_save(vstprk_map, file = here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), dpi = 500)
+tmap_save(vstprk_map, file = here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 5.31, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Visitation Park", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1508,14 +1559,15 @@ ggplot(vstprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vstprk_plot
 
-ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), plot = vstprk_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), 
+       plot = vstprk_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Visitation Park High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -1567,35 +1619,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Academy in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Academy in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Academy in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Academy in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Academy: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Academy: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -1649,12 +1707,12 @@ tm_shape(ac_tiles) +
     legend.position = c("right", "bottom")) -> academy_map
 
 #save map as .jpeg
-tmap_save(academy_map, file = here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), dpi = 500)
+tmap_save(academy_map, file = here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 5.21, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Academy", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1732,14 +1790,15 @@ ggplot(academy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ac_plot
 
-ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png"), plot = ac_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png"), 
+       plot = ac_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Academy High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -1791,35 +1850,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Fountain Park in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Fountain Park in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Fountain Park %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Fountain Park in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Fountain Park: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Fountain Park: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -1872,12 +1937,12 @@ tm_shape(fp_tiles) +
     legend.position = c("right", "bottom")) -> ftnprk_map
 
 #save map as .jpeg
-tmap_save(ftnprk_map, file = here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), dpi = 500)
+tmap_save(ftnprk_map, file = here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 4.06, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Fountain Park", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1956,14 +2021,15 @@ ggplot(ftnprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ftnprk_plot
 
-ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), plot = ftnprk_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), 
+       plot = ftnprk_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Fountain Park High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -2014,35 +2080,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Lewis Place in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Lewis Place in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Lewis Place in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Lewis Place in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Lewis Place: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Lewis Place: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -2096,12 +2168,12 @@ tm_shape(lp_tiles) +
     legend.position = c("right", "bottom")) -> lewis_map
 
 #save map as .jpeg
-tmap_save(lewis_map, file = here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), dpi = 500)
+tmap_save(lewis_map, file = here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 6.18, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Lewis Place", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2179,14 +2251,15 @@ ggplot(lewis, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> lewis_plot
 
-ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.png"), plot = lewis_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.png"), 
+       plot = lewis_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Lewis Place High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -2238,35 +2311,41 @@ if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
 if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in Vandeventer in %s %s",
+sprint_1 <- sprintf("%s building permits in %s %s",
                     bp20, params$month, params$year)
-sprint_2 <- sprintf("%s change compared to %s %s (%s total building permits)", 
-                    pct_chg_cnt, params$month, params$pastyear, bp19)
-sprint_3 <- sprintf("%s : Average building permit cost in Vandeventer in %s %s",
-                    cost20, params$month, params$year)
-sprint_4 <- sprintf("%s change compared to %s %s (%s)", 
-                    pct_chg_cost, params$month, params$pastyear, cost19)
-sprint_5 <- sprintf("%s total building permits in Vandeventer in %s", 
+sprint_2 <- sprintf("%s total building permits in %s", 
                     bptot20, params$year)
-sprint_6 <- sprintf("%s change compared to this time in %s (%s total building permits)", 
-                    pct_chg_ytd20, params$pastyear, bptot19)
-sprint_7 <- sprintf("%s : Average building permit cost in Vandeventer in %s", 
-                    totcost20, params$year)
-sprint_8 <- sprintf("%s change compared to this time in %s (%s)", 
-                    pct_chg_cost20, params$pastyear, totcost19)
 
-#write ytd sprints to powerpoint
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
+       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost20), bold),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
+       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
 report%>%
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Vandeventer: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_1, sprint_2, sprint_3, sprint_4), 
-          location = ph_location_type(type = "body"))%>%
-
-  #add extra slide for summary notes
-  add_slide(layout = "Title and Content", master = "Office Theme")%>%
-  ph_with(value = "Vandeventer: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(c(sprint_5, sprint_6, sprint_7, sprint_8), 
-          location = ph_location_type(type = "body")) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -2319,12 +2398,12 @@ tm_shape(vd_tiles) +
     legend.position = c("right", "bottom")) -> vandy_map
 
 #save map as .jpeg
-tmap_save(vandy_map, file = here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), dpi = 500)
+tmap_save(vandy_map, file = here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 8.27, height = 7.5), location = ph_location_type(type = "title"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Vandeventer", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2402,21 +2481,22 @@ ggplot(vandy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vandy_plot
 
-ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.png"), plot = vandy_plot, dpi = 300)
+ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.png"), 
+       plot = vandy_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Vandeventer High Cost Permits", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_cost.png"),
-                       width = 5.45, height = 5.45), location = ph_location_type(type = "body"),
+                       width = 9, height = 5), location = ph_location_type(type = "body"), 
                        use_loc_size = FALSE) -> report
 }
 ```
 
 
 ```{r}
-#save powerpoint
-print(report, target = here::here("results", params$year, params$month, "finalreport.pptx"))
+# save powerpoint report
+print(report, target = here::here("results", "presentations",  params$year, params$month, paste("monthly_report", params$month, params$year, ".pptx", sep = "")))
 ```
 

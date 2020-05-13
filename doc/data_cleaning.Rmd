@@ -7,27 +7,26 @@ params:
   
   #Change Every month
   month: March
-  
   pastyear: 2019
   year: 2020 
                  
   # Compiles Year to Date Dataset for this year | Leave at January 1st 2020
   ytd: "2020-01-01" 
                
-  # Pulls in the data for the most recent month | Change this each month
-  date: "2020-03-01"   
+  # First day of current month | Change this each month
+  date: "2020-01-01"   
   
-  # Needs to be the first day of the next month | Change this each month
-  enddate: "2020-04-01"
+  # First day of next month | Change this each month
+  enddate: "2020-02-01"
            
-  # Compiles Year to Date Dataset for previous year | Leave at January 1st 2019 
+  #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
-  # Compiles Data for the most recent month of the previous year | This is the first day of the month
-  pstmonth: "2019-03-01" 
+  # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
+  pstmonth: "2019-01-01" 
            
-  # Compiles Data for the most recent month of the previous year | This is the first day of the next month (of last year)
-  pstmonth2: "2019-04-01"  
+  # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
+  pstmonth2: "2019-02-01"  
 ---
 
 ### Introduction
@@ -49,6 +48,45 @@ library(writexl)      #write excel
 library(lubridate)    #manipulate date time data
 ```
 
+```{r}
+# This code chunk creates the appropriate folder paths that are referred to in all of the .Rmd documents. 
+# This code is necessary to knit and compile the powerpoint presentations.
+
+here::here()
+dir.create(getwd())
+dir.create(here::here(file.path("results", params$year)))
+dir.create(here::here(file.path("results", params$year, "yearly")))
+dir.create(here::here(file.path("results", params$year, "yearly", "academy")))
+dir.create(here::here(file.path("results", params$year, "yearly", "cwe")))
+dir.create(here::here(file.path("results", params$year, "yearly", "dbplace")))
+dir.create(here::here(file.path("results", params$year, "yearly", "ftnprk")))
+dir.create(here::here(file.path("results", params$year, "yearly", "fpse")))
+dir.create(here::here(file.path("results", params$year, "yearly", "lewis")))
+dir.create(here::here(file.path("results", params$year, "yearly", "skinker")))
+dir.create(here::here(file.path("results", params$year, "yearly", "vandy")))
+dir.create(here::here(file.path("results", params$year, "yearly", "vstprk")))
+dir.create(here::here(file.path("results", params$year, "yearly", "westend")))
+dir.create(here::here(file.path("results", params$year, "yearly", "all_nbhds")))
+dir.create(here::here(file.path("results", params$year, params$month)))
+dir.create(here::here(file.path("results", params$year, params$month, "academy")))
+dir.create(here::here(file.path("results", params$year, params$month, "cwe")))
+dir.create(here::here(file.path("results", params$year, params$month, "dbplace")))
+dir.create(here::here(file.path("results", params$year, params$month, "ftnprk")))
+dir.create(here::here(file.path("results", params$year, params$month, "fpse")))
+dir.create(here::here(file.path("results", params$year, params$month, "lewis")))
+dir.create(here::here(file.path("results", params$year, params$month, "skinker")))
+dir.create(here::here(file.path("results", params$year, params$month, "vandy")))
+dir.create(here::here(file.path("results", params$year, params$month, "vstprk")))
+dir.create(here::here(file.path("results", params$year, params$month, "westend")))
+dir.create(here::here(file.path("results", params$year, params$month, "all_nbhds")))
+dir.create(here::here(file.path("results", "presentations", params$year, params$month)))
+dir.create(here::here(file.path("results", "presentations", params$year, "yearly")))
+dir.create(here::here(file.path("data", params$year)))
+dir.create(here::here(file.path("data", params$year, params$month)))
+dir.create(here::here(file.path("data", params$year, params$month, "shapefiles")))
+dir.create(here::here(file.path("data", params$pastyear, "yearly")))
+```
+
 ### Temperary Code
 ```{r, message=FALSE}
 library(readxl)
@@ -57,7 +95,6 @@ data <- read_excel(here::here("data", "PrmBldg.xlsx"))
 
 
 ```{r, include=FALSE}
-
 # Set working directory
 wd <- getwd()
 setwd(wd)
@@ -188,9 +225,9 @@ write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 
 #last year data
 lstyr <- filter(df, yr == params$pastyear)
-write_csv(lstyr, here::here("data", params$pastyear, "summary", "clean_year.csv"))
+write_csv(lstyr, here::here("data", params$pastyear, "yearly", "clean_year.csv"))
 
 #5 year data
 yr5 <- filter(df, yr >= (params$pastyear - 5) & yr <= params$pastyear)
-write_csv(yr5, here::here("data", params$pastyear, "summary", "5year.csv"))
+write_csv(yr5, here::here("data", params$pastyear, "yearly", "5year.csv"))
 ```
