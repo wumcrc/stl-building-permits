@@ -6,7 +6,7 @@ output: html_document
 params:
   
   #Change Every month
-  month: March
+  month: May
   pastyear: 2019
   year: 2020 
                  
@@ -14,19 +14,19 @@ params:
   ytd: "2020-01-01" 
                
   # First day of current month | Change this each month
-  date: "2020-01-01"   
+  date: "2020-05-01"   
   
   # First day of next month | Change this each month
-  enddate: "2020-02-01"
+  enddate: "2020-06-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-01-01" 
+  pstmonth: "2019-05-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2019-02-01"  
+  pstmonth2: "2019-06-01"  
 ---
 
 ### Introduction
@@ -87,7 +87,7 @@ dir.create(here::here(file.path("data", params$year, params$month, "shapefiles")
 dir.create(here::here(file.path("data", params$pastyear, "yearly")))
 ```
 
-### Temperary Code
+### Temporary Code
 ```{r, message=FALSE}
 library(readxl)
 data <- read_excel(here::here("data", "PrmBldg.xlsx"))
@@ -101,7 +101,7 @@ setwd(wd)
 #setwd("G:/Projects/Monthly-Reports/stl-building-permits")
 ```
 
-
+### Actual code for importing data 
 ```{r, include=FALSE}
 
 #Import data
@@ -230,4 +230,11 @@ write_csv(lstyr, here::here("data", params$pastyear, "yearly", "clean_year.csv")
 #5 year data
 yr5 <- filter(df, yr >= (params$pastyear - 5) & yr <= params$pastyear)
 write_csv(yr5, here::here("data", params$pastyear, "yearly", "5year.csv"))
+```
+
+```{r}
+# This code cleans our Global Environment and gives you a nice lil' message
+
+rm(list = ls())
+print("Congrats! The code ran and you rock! Have a great day champ :)")
 ```
