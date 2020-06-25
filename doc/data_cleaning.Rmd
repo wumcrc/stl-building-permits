@@ -170,7 +170,8 @@ data%>%
                                              ifelse(grepl("CAFE", NewUse), "Commercial",
                                              ifelse(grepl("LOUNGE", NewUse), "Commercial",
                                              ifelse(grepl("NURSING HOME", NewUse), "Residential",
-                                                    NA)))))))))))))))))))))))%>%
+                                             ifelse(grepl("SINGLE FAMILY", NewUse), "Residential",
+                                                    NA))))))))))))))))))))))))%>%
   
   # Create New Variables for Building Permits Greater/Less Than 50,000
   mutate(big_cost = ifelse(EstProjectCost >= 50000, 1, NA))%>%
@@ -187,14 +188,12 @@ data%>%
   rename(HANDLE = Handle)%>%
   
   #Drop unused variables using `select` function, assign to new `df` data frame
-  select(AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
+  dplyr::select(AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
                     StDir, StName, StType, UnitNum, OrigAddress, ProjectType, MainStrucType, AppDate,
                     IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
                     NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
-                    OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo, count, big_cost, lil_cost, lrgcost, new_use, nbhd_name, yr, month) -> df
-
-
-
+                    OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo, count, big_cost, lil_cost, lrgcost, new_use,
+                    nbhd_name, yr, month) -> df
 ```
 
 
