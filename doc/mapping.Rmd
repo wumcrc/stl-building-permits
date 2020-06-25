@@ -17,19 +17,19 @@ params:
   ytd: "2020-01-01" 
                
   # First day of current month | Change this each month
-  date: "2020-02-01"   
+  date: "2020-05-01"   
   
   # First day of next month | Change this each month
-  enddate: "2020-03-01"
+  enddate: "2020-06-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-02-01" 
+  pstmonth: "2019-05-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2019-03-01"  
+  pstmonth2: "2019-06-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -159,7 +159,7 @@ report%>%
   df%>%
   group_by(nbhd_name)%>%
   summarize(mean = mean(EstProjectCost), count = n())%>%
-  select(nbhd_name, mean, count) -> table
+  dplyr::select(nbhd_name, mean, count) -> table
   
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -259,8 +259,6 @@ report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Forest Park Southeast: Summary Notes", location = ph_location_type(type = "title"))%>%
   ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
-
-print(report, target = here::here("results", "test.pptx"))
 ```
 
 ```{r}
@@ -359,7 +357,7 @@ if("Forest Park Southeast" %in% df$nbhd_name){
     #create in depth summary table
   df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -405,7 +403,7 @@ report%>%
   ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE)%>%
-  ph_with(value = "Forest Park Southeast High Cost Permits", 
+  ph_with(value = "Forest Park Southeast Permit Cost Breakdown", 
           location = ph_location_type(type = "title")) -> report
 }
 ```
@@ -593,7 +591,7 @@ if("Central West End" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Central West End")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -635,7 +633,7 @@ ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"),
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Cental West End High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Cental West End Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -822,7 +820,7 @@ if("DeBaliviere Place" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -864,7 +862,7 @@ ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cos
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "DeBaliviere Place High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "DeBaliviere Place Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -1057,7 +1055,7 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -1099,7 +1097,7 @@ ggsave(here::here("results",  params$year, params$month, "skinker", "skinker_cos
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Skinker DeBaliviere High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Skinker DeBaliviere Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -1292,7 +1290,7 @@ if("West End" %in% df$nbhd_name){
     #create in depth summary table
   df%>%
   filter(nbhd_name == "West End")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -1335,7 +1333,7 @@ ggsave(here::here("results",  params$year, params$month, "westend", "westend_cos
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "West End High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "West End Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -1523,7 +1521,7 @@ if("Visitation Park" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Visitation Park")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -1565,7 +1563,7 @@ ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Visitation Park High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Visitation Park Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -1753,7 +1751,7 @@ if("Academy" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Academy")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -1796,7 +1794,7 @@ ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Academy High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Academy Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -1984,7 +1982,7 @@ if("Fountain Park" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Fountain Park")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -2027,7 +2025,7 @@ ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Fountain Park High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Fountain Park Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -2215,7 +2213,7 @@ if("Lewis Place" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Lewis Place")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -2257,7 +2255,7 @@ ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.pn
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Lewis Place High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Lewis Place Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
@@ -2445,7 +2443,7 @@ if("Vandeventer" %in% df$nbhd_name){
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Vandeventer")%>%
-    select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
+    dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
   
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
@@ -2487,7 +2485,7 @@ ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.pn
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(value = "Vandeventer High Cost Permits", location = ph_location_type(type = "title"))%>%
+  ph_with(value = "Vandeventer Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"), 
                        use_loc_size = FALSE) -> report
