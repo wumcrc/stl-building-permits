@@ -27,6 +27,9 @@ params:
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
   pstmonth2: "2019-06-01"  
+  
+    #6 Months prior to params$date
+  month6: "2019-12-01"
 ---
 
 ### Introduction
@@ -226,9 +229,9 @@ write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 lstyr <- filter(df, yr == params$pastyear)
 write_csv(lstyr, here::here("data", params$pastyear, "yearly", "clean_year.csv"))
 
-#5 year data
-yr5 <- filter(df, yr >= (params$pastyear - 5) & yr <= params$pastyear)
-write_csv(yr5, here::here("data", params$pastyear, "yearly", "5year.csv"))
+#6 month data
+month6 <- filter(df, FirstDate >= as.Date(params$month6) & FirstDate <= as.Date(params$date))
+write_csv(month6, here::here("data", params$year, params$month, "month6.csv"))
 ```
 
 ```{r}

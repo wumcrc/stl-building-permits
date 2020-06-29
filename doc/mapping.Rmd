@@ -36,6 +36,9 @@ params:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Introduction
+
+Before running this code make sure that all params are changed to the correct dates!
 
 ```{r, include=FALSE}
 #load dependencies
@@ -58,6 +61,9 @@ library(formattable)  # currency values
 library(lubridate)    # manipulate date time data
 library(officer)      # powerpoint manipulation
 library(flextable)    # nice tables
+library(customLayout) # custom powerpoint layout
+library(rlang)        # check for empty values
+library(tidyr)        # used to drop NA
 ```
 
 
@@ -70,6 +76,7 @@ ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
 lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv"))
 lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv"))
 avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
+month6 <- read_csv(here::here("data", params$year, params$month,  "month6.csv"))
 
 load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
 load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
@@ -77,6 +84,10 @@ load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
 
 #create powerpoint
 report <- read_pptx()
+
+neighborhoods <- c(38, 39, 46:49, 51, 53, 54, 58)
+names <- c("Central West End", "Forest Park Southeast", "Skinker DeBaliviere", "DeBaliviere Place", "West End", "Visitation Park", "Academy", "Fountain Park", "Lewis Place", "Vandeventer")
+use <- c("Industrial", "Institutional", "Residential", "Commercial")
 ```
 
 ```{r, include=FALSE}
@@ -84,6 +95,42 @@ report <- read_pptx()
 st_read(here::here("/data/working-db/parcels", "prcl.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> prcl
+```
+
+```{r}
+df%>%
+  group_by(Nbrhd)%>%
+  count() -> sub
+
+neighborhoods[!(neighborhoods %in% sub$Nbrhd)] -> missing_category_days
+is_empty(missing_category_days) -> test
+
+as.data.frame(sub) -> sub
+
+if(test == FALSE) {
+  add_row(sub, Nbrhd = missing_category_days) -> sub
+}
+sub%>%
+  replace(., is.na(.), 0) -> sub
+
+nbhd_sf <- left_join(nhoods_sf, sub, by = c("neighborhood" = "Nbrhd")) %>% 
+  st_transform(crs = 102696) %>%
+  drop_na()
+
+dst5_rateMap <- tm_shape(dst5_tiles) +
+  tm_rgb() +
+  tm_shape(nbhd_sf) +
+  tm_polygons(col = "n",
+              palette = "BuPu",
+              style = "jenks",
+              title = "Number of Building Permits") +
+  tm_text("n", shadow=TRUE) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("left", "bottom"))
 ```
 
 
@@ -106,6 +153,18 @@ reg24 <- fp_text(color = 'black', font.size = 24)
 reg20 <- fp_text(color = 'black', font.size = 20)
 boldline <- fp_text(color = "black", font.size = 28, bold = TRUE, underlined = TRUE)
 bold <- fp_text(color = "black", font.size = 24, bold = TRUE)
+```
+
+```{r officer layout}
+#create custom powerpoint layout
+lay <- lay_new(matrix(1:2)) 
+title <- lay_new(1, widths = 2, heights = 2)
+layout <- lay_bind_row(title, lay, heights = c(1,6))
+lay_show(layout)
+
+offlayout <- phl_layout(layout,
+    margins = c(0.25, 0.25, 0.25, 0.25),
+    innerMargins = rep(0.15,4))
 ```
 
 ```{r}
@@ -155,26 +214,65 @@ report%>%
 ```
 
 ```{r, echo = FALSE}
-    #create in depth summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   group_by(nbhd_name)%>%
   summarize(mean = mean(EstProjectCost), count = n())%>%
   dplyr::select(nbhd_name, mean, count) -> table
+
+names[!(names %in% table$nbhd_name)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, nbhd_name = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
+month6%>%
+  group_by(nbhd_name)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(nbhd_name, mean, count) -> table1
+
+names[!(names %in% table1$nbhd_name)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, nbhd_name = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-#print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(nbhd_name = "Neighborhood", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(nbhd_name = "Neighborhood", 
     mean = "Average Cost", count = "# of Permits") -> flex01
 
-  #add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Neighborhood Summary", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Neighborhood Summary", 
+               location = ph_location_type(
+                 type = "title")) -> report
 ```
 
 
@@ -247,11 +345,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -323,31 +421,67 @@ report%>%
 ```
 
 ```{r FPSE summary table, echo=FALSE}
-if("Forest Park Southeast" %in% df$nbhd_name){
-    
-    #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Forest Park Southeast")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-#print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Forest Park Southeast") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
   
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Forest Park Southeast", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
-}
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
+
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Neighborhood Summary", 
+               location = ph_location_type(
+                 type = "title")) -> report
 ```
 
 ```{r, echo=FALSE}
@@ -478,11 +612,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -559,28 +693,67 @@ report%>%
 ```{r, echo=FALSE}
 if("Central West End" %in% df$nbhd_name){
     
-  #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Central West End")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Central West End")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-#print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Central West End") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Central West End", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Central West End", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -709,11 +882,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -788,28 +961,67 @@ report%>%
 ```{r, echo=FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
     
- #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "DeBaliviere Place")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-#print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("DeBaliviere Place") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "DeBaliviere Place", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("DeBaliviere Place", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -938,11 +1150,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1018,33 +1230,67 @@ report%>%
 ```{r Skinker DeBaliviere summary table, echo = FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
     
-  #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Skinker DeBaliviere")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "Skinker DeBaliviere")
-  
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Skinker DeBaliviere") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Skinker DeBaliviere", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Skinker DeBaliviere", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -1174,11 +1420,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1254,32 +1500,67 @@ report%>%
 ```{r West End summary table, echo=FALSE}
 if("West End" %in% df$nbhd_name){
   
-  #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "West End")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "West End")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-#print summary table
-  knitr::kable(table,
-               col.names = c("New Use", "Average Cost", "Permit Count"),
-               format="markdown", caption = "West End")
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("West End") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "West End", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("West End", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -1410,11 +1691,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1489,28 +1770,67 @@ report%>%
 ```{r, echo = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
     
-  #create summary table
-  df%>%
+ #create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Visitation Park")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Visitation Park")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Visitation Park") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Visitation Park", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Visitation Park", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -1640,11 +1960,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1720,27 +2040,67 @@ report%>%
 ```{r Academy summary table, echo = FALSE}
 if("Academy" %in% df$nbhd_name){
     
-  #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Academy")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n())-> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Academy")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Academy") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Academy", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Academy", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -1871,11 +2231,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1950,28 +2310,67 @@ report%>%
 ```{r Fountain Park summary table, echo = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
     
-  #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Fountain Park")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Fountain Park")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Fountain Park") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Fountain Park", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Fountain Park", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -2101,11 +2500,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2181,28 +2580,67 @@ report%>%
 ```{r, echo=FALSE}
 if("Lewis Place" %in% df$nbhd_name){
     
-    #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Lewis Place")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Lewis Place")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Lewis Place") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Lewis Place", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Lewis Place", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
@@ -2332,11 +2770,11 @@ summary <- block_list(
        ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
+       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2411,28 +2849,67 @@ report%>%
 ```{r vandy summary table, echo=FALSE}
 if("Vandeventer" %in% df$nbhd_name){
     
-  #create summary table
-  df%>%
+#create summary tables for current month and past 6 months
+df%>%
   filter(nbhd_name == "Vandeventer")%>%
   group_by(new_use)%>%
-  summarize(avg_cost = mean(EstProjectCost),
-            permit_count = n()) -> table
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0) -> table
+
   
-#make avg_cost a currency value
-table$avg_cost <- currency(table$avg_cost, digits = 0L)
+month6%>%
+  filter(nbhd_name == "Vandeventer")%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  dplyr::select(new_use, mean, count) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
   
-  #print summary table
+#make summary tables
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(new_use = "New Use", 
-    avg_cost = "Average Cost", permit_count = "# of Permits")%>%
-    set_caption("Vandeventer") -> flex01
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex
+  
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = "Last 6 Months")%>%
+  set_header_labels(new_use = "Permit Use", 
+    mean = "Average Cost", count = "# of Permits") -> flex01
 
-#add powerpoint slide
-  report%>%
-    add_slide()%>%
-    ph_with(value = "Vandeventer", location = ph_location_type(type = "title"))%>%
-    ph_with(flex01, location = ph_location_type(type = "body")) -> report
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with("Vandeventer", 
+               location = ph_location_type(
+                 type = "title")) -> report
 }
 ```
 
