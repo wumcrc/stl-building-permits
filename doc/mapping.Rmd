@@ -97,6 +97,7 @@ st_read(here::here("/data/working-db/parcels", "prcl.shp"),
   st_transform(crs = 32615) -> prcl
 ```
 
+
 ```{r}
 df%>%
   group_by(Nbrhd)%>%
@@ -116,21 +117,6 @@ sub%>%
 nbhd_sf <- left_join(nhoods_sf, sub, by = c("neighborhood" = "Nbrhd")) %>% 
   st_transform(crs = 102696) %>%
   drop_na()
-
-dst5_rateMap <- tm_shape(dst5_tiles) +
-  tm_rgb() +
-  tm_shape(nbhd_sf) +
-  tm_polygons(col = "n",
-              palette = "BuPu",
-              style = "jenks",
-              title = "Number of Building Permits") +
-  tm_text("n", shadow=TRUE) +
-  tm_layout(
-    frame = FALSE,
-    legend.bg.color = "white",
-    legend.frame=TRUE,
-    legend.outside = TRUE,
-    legend.position = c("left", "bottom"))
 ```
 
 
@@ -173,13 +159,21 @@ report%>%
   add_slide(layout = "Title Slide", master = "Office Theme")%>%
   ph_with(value = "St. Louis Central Corridor West Building Permits", location = ph_location_type(type = "ctrTitle"))%>%
   ph_with(paste("Monthly Report:", params$month, params$year, sep = " "), location = ph_location_type(type = "subTitle"))%>%
-  ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt"))%>%
-  
-  #introduction slide
-  add_slide()%>%
-  ph_with(value = "Introduction", location = ph_location_type(type = "title"))%>%
-  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped", "Infinite change indicates 0 permits in the current or previous time period/comparison month so there was a overall increase or decrease"), location = ph_location_type(type = "body")) -> report
+  ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt")) -> report
+
+#add STL map reference
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "stl_all copy.png")),
+          location = ph_location_left())%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "nbhd_close.png"), height = 3.73, width = 4.19),
+          location = ph_location_right(), use_loc_size = FALSE)%>%
+  ph_with("St. Louis Neighborhood Spatial Reference", 
+               location = ph_location_type(
+                 type = "title") )-> report
 ```
+
+
 
 ### All Neighborhoods: Summary
 
@@ -276,7 +270,46 @@ report%>%
 ```
 
 
-### Forest Park Southeast: Summary Notes
+### Forest Park Southeast
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 39)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "fpse.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Forest Park Southeast", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 
 ```{r FPSE ytd summary notes}
 #filter out neighborhood
@@ -543,7 +576,45 @@ report%>%
 ```
 
 
-### Central West End: Summary Notes
+### Central West End
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 38)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "cwe.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Central West End", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r CWE ytd summary notes}
 #filter out neighborhood
@@ -813,7 +884,45 @@ report%>%
 }
 ```
 
-### DeBaliviere Place: Summary Notes
+### DeBaliviere Place
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 47)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "dbplace.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("DeBaliviere Place", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r dbplace ytd summary notes}
 #filter out neighborhood
@@ -1081,7 +1190,45 @@ report%>%
 }
 ```
 
-### Skinker DeBaliviere: Summary Notes
+### Skinker DeBaliviere
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 46)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "skinker_db.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Skinker DeBaliviere", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r skinker ytd summary notes}
 #filter out neighborhood
@@ -1351,7 +1498,45 @@ report%>%
 ```
 
 
-### West End: Summary Notes
+### West End
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 48)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "westend.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("West End", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r West End ytd summary notes}
 #filter out neighborhood
@@ -1622,7 +1807,45 @@ report%>%
 ```
 
 
-### Visitation Park: Summary Notes
+### Visitation Park
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 49)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "visitation_park.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Visitation Park", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r vstprk ytd summary notes}
 #filter out neighborhood
@@ -1891,7 +2114,45 @@ report%>%
 ```
 
 
-### Academy: Summary Notes
+### Academy
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 51)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "academy.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Academy", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r Academy ytd summary}
 #filter out neighborhood
@@ -2162,7 +2423,45 @@ report%>%
 ```
 
 
-### Fountain Park: Summary Notes
+### Fountain Park
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 53)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "fountain_park.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Fountain Park", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r ftnprk ytd summary}
 #filter out neighborhood
@@ -2431,7 +2730,45 @@ report%>%
 }
 ```
 
-### Lewis Place: Summary Notes
+### Lewis Place
+
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 54)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "lewis_place.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Lewis Place", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r Lewis Place ytd summary}
 #filter out neighborhood
@@ -2703,6 +3040,44 @@ report%>%
 
 ### Vandeventer
 
+```{r}
+#create mean, median, range stats
+nbhd20 <- filter(df, Nbrhd == 58)
+mean <- mean(nbhd20$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(nbhd20$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(nbhd20$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(nbhd20$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "vandeventer.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with("Vandeventer", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ```{r vandy ytd summary}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 58)
@@ -2967,6 +3342,14 @@ report%>%
                        width = 9, height = 5), location = ph_location_type(type = "body"), 
                        use_loc_size = FALSE) -> report
 }
+```
+
+```{r}
+  # additional notes slide
+report%>%
+  add_slide()%>%
+  ph_with(value = "Additional Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped", "Infinite change indicates 0 permits in the current or previous time period/comparison month so there was a overall increase or decrease"), location = ph_location_type(type = "body")) -> report
 ```
 
 
