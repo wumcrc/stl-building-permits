@@ -163,11 +163,9 @@ report%>%
 
 #add STL map reference
 report%>%
-add_slide(layout = "Two Content")%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "stl_all copy.png")),
-          location = ph_location_left())%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "nbhd_close.png"), height = 3.73, width = 4.19),
-          location = ph_location_right(), use_loc_size = FALSE)%>%
+add_slide()%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "spat_ref.png"), height = 5, width = 9),
+          ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("St. Louis Neighborhood Spatial Reference", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -223,7 +221,8 @@ if(test == FALSE) {
   add_row(table, nbhd_name = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., nbhd_name) -> table
 
   
 month6%>%
@@ -240,7 +239,8 @@ if(test == FALSE) {
   add_row(table1, nbhd_name = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., nbhd_name) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -470,7 +470,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -488,7 +489,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -780,7 +782,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> table
 
   
 month6%>%
@@ -798,7 +801,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -1086,7 +1090,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> table
 
   
 month6%>%
@@ -1104,7 +1109,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -1393,7 +1399,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> table
 
   
 month6%>%
@@ -1411,7 +1418,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -1701,7 +1709,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -1719,7 +1728,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -2009,7 +2019,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -2027,7 +2038,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -2317,7 +2329,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -2335,7 +2348,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -2625,7 +2639,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -2643,7 +2658,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -2933,7 +2949,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -2951,7 +2968,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -3240,7 +3258,8 @@ if(test == FALSE) {
   add_row(table, new_use = missing_category) -> table
 }
 table%>%
-  replace(., is.na(.), 0) -> table
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table
 
   
 month6%>%
@@ -3258,7 +3277,8 @@ if(test == FALSE) {
   add_row(table1, new_use = missing_category) -> table1
 }
 table1%>%
-  replace(., is.na(.), 0) -> table1
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
 
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
@@ -3356,5 +3376,10 @@ report%>%
 ```{r}
 # save powerpoint report
 print(report, target = here::here("results", "presentations",  params$year, params$month, paste("monthly_report", params$month, params$year, ".pptx", sep = "")))
+
+# This code cleans our Global Environment and gives you a nice lil' message
+
+rm(list = ls())
+print("NICE JOB! You successfully ran all your code. Have an awesome day :)")
 ```
 
