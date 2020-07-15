@@ -151,6 +151,15 @@ lay_show(layout)
 offlayout <- phl_layout(layout,
     margins = c(0.25, 0.25, 0.25, 0.25),
     innerMargins = rep(0.15,4))
+
+lay1 <- lay_new(matrix(1:4, nc = 2), widths = c(2,2), heights = c(2,1)) 
+title1 <- lay_new(1, widths = 2, heights = 2)
+layout1 <- lay_bind_row(title1, lay1, heights = c(1,6))
+lay_show(layout1)
+
+offlayout01 <- phl_layout(layout1,
+    margins = c(0, 0, 0, 0),
+    innerMargins = rep(0.15,4))
 ```
 
 ```{r}
@@ -209,8 +218,8 @@ report%>%
 #create summary tables for current month and past 6 months
 df%>%
   group_by(nbhd_name)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(nbhd_name, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(nbhd_name, mean, count, sum) -> table
 
 names[!(names %in% table$nbhd_name)] -> missing_category
 is_empty(missing_category) -> test
@@ -227,8 +236,8 @@ table%>%
   
 month6%>%
   group_by(nbhd_name)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(nbhd_name, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(nbhd_name, mean, count, sum) -> table1
 
 names[!(names %in% table1$nbhd_name)] -> missing_category
 is_empty(missing_category) -> test
@@ -245,28 +254,30 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(nbhd_name = "Neighborhood", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(nbhd_name = "Neighborhood", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
-  add_slide(layout = "Two Content")%>%
-  ph_with(flex, location = ph_location_left())%>%
-  ph_with(flex01, location = ph_location_right())%>%
+  add_slide()%>%
   ph_with("Neighborhood Summary", 
                location = ph_location_type(
-                 type = "title")) -> report
+                 type = "title"))%>%
+  phl_with_flextable(olay = offlayout01, 2, flex)%>%
+  phl_with_flextable(olay = offlayout01, 4, flex01) -> report
 ```
 
 
@@ -458,8 +469,8 @@ report%>%
 df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -477,8 +488,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -495,19 +506,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -770,8 +783,8 @@ if("Central West End" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Central West End")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -789,8 +802,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Central West End")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -807,19 +820,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -1078,8 +1093,8 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -1097,8 +1112,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -1115,19 +1130,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -1387,8 +1404,8 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -1406,8 +1423,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -1424,19 +1441,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -1697,8 +1716,8 @@ if("West End" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "West End")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -1716,8 +1735,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "West End")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -1734,19 +1753,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -2007,8 +2028,8 @@ if("Visitation Park" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Visitation Park")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2026,8 +2047,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Visitation Park")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2044,19 +2065,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -2317,8 +2340,8 @@ if("Academy" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Academy")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2336,8 +2359,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Academy")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2354,19 +2377,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -2627,8 +2652,8 @@ if("Fountain Park" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Fountain Park")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2646,8 +2671,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Fountain Park")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2664,19 +2689,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -2937,8 +2964,8 @@ if("Lewis Place" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Lewis Place")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2956,8 +2983,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Lewis Place")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -2974,19 +3001,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
@@ -3246,8 +3275,8 @@ if("Vandeventer" %in% df$nbhd_name){
 df%>%
   filter(nbhd_name == "Vandeventer")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
 
 use[!(use %in% table$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -3265,8 +3294,8 @@ table%>%
 month6%>%
   filter(nbhd_name == "Vandeventer")%>%
   group_by(new_use)%>%
-  summarize(mean = mean(EstProjectCost), count = n())%>%
-  dplyr::select(new_use, mean, count) -> table1
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
 
 use[!(use %in% table1$new_use)] -> missing_category
 is_empty(missing_category) -> test
@@ -3283,19 +3312,21 @@ table1%>%
 #make a currency value
 table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
   
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
   set_header_labels(new_use = "Permit Use", 
-    mean = "Average Cost", count = "# of Permits") -> flex01
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
