@@ -230,7 +230,7 @@ lstyr <- filter(df, yr == params$pastyear)
 write_csv(lstyr, here::here("data", params$pastyear, "yearly", "clean_year.csv"))
 
 #6 month data
-month6 <- filter(df, FirstDate >= as.Date(params$month6) & FirstDate <= as.Date(params$date))
+month6 <- filter(df, FirstDate >= as.Date(params$month6) & FirstDate <= as.Date(params$enddate))
 write_csv(month6, here::here("data", params$year, params$month, "month6.csv"))
 ```
 
