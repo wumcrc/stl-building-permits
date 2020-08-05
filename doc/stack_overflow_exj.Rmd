@@ -1,0 +1,106 @@
+---
+title: "Untitled"
+author: "Logan Williams"
+date: "6/19/2020"
+output: html_document
+---
+
+```{r}
+library(shiny)
+library(shinyWidgets)
+library(dplyr)
+library(leaflet)
+library(RColorBrewer)
+
+SampleData <- data.frame(year = c('2017', '2018', '2017', '2020', '2018', '2018', '2017'),
+                         lon = c(38.62893, 38.62681, 38.62797, 38.62972, 38.624, 38.6245, 38.6252),
+                         lat = c(-90.26233, -90.25272, -90.26232, -90.25703, -90.264, -90.265, -90.266),
+                         month = c('January', 'February', 'March', 'April', 'February', 'March', 'April'),
+                         new_use = c('Industrial', 'Institutional', 'Commercial', 'Residential',  'Institutional', 'Commercial', 'Residential'))
+
+vars <- c(
+  "Color by Year" = "year",
+  "Color by Month" = "month",
+  "Color by Use" = "use"
+)
+
+ui <- bootstrapPage(
+  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
+  leafletOutput("map", width = "100%", height = "100%"),
+  absolutePanel(top = 10, right = 10,
+                pickerInput(inputId = "month", 
+                            label = "Select Month:", 
+                            choices = sort(unique(SampleData$month)), 
+                            multiple = TRUE,
+                            selected = sort(unique(SampleData$month)),
+                            options = list(
+                              `actions-box` = TRUE, 
+                              `selected-text-format` = paste0("count > ", length(sort(unique(SampleData$month))) -1), `count-selected-text` = "All Months")),
+                pickerInput(inputId = "year", 
+                            label = "Select Year:", 
+                            choices = sort(unique(SampleData$year)), 
+                            multiple = TRUE,
+                            selected = sort(unique(SampleData$year)),
+                            options = list(
+                              `actions-box` = TRUE, 
+                              `selected-text-format` = paste0("count > ", length(sort(unique(SampleData$year))) -1), `count-selected-text` = "All Years")),
+                pickerInput(inputId = "new_use", 
+                            label = "Select Permit Use:", 
+                            choices = sort(unique(SampleData$new_use)), 
+                            multiple = TRUE,
+                            selected = sort(unique(SampleData$new_use)),
+                            options = list(
+                              `actions-box` = TRUE, 
+                              `selected-text-format` = paste0("count > ", length(sort(unique(SampleData$new_use))) -1), `count-selected-text` = "All Permit Types")),
+                selectInput(inputId = "color",
+                            label = "Select a Color Scheme:", 
+                            choices = vars)
+  )
+)
+
+server <- function(input, output, session) {
+  
+  output$map <- renderLeaflet({
+    leaflet() %>% 
+      setView(lng = -90.1994, lat = 38.6270, zoom = 10)%>%
+      addProviderTiles(providers$CartoDB.Positron)
+  })
+  
+  # Reactive expression for the data subsetted to what the user selected
+  filteredData <- reactive({
+    dplyr::filter(SampleData, year %in% input$year & new_use %in% input$new_use & month %in% input$month)
+  })
+  
+  observe({
+    
+    colorBy <- input$color
+    
+    if (colorBy == "year") {
+      colorData <- factor(SampleData$year)
+      pal <- colorFactor(palette = "Set1", levels = levels(colorData))
+    } 
+    if (colorBy == "month") {
+      colorData <- factor(SampleData$month)
+      pal <- colorFactor(palette = "Set1", levels = levels(colorData))
+    }
+    if (colorBy == "use") {
+      colorData <- factor(SampleData$new_use)
+      pal <- colorFactor(palette = "Set1", levels = levels(colorData))
+    }
+    
+    leafletProxy("map") %>%
+      clearShapes() %>%
+      addCircleMarkers(data = filteredData(), 
+                       ~lat, ~lon, color = ~pal(colorData), popup = paste("<b>Year:</b> ", filteredData()$year, "<br>",
+                                                                         "<b>Permit Type:</b> ", filteredData()$new_use, "<br>")) 
+       addLegend("bottomright", pal = pal, values = levels(colorData), title = colorBy,
+                 layerId = "colorLegend")
+  })
+  
+}    
+
+
+
+shinyApp(ui, server)
+```
+

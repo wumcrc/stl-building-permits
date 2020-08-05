@@ -9,7 +9,7 @@ always_allow_html: yes
 params:
   
   #change EVERY month
-  month: May
+  month: June
   year: 2020
   pastyear: 2019
 
@@ -17,19 +17,19 @@ params:
   ytd: "2020-01-01" 
                
   # First day of current month | Change this each month
-  date: "2020-05-01"   
+  date: "2020-06-01"   
   
   # First day of next month | Change this each month
-  enddate: "2020-06-01"
+  enddate: "2020-07-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-05-01" 
+  pstmonth: "2019-06-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2019-06-01"  
+  pstmonth2: "2019-07-01"  
 ---
 
 ```{r setup, include=FALSE}
