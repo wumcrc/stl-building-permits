@@ -9,7 +9,7 @@ always_allow_html: yes
 params:
   
   #change EVERY month
-  month: September
+  month: October
   year: 2020
   pastyear: 2019
 
@@ -17,19 +17,19 @@ params:
   ytd: "2020-01-01" 
                
   # First day of current month | Change this each month
-  date: "2020-09-01"   
+  date: "2020-10-01"   
   
   # First day of next month | Change this each month
-  enddate: "2020-10-01"
+  enddate: "2020-11-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-09-01" 
+  pstmonth: "2019-10-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2019-10-01"  
+  pstmonth2: "2019-11-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -97,55 +97,6 @@ st_read(here::here("/data/working-db/parcels", "prcl.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> prcl
 ```
-
-
-```{r}
-df%>%
-  group_by(Nbrhd)%>%
-  count() -> sub
-
-neighborhoods[!(neighborhoods %in% sub$Nbrhd)] -> missing_category_days
-is_empty(missing_category_days) -> test
-
-as.data.frame(sub) -> sub
-
-if(test == FALSE) {
-  add_row(sub, Nbrhd = missing_category_days) -> sub
-}
-sub%>%
-  replace(., is.na(.), 0) -> sub
-
-nbhd_sf <- left_join(nhoods_sf, sub, by = c("neighborhood" = "Nbrhd")) %>% 
-  st_transform(crs = 102696) %>%
-  drop_na()
-
-####TEMP CODE
-####
-####
-####
-
-# st_write(merge, here::here("doc", "nbhd.shp"), 
-#          delete_dsn = TRUE)
-# library(rgdal)
-# library(leaflet)
-# boundary <- readOGR(dsn= ".",
-#                     layer = "nbhd",
-#                     verbose = FALSE)
-# #transform shapefile into lat long dataframe so its compatible w/leaflet
-# shapeData <- spTransform(boundary, CRS("+proj=longlat +datum=WGS84 +no_defs"))
-# 
-# leaflet(shapeData)%>%
-#   addPolygons(color = "blue", weight = 1, opacity = 1, fillColor = "blue", fillOpacity = 1, highlightOptions = highlightOptions(color = "white", weight = 1,
-#       bringToFront = TRUE), popup = paste())%>%
-#   setView(lng = -90.240264, lat = 38.647438, zoom = 13)%>%
-#             addProviderTiles(providers$CartoDB.Positron)
-# addPoly
-  ####
-#####
-####
-####TEMP CODE
-```
-
 
 ```{r, include=FALSE}
 #make sure both are numeric
