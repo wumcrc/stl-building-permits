@@ -65,6 +65,8 @@ library(customLayout) # custom powerpoint layout
 library(rlang)        # check for empty values
 library(tidyr)        # used to drop NA
 library(docxtractr)   #convert pptx to pdf
+library(gateway)
+library(grid)
 ```
 
 
@@ -78,6 +80,8 @@ lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.
 lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv"))
 avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
 month6 <- read_csv(here::here("data", params$year, params$month,  "month6.csv"))
+bound <- gw_get_data("Neighborhoods", "sf")
+nbhd_num <- c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58")
 
 load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
 load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
@@ -139,6 +143,48 @@ offlayout01 <- phl_layout(layout1,
     margins = c(0, 0, 0, 0),
     innerMargins = rep(0.15,4))
 ```
+
+```{r}
+# All Neighborhood Building Permit Map
+merge_sf <- st_as_sf(merge)
+
+bound%>%
+filter(NHD_NUM %in% nbhd_num) -> bound_sub
+
+#inset map
+bound%>%
+tm_shape()+
+  tm_fill(col = "grey")+
+  tm_borders(col = "white")+
+  bound_sub%>%
+  tm_shape()+
+  tm_fill(col = "forestgreen")+
+  tm_borders(col = "white") -> inset
+
+bound_sub%>%
+tm_shape()+
+  tm_fill(col = "grey")+
+  tm_borders(col = "white")+
+  merge_sf%>%
+  tm_shape() +
+  tm_bubbles(size = .25,
+               col = "new_use",
+               palette = "Set1",
+               title.col = "Building Permit Type") +
+  tm_credits("Source: City of St. Louis", position = c("left", "BOTTOM"), size = .5) +
+    tm_credits(paste("Date Created:", Sys.Date()), position = c("right", "BOTTOM"), size = .5)+
+  tm_layout(
+    main.title = paste("St. Louis Central Corridor West\nBuilding Permits -", params$month, params$year),
+    main.title.position = "center",
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))-> map
+
+tmap_save(map, insets_tm = inset, insets_vp = viewport(0.8, 0.75, width = 0.4, height = 0.4), file = here::here("results", params$year, params$month, "all_nbhds", "allbldg_map.jpeg"), width = 10.5, height = 5.9, units = "in")
+```
+
 
 ```{r}
 #title slide
