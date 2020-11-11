@@ -1270,7 +1270,7 @@ summary <- block_list(
 #create powerpoint slide
 report%>%
 add_slide(layout = "Two Content")%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "skinker_db.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "skinker.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
   ph_with("Skinker DeBaliviere", 
                location = ph_location_type(
@@ -1895,7 +1895,7 @@ summary <- block_list(
 #create powerpoint slide
 report%>%
 add_slide(layout = "Two Content")%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "visitation_park.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "vstprk.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
   ph_with("Visitation Park", 
                location = ph_location_type(
@@ -2519,7 +2519,7 @@ summary <- block_list(
 #create powerpoint slide
 report%>%
 add_slide(layout = "Two Content")%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "fountain_park.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "ftnprk.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
   ph_with("Fountain Park", 
                location = ph_location_type(
@@ -2830,7 +2830,7 @@ summary <- block_list(
 #create powerpoint slide
 report%>%
 add_slide(layout = "Two Content")%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "lewis_place.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "lewis.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
   ph_with("Lewis Place", 
                location = ph_location_type(
@@ -3142,7 +3142,7 @@ summary <- block_list(
 #create powerpoint slide
 report%>%
 add_slide(layout = "Two Content")%>%
-  ph_with(external_img(here::here("data", "neighborhood_pics", "vandeventer.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "vandy.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
   ph_with("Vandeventer", 
                location = ph_location_type(
