@@ -30,6 +30,18 @@ params:
   
     #6 Months prior to params$date
   month6: "2020-05-01"
+  
+  #Quarterly Report Data only needs to be updated once every quarter. Quarter data for current year and previous year for comparison
+  #start of quarter
+  qrtstart: "2020-01-01"
+  qrtstart2: "2019-01-01"
+  
+  #end of quarter
+  qrtend: "2020-03-31"
+  qrtend2: "2019-03-31"
+  
+  #Quarter
+  quarter: 1
 ---
 
 ### Introduction
@@ -84,10 +96,65 @@ dir.create(here::here(file.path("results", params$year, params$month, "westend")
 dir.create(here::here(file.path("results", params$year, params$month, "all_nbhds")))
 dir.create(here::here(file.path("results", "presentations", params$year, params$month)))
 dir.create(here::here(file.path("results", "presentations", params$year, "yearly")))
+dir.create(here::here(file.path("results", "presentations", params$year, "quarterly")))
 dir.create(here::here(file.path("data", params$year)))
 dir.create(here::here(file.path("data", params$year, params$month)))
 dir.create(here::here(file.path("data", params$year, params$month, "shapefiles")))
 dir.create(here::here(file.path("data", params$pastyear, "yearly")))
+dir.create(here::here(file.path("data", params$year, "quarterly")))
+dir.create(here::here(file.path("data", params$year, "quarterly", "1")))
+dir.create(here::here(file.path("data", params$year, "quarterly", "2")))
+dir.create(here::here(file.path("data", params$year, "quarterly", "3")))
+dir.create(here::here(file.path("data", params$year, "quarterly", "4")))
+dir.create(here::here(file.path("results", params$year, "quarterly")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "academy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "cwe")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "dbplace")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "ftnprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "fpse")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "lewis")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "skinker")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "vandy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "vstprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "westend")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "1", "all_nbhds")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "academy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "cwe")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "dbplace")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "ftnprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "fpse")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "lewis")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "skinker")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "vandy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "vstprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "westend")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "2", "all_nbhds")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "academy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "cwe")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "dbplace")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "ftnprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "fpse")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "lewis")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "skinker")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "vandy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "vstprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "westend")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "3", "all_nbhds")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "academy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "cwe")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "dbplace")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "ftnprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "fpse")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "lewis")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "skinker")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "vandy")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "vstprk")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "westend")))
+dir.create(here::here(file.path("results", params$year, "quarterly", "4", "all_nbhds")))
 ```
 
 ### Temporary Code
@@ -189,6 +256,16 @@ data%>%
   
   #rename handle
   rename(HANDLE = Handle)%>%
+  mutate(abbr = ifelse(grepl("38", Nbrhd), "cwe",
+                                             ifelse(grepl("39", Nbrhd), "fpse",
+                                             ifelse(grepl("46", Nbrhd), "skinker",  
+                                             ifelse(grepl("47", Nbrhd), "dbplace",
+                                             ifelse(grepl("48", Nbrhd), "westend",
+                                             ifelse(grepl("49", Nbrhd), "vstprk",       
+                                             ifelse(grepl("51", Nbrhd), "academy",       
+                                             ifelse(grepl("53", Nbrhd), "ftnprk",       
+                                             ifelse(grepl("54", Nbrhd), "lewis",       
+                                             ifelse(grepl("58", Nbrhd), "vandy", NA)))))))))))%>%
   
   #Drop unused variables using `select` function, assign to new `df` data frame
   dplyr::select(AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
@@ -196,7 +273,7 @@ data%>%
                     IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
                     NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
                     OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo, count, big_cost, lil_cost, lrgcost, new_use,
-                    nbhd_name, yr, month) -> df
+                    nbhd_name, yr, month, abbr) -> df
 ```
 
 
@@ -232,6 +309,14 @@ write_csv(lstyr, here::here("data", params$pastyear, "yearly", "clean_year.csv")
 #6 month data
 month6 <- filter(df, FirstDate >= as.Date(params$month6) & FirstDate <= as.Date(params$enddate))
 write_csv(month6, here::here("data", params$year, params$month, "month6.csv"))
+
+#Quarterly Data
+data_qrt <- filter(df, FirstDate >= as.Date(params$qrtstart) & FirstDate <= as.Date(params$qrtend))
+write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "quarter-data.csv"))
+
+#Last year quarterly data
+data_qrt <- filter(df, FirstDate >= as.Date(params$qrtstart2) & FirstDate <= as.Date(params$qrtend2))
+write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "past-qrtr-data.csv"))
 ```
 
 ```{r}
