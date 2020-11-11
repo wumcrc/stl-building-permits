@@ -1,0 +1,322 @@
+---
+title: "Quarterly Report"
+author: "Logan Williams"
+date: "11/9/2020"
+output: html_document
+params:
+  quarter: 1
+  year: 2020
+  pastyear: 2019
+---
+
+```{r}
+#load dependencies
+library(ggplot2)      # plot making
+library(flextable)    # pretty tables
+library(here)         # file path management
+library(dplyr)        # data cleaning
+library(officer)      # powerpoint output
+library(formattable)  # currency values
+library(ggrepel)      # ggplot labels
+library(readr)        # load csv
+library(rlang)        # check for empty values
+
+#spatial packages
+library(sf)           # spatial data tools
+library(tmap)         # map layouts
+library(tmaptools)    # tools for handeling spatial
+```
+
+```{r}
+#load data
+df <- read_csv(here::here("data", params$year, "quarterly", params$quarter, "quarter-data.csv"))
+lstqrt <- read_csv(here::here("data", params$year, "quarterly", params$quarter, "past-qrtr-data.csv"))
+
+
+# load basemap tiles
+load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
+load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
+load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
+
+# create dataframe of means
+df %>%
+  group_by(nbhd_name, new_use) %>%
+  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
+
+#import parcel data
+st_read(here::here("/data/working-db/parcels", "prcl.shp"),
+        stringsAsFactors = FALSE) %>%
+  st_transform(crs = 32615) -> prcl
+
+#merge by handle
+merge <- df%>%
+  merge(prcl, by = "HANDLE")
+
+use <- c("Industrial", "Institutional", "Residential", "Commercial")
+# summary note colors
+reg24 <- fp_text(color = 'black', font.size = 24)
+reg20 <- fp_text(color = 'black', font.size = 20)
+boldline <- fp_text(color = "black", font.size = 28, bold = TRUE, underlined = TRUE)
+bold <- fp_text(color = "black", font.size = 24, bold = TRUE)
+#create custom color palette for plots
+col <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#4daf4a", "Institutional" = "#984ea3")
+
+# create powerpoint
+report <- read_pptx()
+```
+
+```{r}
+#title slide
+report%>%
+  add_slide(layout = "Title Slide", master = "Office Theme")%>%
+  ph_with(value = "St. Louis Central Corridor West Building Permits", location = ph_location_type(type = "ctrTitle"))%>%
+  ph_with(paste("Quarter", params$quarter, "Report:", params$year), location = ph_location_type(type = "subTitle"))%>%
+  ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt")) -> report
+
+#add STL map reference
+report%>%
+add_slide()%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", "spat_ref.png"), height = 5, width = 9),
+          ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("St. Louis Neighborhood Spatial Reference", 
+               location = ph_location_type(
+                 type = "title") )-> report
+
+# Average cost by neighborhood for each `new_use`
+
+ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
+  scale_colour_manual(
+    values = col,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(position = "dodge", stat="identity") +
+  theme(plot.title = element_text(hjust = 0.5),
+    axis.title.y = element_blank()) +
+  ylab("Cost") +
+  labs(fill = "New Use") +
+  scale_y_continuous(labels = scales::dollar_format())+
+  coord_flip()
+
+ggsave(here::here("results", params$year, "quarterly", params$quarter, "all_nbhds", "allnbhd_plot.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "quarterly", params$quarter, "all_nbhds", "allnbhd_plot.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Neighborhood Summary: Average Building Permit Cost", 
+               location = ph_location_type(
+                 type = "title") )-> report
+
+
+#create comments to use to filter and name outputs
+comment(cwe_tiles) <- "Central West End"
+comment(fpse_tiles) <- "Forest Park Southeast"
+comment(sdb_tiles) <- "Skinker DeBaliviere"
+comment(dbp_tiles) <- "DeBaliviere Place"
+comment(we_tiles) <- "West End"
+comment(vp_tiles) <- "Visitation Park"
+comment(ac_tiles) <- "Academy"
+comment(fp_tiles) <- "Fountain Park"
+comment(lp_tiles) <- "Lewis Place"
+comment(vd_tiles) <- "Vandeventer"
+
+for ( i in list(cwe_tiles, fpse_tiles, sdb_tiles, dbp_tiles, we_tiles, vp_tiles, ac_tiles, fp_tiles, lp_tiles, vd_tiles) ) { 
+  #assign comments to an object
+  name <- comment(i)
+  #only run code for neighborhoods with developments
+  if(name %in% merge$nbhd_name){
+  sub <- filter(merge, nbhd_name == name)
+  abbr <- unique(sub$abbr)
+  num <- unique(sub$Nbrhd)
+
+#create mean, median, range stats
+mean <- mean(sub$EstProjectCost)
+mean <- currency(mean, digits = 0L)
+if(is.nan(mean)){mean[is.nan(mean)] <- 0}
+if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
+median <- median(sub$EstProjectCost)
+median <- currency(median, digits = 0L)
+if(is.nan(median)){median[is.nan(median)] <- 0}
+if(is.infinite(median)){median[is.infinite(median)] <- 0}
+min <- min(sub$EstProjectCost)
+min <- currency(min, digits = 0L)
+if(is.nan(min)){min[is.nan(min)] <- 0}
+if(is.infinite(min)){min[is.infinite(min)] <- 0}
+max <- max(sub$EstProjectCost)
+max <- currency(max, digits = 0L)
+if(is.nan(max)){max[is.nan(max)] <- 0}
+if(is.infinite(max)){max[is.infinite(max)] <- 0}
+
+#create bullet points
+summary <- block_list(
+  fpar(ftext(paste("Quarter", params$quarter, ",", params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
+  fpar(ftext(paste("Median:", median, sep = " "), reg24)),
+  fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
+)
+
+#create powerpoint slide
+report%>%
+add_slide(layout = "Two Content")%>%
+  ph_with(external_img(here::here("data", "neighborhood_pics", paste(abbr, ".png", sep = "")), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
+ ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
+  ph_with(name, 
+               location = ph_location_type(
+                 type = "title") )-> report  
+
+#create empty character vector that will become the color palette
+col <- character(0)
+if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
+if("Industrial" %in% sub$new_use){col <- c(col, "Industrial" = "#e41a1c")}
+if("Institutional" %in% sub$new_use){col <- c(col, "Institutional" = "#984ea3")}
+if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
+
+#create simple feature
+st_as_sf(sub)%>%
+  st_transform(crs = 32615) -> shp
+
+#mapping
+tm_shape(i) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == num) %>%
+  tm_shape() +
+    tm_fill(col = "#9ecae1",
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  shp%>%
+  tm_shape() +
+    tm_bubbles(size = .25,
+               col = "new_use",
+               palette = col,
+               title.col = "Building Permit Type") +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom")) -> map
+
+#save map as .jpeg
+tmap_save(map, file = here::here("results", params$year, "quarterly", params$quarter, abbr, "permituse-map.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "quarterly", params$quarter, abbr, "permituse-map.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(paste(name), 
+               location = ph_location_type(
+                 type = "title") )-> report
+
+ggplot(sub, aes(lrgcost)) +
+  scale_colour_manual(
+    values = col,
+    aesthetics = c("colour", "fill")
+  ) +
+  geom_bar(aes(fill = new_use), position = "dodge", stat="count") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+  )+
+  ylab("Number of Permits") +
+  xlab("Building Permit Cost") +
+  labs(fill = "New Use") -> plot
+
+ggsave(here::here("results",  params$year, "quarterly", params$quarter, abbr, "cost-plot.png"), 
+       plot = plot, width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "quarterly", params$quarter, abbr, "cost-plot.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(paste(name, "Permit Use Breakdown"), 
+               location = ph_location_type(
+                 type = "title") )-> report
+
+#create summary tables for current month and past 6 months
+sub%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table
+
+use[!(use %in% table$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table) -> table
+
+if(test == FALSE) {
+  add_row(table, new_use = missing_category) -> table
+}
+table%>%
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> table
+
+if(name %in% lstqrt$nbhd_name){
+lstqrt%>%
+  filter(nbhd_name == name)%>%
+  group_by(new_use)%>%
+  summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
+  dplyr::select(new_use, mean, count, sum) -> table1
+
+use[!(use %in% table1$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(table1) -> table1
+
+if(test == FALSE) {
+  add_row(table1, new_use = missing_category) -> table1
+}
+table1%>%
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use) -> table1
+
+#make a currency value
+table$mean <- currency(table$mean, digits = 0L)
+table1$mean <- currency(table1$mean, digits = 0L)
+table$sum <- currency(table$sum, digits = 0L)
+table1$sum <- currency(table1$sum, digits = 0L)
+
+#make summary tables
+  flextable(table)%>%
+  autofit()%>%
+  add_header_lines(values = paste("Quarter ", params$quarter, ", ", params$year, sep = ""))%>%
+  set_header_labels(new_use = "Permit Use",
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
+
+  flextable(table1)%>%
+  autofit()%>%
+  add_header_lines(values = paste("Quarter", params$quarter, params$pastyear))%>%
+  set_header_labels(new_use = "Permit Use",
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
+
+# add powerpoint slide
+report%>%
+  add_slide(layout = "Two Content")%>%
+  ph_with(flex, location = ph_location_left())%>%
+  ph_with(flex01, location = ph_location_right())%>%
+  ph_with(name,
+               location = ph_location_type(
+                 type = "title")) -> report
+}else{
+  #make summary tables
+  flextable(table)%>%
+  autofit()%>%
+  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  set_header_labels(new_use = "Permit Use",
+    mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
+
+  #add powerpoint slide
+  report%>%
+    add_slide()%>%
+    ph_with(value = paste(name, "Permit Breakdown"), location = ph_location_type(type = "title"))%>%
+    ph_with(flex, location = ph_location_type(type = "body")) -> report
+}
+  }}
+
+print(report, target = here::here("results", "presentations",  params$year, "quarterly", paste("quarter-", params$quarter, "report", ".pptx", sep = "")))
+```
