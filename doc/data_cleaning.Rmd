@@ -37,8 +37,8 @@ params:
   qrtstart2: "2019-01-01"
   
   #end of quarter
-  qrtend: "2020-03-31"
-  qrtend2: "2019-03-31"
+  qrtend: "2020-03-30"
+  qrtend2: "2019-03-30"
   
   #Quarter
   quarter: 1
