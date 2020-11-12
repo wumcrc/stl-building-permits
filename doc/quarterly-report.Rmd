@@ -166,6 +166,57 @@ add_slide(layout = "Two Content")%>%
                location = ph_location_type(
                  type = "title") )-> report  
 
+#filter out neighborhood
+sub02 <- filter(lstqrt, nbhd_name == name)
+
+#create cost and year to date variables for each year
+bp20 <- nrow(sub)
+bp19 <- nrow(sub02)
+cost20 <- mean(sub$EstProjectCost)
+cost20 <- currency(cost20, digits = 0L)
+if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
+cost19 <- mean(sub02$EstProjectCost)
+cost19 <- currency(cost19, digits = 0L)
+if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+
+
+#create percent change variables
+pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- percent(pct_chg_cnt)
+if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
+if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
+pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- percent(pct_chg_cost)
+if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
+if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
+
+  
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s building permits in Quarter %s, %s",
+                    bp20, params$quarter, params$year)
+
+# text formatting
+color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
+  
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
+       ftext(paste("compared to Quarter ", params$quarter, ", ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost20), bold),
+       ftext(paste(": Average building permit cost in Quarter ", params$quarter, ", ", params$year, sep = ""), reg24)),
+  fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
+       ftext(paste(" compared to Quarter ", params$quarter, ", ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
+report%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
+  ph_with(value = paste(name, ": Summary Notes", sep = ""), location = ph_location_type(type = "title"))%>%
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
+
 #create empty character vector that will become the color palette
 col <- character(0)
 if("Commercial" %in% sub$new_use){col <- c("Commercial" = "#4daf4a")}
@@ -318,5 +369,12 @@ report%>%
 }
   }}
 
+  # additional notes slide
+report%>%
+  add_slide()%>%
+  ph_with(value = "Additional Notes", location = ph_location_type(type = "title"))%>%
+  ph_with(c("Data retreived from https://www.stlouis-mo.gov/data/", "Building permits with a cost of $0 were dropped", "Building permits that were cancelled were dropped", "Infinite change indicates 0 permits in the current or previous time period/comparison month so there was a overall increase or decrease"), location = ph_location_type(type = "body")) -> report
+
 print(report, target = here::here("results", "presentations",  params$year, "quarterly", paste("quarter-", params$quarter, "report", ".pptx", sep = "")))
 ```
+
