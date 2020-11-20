@@ -20,6 +20,7 @@ library(formattable)  # currency values
 library(ggrepel)      # ggplot labels
 library(readr)        # load csv
 library(rlang)        # check for empty values
+library(janitor)      # create column totals
 
 #spatial packages
 library(sf)           # spatial data tools
@@ -41,7 +42,8 @@ load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
 # create dataframe of means
 df %>%
   group_by(nbhd_name, new_use) %>%
-  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
+  summarise(sum = sum(EstProjectCost)/10000)%>%
+  mutate(pos = (cumsum(sum)-0.5*sum))-> means
 
 #import parcel data
 st_read(here::here("/data/working-db/parcels", "prcl.shp"),
@@ -84,18 +86,30 @@ add_slide()%>%
 
 # Average cost by neighborhood for each `new_use`
 
-ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
+# ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
+#   scale_colour_manual(
+#     values = col,
+#     aesthetics = c("colour", "fill")
+#   ) +
+#   geom_bar(position = "dodge", stat="identity") +
+#   theme(plot.title = element_text(hjust = 0.5),
+#     axis.title.y = element_blank()) +
+#   ylab("Cost") +
+#   labs(fill = "New Use") +
+#   scale_y_continuous(labels = scales::dollar_format())+
+#   coord_flip()
+
+ggplot(means, aes(x = nbhd_name, y = sum, fill = new_use, label = sum)) +
   scale_colour_manual(
     values = col,
     aesthetics = c("colour", "fill")
   ) +
-  geom_bar(position = "dodge", stat="identity") +
-  theme(plot.title = element_text(hjust = 0.5),
-    axis.title.y = element_blank()) +
-  ylab("Cost") +
-  labs(fill = "New Use") +
-  scale_y_continuous(labels = scales::dollar_format())+
-  coord_flip()
+  geom_bar(stat = "identity") +
+  geom_text(aes(label=ifelse(sum>1000,paste0("$", round(sum,0)),"")), position = position_stack(vjust = 0.5), colour="white") +
+  scale_y_continuous(labels=scales::dollar_format(prefix="$")) +
+  coord_flip()+
+  labs(y="Thousands of $", x="")+
+  scale_fill_discrete(name = "Permit Type")
 
 ggsave(here::here("results", params$year, "quarterly", params$quarter, "all_nbhds", "allnbhd_plot.png"), 
        width = 9, height = 5, units = "in")
@@ -105,7 +119,7 @@ report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, "quarterly", params$quarter, "all_nbhds", "allnbhd_plot.png"), width = 9, height = 5),
           location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Neighborhood Summary: Average Building Permit Cost", 
+  ph_with("Neighborhood Summary: Total Building Permit Cost", 
                location = ph_location_type(
                  type = "title") )-> report
 
@@ -148,10 +162,15 @@ max <- max(sub$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
+tot <- sum(sub$EstProjectCost)
+tot <- currency(tot, digits = 0L)
+if(is.nan(tot)){tot[is.nan(tot)] <- 0}
+if(is.infinite(tot)){tot[is.infinite(tot)] <- 0}
 
 #create bullet points
 summary <- block_list(
   fpar(ftext(paste("Quarter", params$quarter, ",", params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste("Total Cost:", tot, sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -189,7 +208,6 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-
   
 #create sprints for powerpoint output  
 sprint_1 <- sprintf("%s building permits in Quarter %s, %s",
@@ -216,6 +234,175 @@ report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = paste(name, ": Summary Notes", sep = ""), location = ph_location_type(type = "title"))%>%
   ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
+
+#summary notes for new_use
+df%>%
+  filter(nbhd_name == name)%>%
+  group_by(new_use)%>%
+  summarise(mean = mean(EstProjectCost), count = n())-> use_sub
+
+lstqrt%>%
+  filter(nbhd_name == name)%>%
+  group_by(new_use)%>%
+  summarise(mean = mean(EstProjectCost), count = n())-> use_sub02
+
+# add missing new_use values for Permit Type comparison
+use[!(use %in% use_sub$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(use_sub) -> use_sub
+
+if(test == FALSE) {
+  add_row(use_sub, new_use = missing_category) -> use_sub
+}
+use_sub%>%
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> use_sub
+#do the same thing for last years quarter
+use[!(use %in% use_sub02$new_use)] -> missing_category
+is_empty(missing_category) -> test
+
+as.data.frame(use_sub02) -> use_sub02
+
+if(test == FALSE) {
+  add_row(use_sub02, new_use = missing_category) -> use_sub02
+}
+use_sub02%>%
+  replace(., is.na(.), 0)%>%
+  arrange(., new_use)  -> use_sub02
+
+
+
+#create percent change variables for Residential
+use_sub%>%
+  filter(new_use == "Residential") -> res01
+use_sub02%>%
+  filter(new_use == "Residential") -> res02
+res_chg_cnt <- (as.numeric(res01$count) - as.numeric(res02$count))/as.numeric(res02$count)
+res_chg_cnt <- percent(res_chg_cnt)
+if(is.nan(res_chg_cnt)){res_chg_cnt[is.nan(res_chg_cnt)] <- 0}
+if(is.infinite(res_chg_cnt)){res_chg_cnt[is.infinite(res_chg_cnt)] <- "Infinite"}
+res_chg_cost <- (as.numeric(res01$mean) - as.numeric(res02$mean))/as.numeric(res02$mean)
+res_chg_cost <- percent(res_chg_cost)
+if(is.nan(res_chg_cost)){res_chg_cost[is.nan(res_chg_cost)] <- 0}
+if(is.infinite(res_chg_cost)){res_chg_cost[is.infinite(res_chg_cost)] <- "Infinite"}
+# text formatting
+res_color24a <- fp_text(color = ifelse(res_chg_cnt == 0, "#00B0F0", ifelse(res_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+res_color20a <- fp_text(color = ifelse(res_chg_cost == 0, "#00B0F0", ifelse(res_chg_cost > 0, "#00B050", "red")), font.size = 20)
+
+#create percent change variables for Institutional
+use_sub%>%
+  filter(new_use == "Institutional") -> inst01
+use_sub02%>%
+  filter(new_use == "Institutional") -> inst02
+inst_chg_cnt <- (as.numeric(inst01$count) - as.numeric(inst02$count))/as.numeric(inst02$count)
+inst_chg_cnt <- percent(inst_chg_cnt)
+if(is.nan(inst_chg_cnt)){inst_chg_cnt[is.nan(inst_chg_cnt)] <- 0}
+if(is.infinite(inst_chg_cnt)){inst_chg_cnt[is.infinite(inst_chg_cnt)] <- "Infinite"}
+inst_chg_cost <- (as.numeric(inst01$mean) - as.numeric(inst02$mean))/as.numeric(inst02$mean)
+inst_chg_cost <- percent(inst_chg_cost)
+if(is.nan(inst_chg_cost)){inst_chg_cost[is.nan(inst_chg_cost)] <- 0}
+if(is.infinite(inst_chg_cost)){inst_chg_cost[is.infinite(inst_chg_cost)] <- "Infinite"}
+# text formatting
+inst_color24a <- fp_text(color = ifelse(inst_chg_cnt == 0, "#00B0F0", ifelse(inst_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+inst_color20a <- fp_text(color = ifelse(inst_chg_cost == 0, "#00B0F0", ifelse(inst_chg_cost > 0, "#00B050", "red")), font.size = 20)
+
+#create percent change variables for Industrial
+use_sub%>%
+  filter(new_use == "Industrial") -> ind01
+use_sub02%>%
+  filter(new_use == "Industrial") -> ind02
+ind_chg_cnt <- (as.numeric(ind01$count) - as.numeric(ind02$count))/as.numeric(ind02$count)
+ind_chg_cnt <- percent(ind_chg_cnt)
+if(is.nan(ind_chg_cnt)){ind_chg_cnt[is.nan(ind_chg_cnt)] <- 0}
+if(is.infinite(ind_chg_cnt)){ind_chg_cnt[is.infinite(ind_chg_cnt)] <- "Infinite"}
+ind_chg_cost <- (as.numeric(ind01$mean) - as.numeric(ind02$mean))/as.numeric(ind02$mean)
+ind_chg_cost <- percent(ind_chg_cost)
+if(is.nan(ind_chg_cost)){ind_chg_cost[is.nan(ind_chg_cost)] <- 0}
+if(is.infinite(ind_chg_cost)){ind_chg_cost[is.infinite(ind_chg_cost)] <- "Infinite"}
+# text formatting
+ind_color24a <- fp_text(color = ifelse(ind_chg_cnt == 0, "#00B0F0", ifelse(ind_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+ind_color20a <- fp_text(color = ifelse(ind_chg_cost == 0, "#00B0F0", ifelse(ind_chg_cost > 0, "#00B050", "red")), font.size = 20)
+
+#create percent change variables for Commercial
+use_sub%>%
+  filter(new_use == "Commercial") -> com01
+use_sub02%>%
+  filter(new_use == "Commercial") -> com02
+com_chg_cnt <- (as.numeric(com01$count) - as.numeric(com02$count))/as.numeric(com02$count)
+com_chg_cnt <- percent(com_chg_cnt)
+if(is.nan(com_chg_cnt)){com_chg_cnt[is.nan(com_chg_cnt)] <- 0}
+if(is.infinite(com_chg_cnt)){com_chg_cnt[is.infinite(com_chg_cnt)] <- "Infinite"}
+com_chg_cost <- (as.numeric(com01$mean) - as.numeric(com02$mean))/as.numeric(com02$mean)
+com_chg_cost <- percent(com_chg_cost)
+if(is.nan(com_chg_cost)){com_chg_cost[is.nan(com_chg_cost)] <- 0}
+if(is.infinite(com_chg_cost)){com_chg_cost[is.infinite(com_chg_cost)] <- "Infinite"}
+# text formatting
+com_color24a <- fp_text(color = ifelse(com_chg_cnt == 0, "#00B0F0", ifelse(com_chg_cnt > 0, "#00B050", "red")), font.size = 24)
+com_color20a <- fp_text(color = ifelse(com_chg_cost == 0, "#00B0F0", ifelse(com_chg_cost > 0, "#00B050", "red")), font.size = 20)
+
+
+#create sprints for powerpoint output  
+sprint_1 <- sprintf("%s residential permits in Quarter %s, %s",
+                    res01$count, params$quarter, params$year)
+sprint_2 <- sprintf("%s industrial permits in Quarter %s, %s",
+                    ind01$count, params$quarter, params$year)
+sprint_3 <- sprintf("%s commercial permits in Quarter %s, %s",
+                    com01$count, params$quarter, params$year)
+sprint_4 <- sprintf("%s residential permits in Quarter %s, %s",
+                    inst01$count, params$quarter, params$year)
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_1, boldline)),
+  fpar(ftext(paste(res_chg_cnt, "change ", sep = " "), res_color24a),
+       ftext(paste("compared to Quarter ", params$quarter, ", ", params$pastyear, " (", res02$count, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(currency(res01$mean, digits = 0L)), bold),
+       ftext(paste(": Average residential building permit cost in Quarter ", params$quarter, ", ", params$year, sep = ""), reg24)),
+  fpar(ftext(paste(res_chg_cost, "change", sep = " "), res_color20a),
+       ftext(paste(" compared to Quarter ", params$quarter, ", ", params$pastyear, " (", currency(res02$mean, digits = 0L), ")", sep = ""), reg20)),
+  fpar(ftext(sprint_2, boldline)),
+  fpar(ftext(paste(ind_chg_cnt, "change ", sep = " "), ind_color24a),
+       ftext(paste("compared to Quarter ", params$quarter, ", ", params$pastyear, " (", ind02$count, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(currency(ind01$mean, digits = 0L)), bold),
+       ftext(paste(": Average industrial building permit cost in Quarter ", params$quarter, ", ", params$year, sep = ""), reg24)),
+  fpar(ftext(paste(ind_chg_cost, "change", sep = " "), ind_color20a),
+       ftext(paste(" compared to Quarter ", params$quarter, ", ", params$pastyear, " (", currency(ind02$mean, digits = 0L), ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
+report%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
+  ph_with(value = paste(name, ": Summary Notes", sep = ""), location = ph_location_type(type = "title"))%>%
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+
+# create summary notes
+summary <- block_list(
+  fpar(ftext(sprint_3, boldline)),
+  fpar(ftext(paste(com_chg_cnt, "change ", sep = " "), com_color24a),
+       ftext(paste("compared to Quarter ", params$quarter, ", ", params$pastyear, " (", com02$count, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(currency(com01$mean, digits = 0L)), bold),
+       ftext(paste(": Average commercial building permit cost in Quarter ", params$quarter, ", ", params$year, sep = ""), reg24)),
+  fpar(ftext(paste(com_chg_cost, "change", sep = " "), com_color20a),
+       ftext(paste(" compared to Quarter ", params$quarter, ", ", params$pastyear, " (", currency(com02$mean, digits = 0L), ")", sep = ""), reg20)),
+  fpar(ftext(sprint_4, boldline)),
+  fpar(ftext(paste(inst_chg_cnt, "change ", sep = " "), inst_color24a),
+       ftext(paste("compared to Quarter ", params$quarter, ", ", params$pastyear, " (", inst02$count, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(currency(inst01$mean, digits = 0L)), bold),
+       ftext(paste(": Average institutional building permit cost in Quarter ", params$quarter, ", ", params$year, sep = ""), reg24)),
+  fpar(ftext(paste(inst_chg_cost, "change", sep = " "), inst_color20a),
+       ftext(paste(" compared to Quarter ", params$quarter, ", ", params$pastyear, " (", currency(ind02$mean, digits = 0L), ")", sep = ""), reg20))
+)
+
+# write summary notes to powerpoint slide
+report%>%
+  add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
+  ph_with(value = paste(name, ": Summary Notes", sep = ""), location = ph_location_type(type = "title"))%>%
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+
+
+
+
 
 #create empty character vector that will become the color palette
 col <- character(0)
@@ -327,10 +514,27 @@ table1%>%
   arrange(., new_use) -> table1
 
 #make a currency value
-table$mean <- currency(table$mean, digits = 0L)
-table1$mean <- currency(table1$mean, digits = 0L)
-table$sum <- currency(table$sum, digits = 0L)
-table1$sum <- currency(table1$sum, digits = 0L)
+# table$mean <- currency(table$mean, digits = 0L)
+# table1$mean <- currency(table1$mean, digits = 0L)
+# table$sum <- currency(table$sum, digits = 0L)
+# table1$sum <- currency(table1$sum, digits = 0L)
+
+table$mean <- as.numeric(table$mean)
+table$sum <- as.numeric(table$sum)
+table$count <- as.numeric(table$count)
+table1$mean <- as.numeric(table1$mean)
+table1$sum <- as.numeric(table1$sum)
+table1$count <- as.numeric(table1$count)
+
+#add totals row
+table%>%
+  arrange(., new_use) %>%
+  adorn_totals(., "row", name = "Total") -> table
+
+#add totals row
+table1%>%
+  arrange(., new_use) %>%
+  adorn_totals(., "row", name = "Total") -> table1
 
 #make summary tables
   flextable(table)%>%
@@ -339,11 +543,15 @@ table1$sum <- currency(table1$sum, digits = 0L)
   set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
 
+  flex <- colformat_num(flex, j = c("mean", "sum"), prefix = "$", digits = 0) 
+  
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = paste("Quarter", params$quarter, params$pastyear))%>%
   set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
+  
+  flex01 <- colformat_num(flex01, j = c("mean", "sum"), prefix = "$", digits = 0)
 
 # add powerpoint slide
 report%>%
@@ -377,4 +585,5 @@ report%>%
 
 print(report, target = here::here("results", "presentations",  params$year, "quarterly", paste("quarter-", params$quarter, "report", ".pptx", sep = "")))
 ```
+
 
