@@ -4,7 +4,7 @@ author: "Logan Williams"
 date: "11/9/2020"
 output: html_document
 params:
-  quarter: 1
+  quarter: 3
   year: 2020
   pastyear: 2019
 ---
@@ -544,21 +544,23 @@ table1%>%
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
 
   flex <- colformat_num(flex, j = c("mean", "sum"), prefix = "$", digits = 0) 
+  flex <- width(flex, width = 1)
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = paste("Quarter", params$quarter, params$pastyear))%>%
+  add_header_lines(values = paste("Quarter", params$quarter, ", ", params$pastyear, sep = ""))%>%
   set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
   
   flex01 <- colformat_num(flex01, j = c("mean", "sum"), prefix = "$", digits = 0)
+  flex01 <- width(flex01, width = 1)
 
 # add powerpoint slide
 report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with(name,
+  ph_with(paste(name, "Permit Breakdown"),
                location = ph_location_type(
                  type = "title")) -> report
 }else{
@@ -568,6 +570,9 @@ report%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
   set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
+  
+  flex <- colformat_num(flex, j = c("mean", "sum"), prefix = "$", digits = 0) 
+  flex <- width(flex, width = 1)
 
   #add powerpoint slide
   report%>%
@@ -585,5 +590,4 @@ report%>%
 
 print(report, target = here::here("results", "presentations",  params$year, "quarterly", paste("quarter-", params$quarter, "report", ".pptx", sep = "")))
 ```
-
 
