@@ -63,6 +63,38 @@ library(writexl)      #write excel
 library(lubridate)    #manipulate date time data
 ```
 
+#Function References
+
+`dir.create` creates a new folder in a specified location, often using the `here` function from the `here` package to specify the desired location.
+
+`here` is a function from the `here` package that is used for file path referencing. It specifically directs you to your current working directory.
+
+`getwd` gives you your current working directory.
+
+`file.path` constructs file paths in a platform independent way.
+
+`filter` is a dplyr function that is used to clean data. Specifically it is used to find rows/cases where a condition is true. If the condition is true then the values are kept, if not they are dropped.
+
+`group_by` takes an existing tbl and converts it into a grouped tbl based on a specific variable.
+
+`rename` does exactly what you think it does. It renames variables based on name.
+
+`replace` replaces a certain value with another. It is used in this notebook to replace NAs with 0.
+
+`mutate` is used to create a new variable in your data frame.
+
+`ifelse` is a function that provides a condition. If this condition is true, it executes a command, if the condition isn't true it executes a seperate command. It is used in this notebook along with the `mutate` function to create new variables based on existing variables in a dataset.
+
+`grepl` searches for matches to a pattern. It is used in this notebook along with `ifelse` and `mutate` to look for matches to, for example, neighborhood number and then create a variable with the corresponding neighborhood name.
+
+`select` comes from the dplyr package and is used to select variables from a dataset that you wish to keep (it can also be used to remove unwanted variables).
+
+`summarise` is used in conjunction with `group_by` to create an output that has one row for each group specified in the `summarise` function.
+
+`as.Date` converts a specified variable to a date format. This is used in this notebook so that we can filter out observations based on the date they occurred. 
+
+`write_csv` is a function used to write a .csv file from a dataset.
+
 ```{r}
 # This code chunk creates the appropriate folder paths that are referred to in all of the .Rmd documents. 
 # This code is necessary to knit and compile the powerpoint presentations.
