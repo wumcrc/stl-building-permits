@@ -17,7 +17,11 @@ Run the `data_cleaning.Rmd` at the beginning of each month. Right now I have Jes
           `qrtend` set 3 months after qrtstart. This is the end of the quarter
           `qrtstart2` also only needs to be changed once a quarter. This is the beginning of the quarter, the same as `qrtstart` only set to the previous year
           `qrtend2` same as `qrtend` just set to the previous year
+          `quarter` should be changed to the appropriate quarter you are observing
 Once you have changed all 8 of the params you can run the `data-creation.Rmd`. 
+
+If you are running the `quarterly-report.Rmd` skip to step 7.
+If you are running the `yearly_report.Rmd` skip to step 8.
 
 
 #Step 2
@@ -44,3 +48,15 @@ Once you have double checked everything it is time to push everything to github!
           
 #Step 6
 After you have made those commits it is time to push them to Github! Congrats, you're all done!
+
+#Step 7
+For the Quarterly reports, once you have ran the `data_cleaning.Rmd` it is time to run the `quarterly-report.Rmd`. First, you will have to change the parameters:
+          `quarter` should be changed to the appropriate quarter you are observing
+          `year` should be set to the current year
+          `pastyear` should be set to the previous year
+Once you have done this you are ready to run the `quarterly-report.Rmd`! Now, complete steps 4-6. 
+
+#Step 8
+For the Yearly reports, once you have ran the `data_cleaning.Rmd` it is time to run the `yearly_report.Rmd`. First, you will have to change the parameters:
+          `year` should be set to the year you want to run the reports for
+Once you have done this you are ready to run the `yearly_report.Rmd`! Now, complete steps 4-6. 
