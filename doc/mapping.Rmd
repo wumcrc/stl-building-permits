@@ -9,27 +9,27 @@ always_allow_html: yes
 params:
   
   #change EVERY month
-  month: November
+  month: December
   year: 2020
   pastyear: 2019
 
-# Compiles Year to Date Dataset for this year | Leave at January 1st 2020
+# Compiles Year to Date Dataset for this year | Leave at January 1st of the current year
   ytd: "2020-01-01" 
                
   # First day of current month | Change this each month
-  date: "2020-11-01"   
+  date: "2020-12-01"   
   
   # First day of next month | Change this each month
-  enddate: "2020-12-01"
+  enddate: "2021-01-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2019-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-11-01" 
+  pstmonth: "2019-12-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2019-12-01"  
+  pstmonth2: "2020-01-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -218,7 +218,7 @@ use <- c("Industrial", "Institutional", "Residential", "Commercial")
 
 ```{r, include=FALSE}
 #import parcel data
-st_read(here::here("/data/working-db/parcels", "prcl.shp"),
+st_read(here::here("data", "working-db", "parcels", "prcl.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> prcl
 ```
