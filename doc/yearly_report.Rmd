@@ -139,7 +139,7 @@ report <- read_pptx()
 
 ```{r, include=FALSE}
 #import parcel data
-st_read(here::here("/data/working-db/parcels", "prcl.shp"),
+st_read(here::here("data", "working-db", "parcels", "prcl.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> prcl
 
