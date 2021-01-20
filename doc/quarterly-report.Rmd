@@ -4,7 +4,7 @@ author: "Logan Williams"
 date: "11/9/2020"
 output: html_document
 params:
-  quarter: 3
+  quarter: 4
   year: 2020
   pastyear: 2019
 ---
