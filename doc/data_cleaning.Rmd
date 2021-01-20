@@ -33,15 +33,15 @@ params:
   
   #Quarterly Report Data only needs to be updated once every quarter. Quarter data for current year and previous year for comparison
   #start of quarter
-  qrtstart: "2020-01-01"
-  qrtstart2: "2019-01-01"
+  qrtstart: "2020-10-01"
+  qrtstart2: "2019-10-01"
   
   #end of quarter
-  qrtend: "2020-03-30"
-  qrtend2: "2019-03-30"
+  qrtend: "2020-12-31"
+  qrtend2: "2019-12-31"
   
   #Quarter
-  quarter: 1
+  quarter: 4
 ---
 
 ### Introduction
@@ -132,7 +132,7 @@ dir.create(here::here(file.path("results", "presentations", params$year, "quarte
 dir.create(here::here(file.path("data", params$year)))
 dir.create(here::here(file.path("data", params$year, params$month)))
 dir.create(here::here(file.path("data", params$year, params$month, "shapefiles")))
-dir.create(here::here(file.path("data", params$pastyear, "yearly")))
+dir.create(here::here(file.path("data", params$year, "yearly")))
 dir.create(here::here(file.path("data", params$year, "quarterly")))
 dir.create(here::here(file.path("data", params$year, "quarterly", "1")))
 dir.create(here::here(file.path("data", params$year, "quarterly", "2")))
@@ -335,8 +335,8 @@ lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Da
 write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 
 #last year data
-lstyr <- filter(df, yr == params$pastyear)
-write_csv(lstyr, here::here("data", params$pastyear, "yearly", "clean_year.csv"))
+lstyr <- filter(df, yr == params$year)
+write_csv(lstyr, here::here("data", params$year, "yearly", "clean_year.csv"))
 
 #6 month data
 month6 <- filter(df, FirstDate >= as.Date(params$month6) & FirstDate <= as.Date(params$enddate))
@@ -349,6 +349,10 @@ write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter,
 #Last year quarterly data
 data_qrt <- filter(df, FirstDate >= as.Date(params$qrtstart2) & FirstDate <= as.Date(params$qrtend2))
 write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "past-qrtr-data.csv"))
+
+#5 year data
+yr5 <- filter(df, yr >= (params$year - 4) & yr <= params$year)
+write_csv(yr5, here::here("data", params$year, "yearly", "5year.csv"))
 ```
 
 ```{r}
