@@ -133,6 +133,7 @@ dir.create(here::here(file.path("data", params$year)))
 dir.create(here::here(file.path("data", params$year, params$month)))
 dir.create(here::here(file.path("data", params$year, params$month, "shapefiles")))
 dir.create(here::here(file.path("data", params$year, "yearly")))
+dir.create(here::here(file.path("data", params$year, "yearly", "shapefiles")))
 dir.create(here::here(file.path("data", params$year, "quarterly")))
 dir.create(here::here(file.path("data", params$year, "quarterly", "1")))
 dir.create(here::here(file.path("data", params$year, "quarterly", "2")))
@@ -261,7 +262,9 @@ data%>%
                                              ifelse(grepl("I2", NewUseGroup1), "Institutional", 
                                              ifelse(grepl("I4", NewUseGroup1), "Institutional",
                                              ifelse(grepl("F1", NewUseGroup1), "Commercial",
-                                             ifelse(grepl("U", NewUseGroup1), "Commercial", 
+                                             ifelse(grepl("U", NewUseGroup1), "Commercial",
+                                             ifelse(grepl("A1", NewUseGroup1), "Commercial",        
+                                             ifelse(grepl("S2", NewUseGroup1), "Commercial",
                                              ifelse(grepl("RESTAURANT", NewUse), "Commercial",
                                              ifelse(grepl("COMM/RESIDENT", NewUse), "Residential",
                                              ifelse(grepl("EVENT SPACE", NewUse), "Commercial",   
@@ -273,7 +276,10 @@ data%>%
                                              ifelse(grepl("LOUNGE", NewUse), "Commercial",
                                              ifelse(grepl("NURSING HOME", NewUse), "Residential",
                                              ifelse(grepl("SINGLE FAMILY", NewUse), "Residential",
-                                                    NA))))))))))))))))))))))))%>%
+                                             ifelse(grepl("INGROUND POOL", NewUse), "Commercial",
+                                             ifelse(grepl("AUTO BODY", NewUse), "Commercial",
+                                             ifelse(grepl("STORAGE", NewUse), "Commercial",
+                                                    NA)))))))))))))))))))))))))))))%>%
   
   # Create New Variables for Building Permits Greater/Less Than 50,000
   mutate(big_cost = ifelse(EstProjectCost >= 50000, 1, NA))%>%
