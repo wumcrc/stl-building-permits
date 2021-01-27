@@ -8,28 +8,8 @@ output:
 always_allow_html: yes
 params:
   
-  #change EVERY month
-  month: December
   year: 2020
   pastyear: 2019
-
-# Compiles Year to Date Dataset for this year | Leave at January 1st of the current year
-  ytd: "2020-01-01" 
-               
-  # First day of current month | Change this each month
-  date: "2020-12-01"   
-  
-  # First day of next month | Change this each month
-  enddate: "2021-01-01"
-           
-  #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
-  pastdate: "2019-01-01" 
-            
-  # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-12-01" 
-           
-  # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2020-01-01"  
 ---
 
 ```{r setup, include=FALSE}
@@ -73,18 +53,21 @@ library(grid)
 #load data
 setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
-df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
-ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
-lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv"))
-lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv"))
-avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
-month6 <- read_csv(here::here("data", params$year, params$month,  "month6.csv"))
+#load data
+df <- read_csv(here::here("data", params$year, "yearly", "clean_year.csv"))
+yr5 <- read_csv(here::here("data", params$year, "yearly", "5year.csv"))
+lastyr <- read_csv(here::here("data", params$pastyear, "yearly", "clean_year.csv"))
 bound <- gw_get_data("Neighborhoods", "sf")
 nbhd_num <- c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58")
 
 load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
 load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
 load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
+
+# create dataframe of means
+df %>%
+  group_by(nbhd_name, new_use) %>%
+  summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
 
 #create powerpoint
 report <- read_pptx()
@@ -295,7 +278,7 @@ tm_shape()+
   tm_credits("Source: City of St. Louis", position = c("left", "BOTTOM"), size = .5) +
     tm_credits(paste("Date Created:", Sys.Date()), position = c("right", "BOTTOM"), size = .5)+
   tm_layout(
-    main.title = paste("St. Louis Central Corridor West\nBuilding Permits -", params$month, params$year),
+    main.title = paste("St. Louis Central Corridor West\nBuilding Permits -", params$year),
     main.title.position = "center",
     frame = FALSE,
     legend.bg.color = "white",
@@ -303,7 +286,7 @@ tm_shape()+
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))-> map
 
-tmap_save(map, insets_tm = inset, insets_vp = viewport(0.8, 0.75, width = 0.4, height = 0.4), file = here::here("results", params$year, params$month, "all_nbhds", "allbldg_map.jpeg"), width = 10.5, height = 5.9, units = "in")
+tmap_save(map, insets_tm = inset, insets_vp = viewport(0.8, 0.75, width = 0.4, height = 0.4), file = here::here("results", params$year, "yearly", "all_nbhds", "allbldg_map.jpeg"), width = 10.5, height = 5.9, units = "in")
 ```
 
 
@@ -312,7 +295,7 @@ tmap_save(map, insets_tm = inset, insets_vp = viewport(0.8, 0.75, width = 0.4, h
 report%>%
   add_slide(layout = "Title Slide", master = "Office Theme")%>%
   ph_with(value = "St. Louis Central Corridor West Building Permits", location = ph_location_type(type = "ctrTitle"))%>%
-  ph_with(paste("Monthly Report:", params$month, params$year, sep = " "), location = ph_location_type(type = "subTitle"))%>%
+  ph_with(paste("Monthly Report:", params$year, sep = " "), location = ph_location_type(type = "subTitle"))%>%
   ph_with(value = "Washington University Medical Center", location = ph_location_type(type = "dt")) -> report
 
 #add STL map reference
@@ -325,12 +308,45 @@ add_slide()%>%
                  type = "title") )-> report
 ```
 
+#5 Year Analysis
+```{r}
+yr5%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  theme(axis.title.x = element_blank()) +
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "all_nbhds", "5yr_plot.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "all_nbhds", "5yr_plot.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ### All Neighborhoods: Summary
 
 ```{r}
 # Average cost by neighborhood for each `new_use`
 
-ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
+ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
   scale_colour_manual(
     values = cols,
     aesthetics = c("colour", "fill")
@@ -343,13 +359,13 @@ ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
   scale_y_continuous(labels = scales::dollar_format())+
   coord_flip()
 
-ggsave(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"), 
+ggsave(here::here("results", params$year, "yearly", "all_nbhds", "allnbhd_plot.png"), 
        width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"), width = 9, height = 5),
+  ph_with(external_img(here::here("results", params$year, "yearly", "all_nbhds", "allnbhd_plot.png"), width = 9, height = 5),
           location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Neighborhood Summary: Average Building Permit Cost", 
                location = ph_location_type(
@@ -358,7 +374,7 @@ report%>%
 ```
 
 ```{r, echo = FALSE}
-#create summary tables for current month and past 6 months
+#create summary tables for current year and last year
 df%>%
   group_by(nbhd_name)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -377,7 +393,7 @@ table%>%
   arrange(., nbhd_name) -> table
 
   
-month6%>%
+lastyr%>%
   group_by(nbhd_name)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
   dplyr::select(nbhd_name, mean, count, sum) -> table1
@@ -403,13 +419,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(nbhd_name = "Neighborhood", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(nbhd_name = "Neighborhood", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -425,6 +441,81 @@ report%>%
 
 
 ### Forest Park Southeast
+
+```{r FPSE Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 39) %>%
+  smooth_map(., bandwidth = 0.5, style = "pretty",
+  cover = fpse) -> fpse_densities
+
+fpse_den_tm <- tm_shape(fpse_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 39) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(fpse_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits Per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(fpse_den_tm, file = here("results", params$year, "yearly", "fpse", "fpse_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "fpse", "fpse_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Forest Park Southeast: Building Permit Density Map",
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
+```{r}
+if("Forest Park Southeast" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Forest Park Southeast")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "fpse", "fpse5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "fpse", "fpse5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Forest Park Southeast 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -448,7 +539,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -468,9 +559,7 @@ add_slide(layout = "Two Content")%>%
 ```{r FPSE ytd summary notes}
 #filter out neighborhood
 nbhd20 <- filter(df, Nbrhd == 39)
-nbhd19 <- filter(lastmonth, Nbrhd == 39)
-tot20 <- filter(ytd, Nbrhd ==39)
-tot19 <- filter(lastytd, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -481,14 +570,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -499,51 +580,32 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
 report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Forest Park Southeast: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -561,11 +623,11 @@ if("Forest Park Southeast" %in% df$nbhd_name){
 
 #write shapefile
 fpse_shp <- filter(merge, nbhd_name == "Forest Park Southeast")
-st_write(fpse_shp, here::here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
+st_write(fpse_shp, here::here("data", params$year, "yearly", "shapefiles", "fpse.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "fpse.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "fpse.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> fpse
 
@@ -595,12 +657,12 @@ tm_shape(fpse_tiles) +
     legend.position = c("right", "bottom")) -> fpse_map
 
 #save map as .jpeg
-tmap_save(fpse_map, file = here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(fpse_map, file = here::here("results", params$year, "yearly", "fpse", "fpse_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "fpse", "fpse_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Forest Park Southeast", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -628,7 +690,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -655,13 +717,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -719,13 +781,13 @@ ggplot(fpse, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> fpse_plot
 
-ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "fpse", "fpse_cost.png"), 
        plot = fpse_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "fpse", "fpse_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE)%>%
   ph_with(value = "Forest Park Southeast Permit Cost Breakdown", 
@@ -733,8 +795,44 @@ report%>%
 }
 ```
 
-
 ### Central West End
+
+```{r}
+if("Central West End" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Central West End")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "cwe", "cwe5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Central West End 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -758,7 +856,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -776,10 +874,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r CWE ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 38)
-nbhd19 <- filter(lastmonth, Nbrhd == 38)
-tot20 <- filter(ytd, Nbrhd ==38)
-tot19 <- filter(lastytd, Nbrhd == 38)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -790,14 +886,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -808,51 +896,32 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
 report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Central West End: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -872,11 +941,11 @@ if("Central West End" %in% df$nbhd_name){
 
 #write shapefile  
 cwe_shp <- filter(merge, nbhd_name == "Central West End")
-st_write(cwe_shp, here::here("data", params$year, params$month, "shapefiles", "cwe.shp"), 
+st_write(cwe_shp, here::here("data", params$year, "yearly", "shapefiles", "cwe.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "cwe.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "cwe.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> cwe
 
@@ -906,13 +975,13 @@ tm_shape(cwe_tiles) +
     legend.position = c("right", "bottom")) -> cwe_map
 
 #save map as .jpeg
-tmap_save(cwe_map, file = here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"),
+tmap_save(cwe_map, file = here::here("results", params$year, "yearly", "cwe", "cwe_use.jpeg"),
           width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), width = 9, height = 5), location = ph_location_type(type="body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe_use.jpeg"), width = 9, height = 5), location = ph_location_type(type="body"), use_loc_size = FALSE)%>%
   ph_with("Central West End", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -942,7 +1011,7 @@ table%>%
   arrange(., new_use)  -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Central West End")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -969,13 +1038,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -1033,20 +1102,57 @@ ggplot(cwe, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> cwe_plot
 
-ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "cwe", "cwe_cost.png"), 
        plot = cwe_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Cental West End Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
 ### DeBaliviere Place
+
+```{r}
+if("DeBaliviere Place" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "DeBaliviere Place")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "dbplace", "dbplace5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbplace5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("DeBaliviere Place 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -1070,7 +1176,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -1088,10 +1194,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r dbplace ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 47)
-nbhd19 <- filter(lastmonth, Nbrhd == 47)
-tot20 <- filter(ytd, Nbrhd == 47)
-tot19 <- filter(lastytd, Nbrhd == 47)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -1102,14 +1206,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -1120,51 +1216,32 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
 report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "DeBaliviere Place: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -1183,11 +1260,11 @@ if("DeBaliviere Place" %in% df$nbhd_name){
 
 #write shapefile  
 dbplace_shp <- filter(merge, nbhd_name == "DeBaliviere Place")
-st_write(dbplace_shp, here::here("data", params$year, params$month, "shapefiles", "dbplace.shp"), 
+st_write(dbplace_shp, here::here("data", params$year, "yearly", "shapefiles", "dbplace.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "dbplace.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "dbplace.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> dbplace
 
@@ -1217,12 +1294,12 @@ tm_shape(dbp_tiles) +
     legend.position = c("right", "bottom")) -> dbplace_map
 
 #save map as .jpeg
-tmap_save(dbplace_map, file = here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(dbplace_map, file = here::here("results", params$year, "yearly", "dbplace", "dbplace_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbplace_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("DeBaliviere Place", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1252,7 +1329,7 @@ table%>%
   arrange(., new_use)  -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -1279,13 +1356,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -1343,20 +1420,57 @@ ggplot(dbplace, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> dbplace_plot
 
-ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "dbplace", "dbplace_cost.png"), 
        plot = dbplace_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "DeBaliviere Place Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbplace_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
 ### Skinker DeBaliviere
+
+```{r}
+if("Skinker DeBaliviere" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Skinker DeBaliviere")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "skinker", "skinker5yr.png"),
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "skinker5yr.png"), 
+                       width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Skinker DeBaliviere 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -1380,7 +1494,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -1398,10 +1512,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r skinker ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 46)
-nbhd19 <- filter(lastmonth, Nbrhd == 46)
-tot20 <- filter(ytd, Nbrhd == 46)
-tot19 <- filter(lastytd, Nbrhd == 46)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -1412,14 +1524,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -1430,51 +1534,32 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
 report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Skinker DeBaliviere: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -1493,11 +1578,11 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
 
 #write shapefile
 skinker_shp <- filter(merge, nbhd_name == "Skinker DeBaliviere")
-st_write(skinker_shp, here::here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"), 
+st_write(skinker_shp, here::here("data", params$year, "yearly", "shapefiles", "skinkerdb.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "skinkerdb.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> skinker
 
@@ -1527,12 +1612,12 @@ tm_shape(sdb_tiles) +
     legend.position = c("right", "bottom")) -> skinker_map
 
 #save map as .jpeg
-tmap_save(skinker_map, file = here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(skinker_map, file = here::here("results", params$year, "yearly", "skinker", "skinker_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), width = 9, height = 5), 
+  ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "skinker_use.jpeg"), width = 9, height = 5), 
           location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Skinker DeBaliviere", 
                location = ph_location_type(
@@ -1563,7 +1648,7 @@ table%>%
   arrange(., new_use)  -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -1590,13 +1675,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -1654,21 +1739,56 @@ ggplot(skinker, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> skinker_plot
 
-ggsave(here::here("results",  params$year, params$month, "skinker", "skinker_cost.png"),
+ggsave(here::here("results",  params$year, "yearly", "skinker", "skinker_cost.png"),
        plot = skinker_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Skinker DeBaliviere Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "skinker_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
-
 ### West End
+
+```{r}
+if("West End" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "West End")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "westend", "westend5yr.png"),
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "westend", "westend5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("West End 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -1692,7 +1812,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -1710,10 +1830,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r West End ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 48)
-nbhd19 <- filter(lastmonth, Nbrhd == 48)
-tot20 <- filter(ytd, Nbrhd == 48)
-tot19 <- filter(lastytd, Nbrhd == 48)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -1724,14 +1842,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -1742,44 +1852,25 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1806,11 +1897,11 @@ if("West End" %in% df$nbhd_name){
 
 #write shapefile
 westend_shp <- filter(merge, nbhd_name == "West End")
-st_write(westend_shp, here::here("data", params$year, params$month, "shapefiles", "westend.shp"), 
+st_write(westend_shp, here::here("data", params$year, "yearly", "shapefiles", "westend.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "westend.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "westend.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> westend
 
@@ -1840,12 +1931,12 @@ tm_shape(we_tiles) +
     legend.position = c("right", "bottom")) -> westend_map
 
 #save map as .jpeg
-tmap_save(westend_map, file = here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(westend_map, file = here::here("results", params$year, "yearly", "westend", "westend_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "westend", "westend_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("West End", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1875,7 +1966,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "West End")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -1902,13 +1993,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -1967,21 +2058,56 @@ ggplot(westend, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> westend_plot
 
-ggsave(here::here("results",  params$year, params$month, "westend", "westend_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "westend", "westend_cost.png"), 
        plot = westend_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "West End Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
- ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_cost.png"),
+ ph_with(external_img(here::here("results", params$year, "yearly", "westend", "westend_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
-
 ### Visitation Park
+
+```{r}
+if("Visitation Park" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Visitation Park")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "vstprk", "vstprk5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vstprk5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Visitation Park 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -2005,7 +2131,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -2023,10 +2149,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r vstprk ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 49)
-nbhd19 <- filter(lastmonth, Nbrhd == 49)
-tot20 <- filter(ytd, Nbrhd == 49)
-tot19 <- filter(lastytd, Nbrhd == 49)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -2037,14 +2161,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -2055,44 +2171,25 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2118,11 +2215,11 @@ if("Visitation Park" %in% df$nbhd_name){
   
 #write shapefile
 visit_shp <- filter(merge, nbhd_name == "Visitation Park")
-st_write(visit_shp, here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
+st_write(visit_shp, here::here("data", params$year, "yearly", "shapefiles", "vstprk.shp"), 
          delete_dsn = TRUE)
   
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "vstprk.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> vstprk
 
@@ -2152,12 +2249,12 @@ tm_shape(vp_tiles) +
     legend.position = c("right", "bottom")) -> vstprk_map
 
 #save map as .jpeg
-tmap_save(vstprk_map, file = here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(vstprk_map, file = here::here("results", params$year, "yearly", "vstprk", "vstprk_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vstprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Visitation Park", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2187,7 +2284,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Visitation Park")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -2214,13 +2311,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -2278,21 +2375,56 @@ ggplot(vstprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vstprk_plot
 
-ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "vstprk", "vstprk_cost.png"), 
        plot = vstprk_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Visitation Park Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vstprk_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
-
 ### Academy
+
+```{r}
+if("Academy" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Academy")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "academy", "ac5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Academy 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -2316,7 +2448,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -2334,10 +2466,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r Academy ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 51)
-nbhd19 <- filter(lastmonth, Nbrhd == 51)
-tot20 <- filter(ytd, Nbrhd == 51)
-tot19 <- filter(lastytd, Nbrhd == 51)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -2348,14 +2478,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -2366,51 +2488,32 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
 report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Academy: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -2429,12 +2532,12 @@ if("Academy" %in% df$nbhd_name){
   
 #write shapefile  
   academy_shp <- filter(merge, nbhd_name == "Academy")
-  st_write(academy_shp, here::here("data", params$year, params$month, "shapefiles", "academy.shp"), 
+  st_write(academy_shp, here::here("data", params$year, "yearly", "shapefiles", "academy.shp"), 
          delete_dsn = TRUE)
 
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "academy.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "academy.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> academy
 
@@ -2464,12 +2567,12 @@ tm_shape(ac_tiles) +
     legend.position = c("right", "bottom")) -> academy_map
 
 #save map as .jpeg
-tmap_save(academy_map, file = here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(academy_map, file = here::here("results", params$year, "yearly", "academy", "ac_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Academy", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2499,7 +2602,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Academy")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -2526,13 +2629,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -2591,21 +2694,56 @@ ggplot(academy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ac_plot
 
-ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "academy", "ac_cost.png"), 
        plot = ac_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Academy Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
-
 ### Fountain Park
+
+```{r}
+if("Fountain Park" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Fountain Park")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "ftnprk", "ftnprk5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "ftnprk5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Fountain Park 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -2629,7 +2767,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -2647,10 +2785,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r ftnprk ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 53)
-nbhd19 <- filter(lastmonth, Nbrhd == 53)
-tot20 <- filter(ytd, Nbrhd == 53)
-tot19 <- filter(lastytd, Nbrhd == 53)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -2661,14 +2797,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -2679,44 +2807,25 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2742,11 +2851,11 @@ if("Fountain Park" %in% df$nbhd_name){
 
 #write shapefile
 ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
-st_write(ftnprk_shp, here::here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
+st_write(ftnprk_shp, here::here("data", params$year, "yearly", "shapefiles", "ftnprk.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "ftnprk.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "ftnprk.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> ftnprk
 
@@ -2776,12 +2885,12 @@ tm_shape(fp_tiles) +
     legend.position = c("right", "bottom")) -> ftnprk_map
 
 #save map as .jpeg
-tmap_save(ftnprk_map, file = here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(ftnprk_map, file = here::here("results", params$year, "yearly", "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Fountain Park", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2811,7 +2920,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Fountain Park")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -2838,13 +2947,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -2886,7 +2995,6 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 }}
 ```
 
-
 ```{r ftnprk plot, echo=FALSE, message=FALSE}
 if("Fountain Park" %in% df$nbhd_name){
 ftnprk <- filter(df, nbhd_name == "Fountain Park")
@@ -2903,20 +3011,56 @@ ggplot(ftnprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ftnprk_plot
 
-ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "ftnprk", "ftnprk_cost.png"), 
        plot = ftnprk_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Fountain Park Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "ftnprk_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
 ### Lewis Place
+
+```{r}
+if("Lewis Place" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Lewis Place")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "lewis", "lewis5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lewis5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Lewis Place 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -2940,7 +3084,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -2958,10 +3102,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r Lewis Place ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 54)
-nbhd19 <- filter(lastmonth, Nbrhd == 54)
-tot20 <- filter(ytd, Nbrhd == 54)
-tot19 <- filter(lastytd, Nbrhd == 54)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -2972,14 +3114,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -2990,44 +3124,25 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -3054,11 +3169,11 @@ if("Lewis Place" %in% df$nbhd_name){
 
 #write shapefile
 lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
-st_write(lewis_shp, here::here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
+st_write(lewis_shp, here::here("data", params$year, "yearly", "shapefiles", "lewis.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "lewis.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "lewis.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> lewis
 
@@ -3088,12 +3203,12 @@ tm_shape(lp_tiles) +
     legend.position = c("right", "bottom")) -> lewis_map
 
 #save map as .jpeg
-tmap_save(lewis_map, file = here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(lewis_map, file = here::here("results", params$year, "yearly", "lewis", "lewis_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lewis_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Lewis Place", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -3123,7 +3238,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Lewis Place")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -3150,13 +3265,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -3214,21 +3329,56 @@ ggplot(lewis, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> lewis_plot
 
-ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "lewis", "lewis_cost.png"), 
        plot = lewis_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Lewis Place Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lewis_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
 
-
 ### Vandeventer
+
+```{r}
+if("Vandeventer" %in% df$nbhd_name){
+year <- filter(yr5, nbhd_name == "Vandeventer")
+year%>%
+  group_by(yr)%>%
+  summarize(mean = mean(EstProjectCost), count = n())%>%
+  select(yr, mean, count) -> yr
+
+yr$mean <- currency(yr$mean, digits = 0L)
+
+ggplot(data = yr, aes(x = yr, y = count))+
+  geom_point()+
+  geom_line()+
+  theme(
+    axis.title.x = element_blank())+
+  geom_label_repel(aes(label = mean),
+                  box.padding   = 0.35, 
+                  segment.color = 'grey50')+
+  ylab("Number of Building Permits")+
+  labs(caption = "Values shown represent the average building permit cost for a given year")
+
+# save plot
+ggsave(here::here("results", params$year, "yearly", "vandy", "vandy5yr.png"), 
+       width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vandy5yr.png"), width = 9, height = 5),
+          location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Vandeventer 5 Year Analysis", 
+               location = ph_location_type(
+                 type = "title") )-> report
+}
+```
 
 ```{r}
 #create mean, median, range stats
@@ -3252,7 +3402,7 @@ if(is.infinite(max)){max[is.infinite(max)] <- 0}
 
 #create bullet points
 summary <- block_list(
-  fpar(ftext(paste(params$month, params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
+  fpar(ftext(paste(params$year, "Neighborhood Cost Breakdown", sep = " "), reg24)),
   fpar(ftext(paste("Mean:", mean, sep = " "), reg24)),
   fpar(ftext(paste("Median:", median, sep = " "), reg24)),
   fpar(ftext(paste("Range:", min, "-", max, sep = " "), reg24))
@@ -3270,10 +3420,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r vandy ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 58)
-nbhd19 <- filter(lastmonth, Nbrhd == 58)
-tot20 <- filter(ytd, Nbrhd == 58)
-tot19 <- filter(lastytd, Nbrhd == 58)
+nbhd20 <- filter(df, Nbrhd == 39)
+nbhd19 <- filter(lastyr, Nbrhd == 39)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
@@ -3284,14 +3432,6 @@ if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
 cost19 <- mean(nbhd19$EstProjectCost)
 cost19 <- currency(cost19, digits = 0L)
 if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
-bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
-totcost20 <- mean(tot20$EstProjectCost)
-totcost20 <- currency(totcost20, digits = 0L)
-if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
 pct_chg_cnt <- (bp20 - bp19)/bp19
@@ -3302,51 +3442,32 @@ pct_chg_cost <- (cost20 - cost19)/cost19
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
   
 #create sprints for powerpoint output  
-sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+sprint_1 <- sprintf("%s building permits in %s",
+                    bp20, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
   
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost20), bold),
-       ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
+       ftext(paste(": Average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
-  fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
-       ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+       ftext(paste(" compared to ", " ", params$pastyear, " (", cost19, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
 report%>%
   add_slide(layout = 'Title and Content', master = 'Office Theme')%>%
   ph_with(value = "Vandeventer: Summary Notes", location = ph_location_type(type = "title"))%>%
-  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3, 1, 2, 2, 3)) -> report
+  ph_with(summary, location = ph_location_type(type = "body"), is_list = TRUE, level_list = c(1, 2, 2, 3)) -> report
 ```
 
 ```{r}
@@ -3365,11 +3486,11 @@ if("Vandeventer" %in% df$nbhd_name){
   
 #write shapefile
 vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
-st_write(vandy_shp, here::here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
+st_write(vandy_shp, here::here("data", params$year, "yearly", "shapefiles", "vandy.shp"), 
          delete_dsn = TRUE)
 
 #Load shapefile
-st_read(here::here("data", params$year, params$month, "shapefiles", "vandy.shp"),
+st_read(here::here("data", params$year, "yearly", "shapefiles", "vandy.shp"),
         stringsAsFactors = FALSE) %>%
   st_transform(crs = 32615) -> vandy
 
@@ -3399,12 +3520,12 @@ tm_shape(vd_tiles) +
     legend.position = c("right", "bottom")) -> vandy_map
 
 #save map as .jpeg
-tmap_save(vandy_map, file = here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(vandy_map, file = here::here("results", params$year, "yearly", "vandy", "vandy_use.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vandy_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Vandeventer", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -3434,7 +3555,7 @@ table%>%
   arrange(., new_use) -> table
 
   
-month6%>%
+lastyr%>%
   filter(nbhd_name == "Vandeventer")%>%
   group_by(new_use)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -3461,13 +3582,13 @@ table1$sum <- currency(table1$sum, digits = 0L)
 #make summary tables
   flextable(table)%>%
   autofit()%>%
-  add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
+  add_header_lines(values = paste(params$year))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
   
   flextable(table1)%>%
   autofit()%>%
-  add_header_lines(values = "Last 6 Months")%>%
+  add_header_lines(values = paste(params$pastyear))%>%
   set_header_labels(new_use = "Permit Use", 
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
@@ -3525,14 +3646,14 @@ ggplot(vandy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vandy_plot
 
-ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.png"), 
+ggsave(here::here("results",  params$year, "yearly", "vandy", "vandy_cost.png"), 
        plot = vandy_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
   ph_with(value = "Vandeventer Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_cost.png"),
+  ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vandy_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"), 
                        use_loc_size = FALSE) -> report
 }
@@ -3549,15 +3670,15 @@ report%>%
 
 ```{r}
 # save powerpoint report
-print(report, target = here::here("results", "presentations",  params$year, params$month, paste("bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
+print(report, target = here::here("results", "presentations",  params$year, "yearly", paste("bldgprmt_report", params$year, ".pptx", sep = "")))
 
 #delete any existing fpse-bot-cwe-mc file in the Shiny app
 mydir <- "/Users/loganbogenut/Documents/GitHub/crime_interactive/crime_interactive/www/"
 file.remove(file.path(mydir, dir(path = mydir, pattern = "monthly_report")))
 
 #convert & save powerpoint as PDF to Shiny app
-convert_to_pdf(path = here::here("results", "presentations", params$year, params$month, paste("bldgprmt_report", params$month, params$year, ".pptx", sep = "")),
-               pdf_file = sub("[.]pptx", ".pdf", paste("~/Documents/GitHub/crime_interactive/crime_interactive/www/", "bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
+convert_to_pdf(path = here::here("results", "presentations", params$year, "yearly", paste("bldgprmt_report", params$year, ".pptx", sep = "")),
+               pdf_file = sub("[.]pptx", ".pdf", paste("~/Documents/GitHub/crime_interactive/crime_interactive/www/", "bldgprmt_report", params$year, ".pptx", sep = "")))
 
 # This code cleans our Global Environment and gives you a nice lil' message
 
