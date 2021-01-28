@@ -799,6 +799,44 @@ report%>%
 
 ### Central West End
 
+```{r CWE Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 38) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = cwe) -> cwe_densities
+
+cwe_den_tm <- tm_shape(cwe_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 38) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(cwe_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(cwe_den_tm, file = here("results", params$year, "yearly", "cwe", "cwe_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "cwe", "cwe_density.jpeg"), width = 9, height = 5), location = ph_location_type(type="body"), use_loc_size = FALSE)%>%
+  ph_with("Central West End: Building Permit Density Map", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ```{r}
 if("Central West End" %in% df$nbhd_name){
 year <- filter(yr5, nbhd_name == "Central West End")
@@ -1119,6 +1157,44 @@ report%>%
 
 ### DeBaliviere Place
 
+```{r DBP Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 47) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = dbp) -> dbp_densities
+
+dbp_den_tm <- tm_shape(dbp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 47) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(dbp_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(dbp_den_tm, file = here("results", params$year, "yearly", "dbp", "dbp_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbp", "dbp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("DeBaliviere Place: Crime Density Map",
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ```{r}
 if("DeBaliviere Place" %in% df$nbhd_name){
 year <- filter(yr5, nbhd_name == "DeBaliviere Place")
@@ -1436,6 +1512,44 @@ report%>%
 ```
 
 ### Skinker DeBaliviere
+
+```{r SDB Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 46) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = sdb) -> sdb_densities
+
+sdb_den_tm <- tm_shape(sdb_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 46) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(sdb_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(sdb_den_tm, file = here("results", params$year, "yearly", "sdb", "sdb_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "sdb", "sdb_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Skinker DeBaliviere: Crime Density Map", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
@@ -1756,6 +1870,44 @@ report%>%
 
 ### West End
 
+```{r WE Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 48) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = we) -> we_densities
+
+we_den_tm <- tm_shape(we_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 48) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(we_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(we_den_tm, file = here("results", params$year, "yearly", "we", "we_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "we", "we_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("West End: Building Permit Density", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ```{r}
 if("West End" %in% df$nbhd_name){
 year <- filter(yr5, nbhd_name == "West End")
@@ -2075,6 +2227,44 @@ report%>%
 
 ### Visitation Park
 
+```{r VP Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(neighborhood == 49) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = vp) -> vp_densities
+
+vp_den_tm <- tm_shape(vp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 49) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(we_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(we_den_tm, file = here("results", params$year, "yearly", "vp", "vp_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vp", "vp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Visitation Park: Building Permit Density", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ```{r}
 if("Visitation Park" %in% df$nbhd_name){
 year <- filter(yr5, nbhd_name == "Visitation Park")
@@ -2391,6 +2581,44 @@ report%>%
 ```
 
 ### Academy
+
+```{r AC Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 51) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = ac) -> ac_densities
+
+ac_den_tm <- tm_shape(ac_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 51) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(ac_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(ac_den_tm, file = here("results", params$year, "yearly", "ac", "ac_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "ac", "ac_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Academy: Building Permit Density Map", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r}
 if("Academy" %in% df$nbhd_name){
@@ -2711,6 +2939,48 @@ report%>%
 
 ### Fountain Park
 
+```{r FP Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 53) -> TEST
+
+TEST %>% 
+  filter(., complaint != "20-049181") -> TEST
+
+TEST %>% 
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = fp) -> fp_densities
+
+fp_den_tm <- tm_shape(fp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 53) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(fp_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(fp_den_tm, file = here("results", params$year, "yearly", "fp", "fp_density.jpeg"), width = 9, height = 5, units = "in")
+
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "fp", "fp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Fountain Park: Building Permit Density Map", 
+               location = ph_location_type(
+                 type = "title") )-> report
+```
+
 ```{r}
 if("Fountain Park" %in% df$nbhd_name){
 year <- filter(yr5, nbhd_name == "Fountain Park")
@@ -3027,6 +3297,44 @@ report%>%
 ```
 
 ### Lewis Place
+
+```{r LP Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 54) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = lp) -> lp_densities
+
+lp_den_tm <- tm_shape(lp_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 54) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(lp_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(lp_den_tm, file = here("results", params$year, "yearly", "lp", "lp_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "lp", "lp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Lewis Place: Building Permit Density Map",
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r}
 if("Lewis Place" %in% df$nbhd_name){
@@ -3345,6 +3653,44 @@ report%>%
 ```
 
 ### Vandeventer
+
+```{r VD Density Map Prep, include = FALSE}
+merge_sf %>%
+  filter(Nbrhd == 58) %>%
+  smooth_map(., bandwidth = 0.2, style = "pretty",
+  cover = vd) -> vd_densities
+
+vd_den_tm <- tm_shape(vd_tiles) +
+  tm_rgb() +
+  nhoods_sf %>%
+  filter(., neighborhood == 58) %>%
+  tm_shape() +
+    tm_fill(col = NA,
+            alpha = .5) +
+    tm_borders(col = "black",
+               lwd = 2,
+               lty = "dashed") +
+  tm_shape(vd_densities$polygons) +
+  tm_fill(col = "level", palette = "BuPu", alpha = .60,
+    title = expression("Building Permits per " * km^2)) +
+  tm_credits("© Mapbox, © OpenStreetMap", position = c("left", "BOTTOM")) +
+  tm_layout(
+    frame = FALSE,
+    legend.bg.color = "white",
+    legend.frame=TRUE,
+    legend.outside = TRUE,
+    legend.position = c("right", "bottom"))
+
+tmap_save(vd_den_tm, file = here("results", params$year, "yearly", "vd", "vd_density.jpeg"), width = 9, height = 5, units = "in")
+
+#add to powerpoint report
+report%>%
+  add_slide()%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vd", "vd_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with("Vandeventer: Building Permit Density Map",
+               location = ph_location_type(
+                 type = "title") )-> report
+```
 
 ```{r}
 if("Vandeventer" %in% df$nbhd_name){
