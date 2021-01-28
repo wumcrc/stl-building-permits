@@ -47,6 +47,8 @@ library(tidyr)        # used to drop NA
 library(docxtractr)   #convert pptx to pdf
 library(gateway)
 library(grid)
+library(ggrepel)
+library(oldtmaptools)
 ```
 
 ```{r, include=FALSE}
@@ -445,7 +447,7 @@ report%>%
 ```{r FPSE Density Map Prep, include = FALSE}
 merge_sf %>%
   filter(Nbrhd == 39) %>%
-  smooth_map(., bandwidth = 0.5, style = "pretty",
+  smooth_map(., bandwidth = 0.2, style = "pretty",
   cover = fpse) -> fpse_densities
 
 fpse_den_tm <- tm_shape(fpse_tiles) +
