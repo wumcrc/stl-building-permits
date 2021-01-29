@@ -53,7 +53,7 @@ library(oldtmaptools)
 
 ```{r, include=FALSE}
 #load data
-setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
+#setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
 #load data
 df <- read_csv(here::here("data", params$year, "yearly", "clean_year.csv"))
@@ -1184,12 +1184,12 @@ dbp_den_tm <- tm_shape(dbp_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(dbp_den_tm, file = here("results", params$year, "yearly", "dbp", "dbp_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(dbp_den_tm, file = here("results", params$year, "yearly", "dbplace", "dbp_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "dbp", "dbp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "dbplace", "dbp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("DeBaliviere Place: Crime Density Map",
                location = ph_location_type(
                  type = "title") )-> report
@@ -1540,12 +1540,12 @@ sdb_den_tm <- tm_shape(sdb_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(sdb_den_tm, file = here("results", params$year, "yearly", "sdb", "sdb_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(sdb_den_tm, file = here("results", params$year, "yearly", "skinker", "sdb_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "sdb", "sdb_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "skinker", "sdb_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Skinker DeBaliviere: Crime Density Map", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -1897,12 +1897,12 @@ we_den_tm <- tm_shape(we_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(we_den_tm, file = here("results", params$year, "yearly", "we", "we_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(we_den_tm, file = here("results", params$year, "yearly", "westend", "we_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "we", "we_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "westend", "we_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("West End: Building Permit Density", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2229,8 +2229,8 @@ report%>%
 
 ```{r VP Density Map Prep, include = FALSE}
 merge_sf %>%
-  filter(neighborhood == 49) %>%
-  smooth_map(., bandwidth = 0.2, style = "pretty",
+  filter(Nbrhd == 49) %>%
+  smooth_map(., bandwidth = 0.1, style = "pretty",
   cover = vp) -> vp_densities
 
 vp_den_tm <- tm_shape(vp_tiles) +
@@ -2254,12 +2254,12 @@ vp_den_tm <- tm_shape(vp_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(we_den_tm, file = here("results", params$year, "yearly", "vp", "vp_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(we_den_tm, file = here("results", params$year, "yearly", "vstprk", "vp_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "vp", "vp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vstprk", "vp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Visitation Park: Building Permit Density", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2585,7 +2585,7 @@ report%>%
 ```{r AC Density Map Prep, include = FALSE}
 merge_sf %>%
   filter(Nbrhd == 51) %>%
-  smooth_map(., bandwidth = 0.2, style = "pretty",
+  smooth_map(., bandwidth = 0.1, style = "pretty",
   cover = ac) -> ac_densities
 
 ac_den_tm <- tm_shape(ac_tiles) +
@@ -2609,12 +2609,12 @@ ac_den_tm <- tm_shape(ac_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(ac_den_tm, file = here("results", params$year, "yearly", "ac", "ac_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(ac_den_tm, file = here("results", params$year, "yearly", "academy", "ac_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "ac", "ac_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "academy", "ac_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Academy: Building Permit Density Map", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -2941,14 +2941,19 @@ report%>%
 
 ```{r FP Density Map Prep, include = FALSE}
 merge_sf %>%
-  filter(Nbrhd == 53) -> TEST
-
-TEST %>% 
-  filter(., complaint != "20-049181") -> TEST
-
-TEST %>% 
+  filter(Nbrhd == 53) %>%
   smooth_map(., bandwidth = 0.2, style = "pretty",
   cover = fp) -> fp_densities
+
+#merge_sf %>%
+#  filter(Nbrhd == 53) -> TEST
+
+#TEST %>% 
+#  filter(., complaint != "20-049181") -> TEST
+
+#TEST %>% 
+#  smooth_map(., bandwidth = 0.2, style = "pretty",
+#  cover = fp) -> fp_densities
 
 fp_den_tm <- tm_shape(fp_tiles) +
   tm_rgb() +
@@ -2971,11 +2976,11 @@ fp_den_tm <- tm_shape(fp_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(fp_den_tm, file = here("results", params$year, "yearly", "fp", "fp_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(fp_den_tm, file = here("results", params$year, "yearly", "ftnprk", "fp_density.jpeg"), width = 9, height = 5, units = "in")
 
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "fp", "fp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "ftnprk", "fp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Fountain Park: Building Permit Density Map", 
                location = ph_location_type(
                  type = "title") )-> report
@@ -3325,12 +3330,12 @@ lp_den_tm <- tm_shape(lp_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(lp_den_tm, file = here("results", params$year, "yearly", "lp", "lp_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(lp_den_tm, file = here("results", params$year, "yearly", "lewis", "lp_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "lp", "lp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "lewis", "lp_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Lewis Place: Building Permit Density Map",
                location = ph_location_type(
                  type = "title") )-> report
@@ -3681,12 +3686,12 @@ vd_den_tm <- tm_shape(vd_tiles) +
     legend.outside = TRUE,
     legend.position = c("right", "bottom"))
 
-tmap_save(vd_den_tm, file = here("results", params$year, "yearly", "vd", "vd_density.jpeg"), width = 9, height = 5, units = "in")
+tmap_save(vd_den_tm, file = here("results", params$year, "yearly", "vandy", "vd_density.jpeg"), width = 9, height = 5, units = "in")
 
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, "yearly", "vd", "vd_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
+  ph_with(external_img(here::here("results", params$year, "yearly", "vandy", "vd_density.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
   ph_with("Vandeventer: Building Permit Density Map",
                location = ph_location_type(
                  type = "title") )-> report
