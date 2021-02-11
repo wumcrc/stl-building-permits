@@ -2341,8 +2341,8 @@ add_slide(layout = "Two Content")%>%
 
 ```{r vstprk ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 39)
-nbhd19 <- filter(lastyr, Nbrhd == 39)
+nbhd20 <- filter(df, Nbrhd == 49)
+nbhd19 <- filter(lastyr, Nbrhd == 49)
 
 #create cost and year to date variables for each year
 bp20 <- nrow(nbhd20)
