@@ -6,42 +6,42 @@ output: html_document
 params:
   
   #Change Every month
-  month: December
-  pastyear: 2019
-  year: 2020 
+  month: January
+  pastyear: 2020
+  year: 2021 
                  
   # Compiles Year to Date Dataset for this year | Leave at January 1st 2020
-  ytd: "2020-01-01" 
+  ytd: "2021-01-01" 
                
   # First day of current month | Change this each month
-  date: "2020-12-01"   
+  date: "2021-01-01"   
   
   # First day of next month | Change this each month
-  enddate: "2021-01-01"
+  enddate: "2021-02-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
-  pastdate: "2019-01-01" 
+  pastdate: "2020-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-12-01" 
+  pstmonth: "2020-01-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2020-01-01"  
+  pstmonth2: "2020-02-01"  
   
     #6 Months prior to params$date
-  month6: "2020-07-01"
+  month6: "2020-08-01"
   
   #Quarterly Report Data only needs to be updated once every quarter. Quarter data for current year and previous year for comparison
   #start of quarter
-  qrtstart: "2020-10-01"
-  qrtstart2: "2019-10-01"
+  qrtstart: "2021-01-01"
+  qrtstart2: "2020-01-01"
   
   #end of quarter
-  qrtend: "2020-12-31"
-  qrtend2: "2019-12-31"
+  qrtend: "2021-03-31"
+  qrtend2: "2020-03-31"
   
   #Quarter
-  quarter: 4
+  quarter: 1
 ---
 
 ### Introduction
@@ -126,6 +126,7 @@ dir.create(here::here(file.path("results", params$year, params$month, "vandy")))
 dir.create(here::here(file.path("results", params$year, params$month, "vstprk")))
 dir.create(here::here(file.path("results", params$year, params$month, "westend")))
 dir.create(here::here(file.path("results", params$year, params$month, "all_nbhds")))
+dir.create(here::here(file.path("results", "presentations", params$year)))
 dir.create(here::here(file.path("results", "presentations", params$year, params$month)))
 dir.create(here::here(file.path("results", "presentations", params$year, "yearly")))
 dir.create(here::here(file.path("results", "presentations", params$year, "quarterly")))

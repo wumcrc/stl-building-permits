@@ -1,35 +1,35 @@
 ---
 title: "St. Louis Central Corridor West Building Permits"
-subtitle: "Monthly Report: January 2020" 
+subtitle: "Monthly Report: January 2020"
 author: "Washington University Medical Center"
 date: '(`r format(Sys.time(), "%B %d, %Y")`)'
 output:
   powerpoint_presentation
 always_allow_html: yes
 params:
-  
+
   #change EVERY month
-  month: December
-  year: 2020
-  pastyear: 2019
+  month: January
+  year: 2021
+  pastyear: 2020
 
 # Compiles Year to Date Dataset for this year | Leave at January 1st of the current year
-  ytd: "2020-01-01" 
-               
+  ytd: "2020-01-01"
+
   # First day of current month | Change this each month
-  date: "2020-12-01"   
-  
+  date: "2021-01-01"
+
   # First day of next month | Change this each month
-  enddate: "2021-01-01"
-           
+  enddate: "2021-02-01"
+
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
-  pastdate: "2019-01-01" 
-            
+  pastdate: "2020-01-01"
+
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2019-12-01" 
-           
+  pstmonth: "2020-01-01"
+
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2020-01-01"  
+  pstmonth2: "2020-02-01"
 ---
 
 ```{r setup, include=FALSE}
@@ -71,7 +71,7 @@ library(grid)
 
 ```{r, include=FALSE}
 #load data
-setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
+#setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
 df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
 ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
@@ -246,7 +246,7 @@ bold <- fp_text(color = "black", font.size = 24, bold = TRUE)
 
 ```{r officer layout}
 #create custom powerpoint layout
-lay <- lay_new(matrix(1:2)) 
+lay <- lay_new(matrix(1:2))
 title <- lay_new(1, widths = 2, heights = 2)
 layout <- lay_bind_row(title, lay, heights = c(1,6))
 lay_show(layout)
@@ -255,7 +255,7 @@ offlayout <- phl_layout(layout,
     margins = c(0.25, 0.25, 0.25, 0.25),
     innerMargins = rep(0.15,4))
 
-lay1 <- lay_new(matrix(1:4, nc = 2), widths = c(2,2), heights = c(2,1)) 
+lay1 <- lay_new(matrix(1:4, nc = 2), widths = c(2,2), heights = c(2,1))
 title1 <- lay_new(1, widths = 2, heights = 2)
 layout1 <- lay_bind_row(title1, lay1, heights = c(1,6))
 lay_show(layout1)
@@ -320,7 +320,7 @@ report%>%
 add_slide()%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "spat_ref.png"), height = 5, width = 9),
           ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("St. Louis Neighborhood Spatial Reference", 
+  ph_with("St. Louis Neighborhood Spatial Reference",
                location = ph_location_type(
                  type = "title") )-> report
 ```
@@ -343,7 +343,7 @@ ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
   scale_y_continuous(labels = scales::dollar_format())+
   coord_flip()
 
-ggsave(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"), 
+ggsave(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"),
        width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -351,7 +351,7 @@ report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "all_nbhds", "allnbhd_plot.png"), width = 9, height = 5),
           location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Neighborhood Summary: Average Building Permit Cost", 
+  ph_with("Neighborhood Summary: Average Building Permit Cost",
                location = ph_location_type(
                  type = "title") )-> report
 
@@ -376,7 +376,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., nbhd_name) -> table
 
-  
+
 month6%>%
   group_by(nbhd_name)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
@@ -399,24 +399,24 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(nbhd_name = "Neighborhood", 
+  set_header_labels(nbhd_name = "Neighborhood",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(nbhd_name = "Neighborhood", 
+  set_header_labels(nbhd_name = "Neighborhood",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
 report%>%
   add_slide()%>%
-  ph_with("Neighborhood Summary", 
+  ph_with("Neighborhood Summary",
                location = ph_location_type(
                  type = "title"))%>%
   phl_with_flextable(olay = offlayout01, 2, flex)%>%
@@ -428,20 +428,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 39)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 39)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -459,7 +459,7 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "fpse.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Forest Park Southeast", 
+  ph_with("Forest Park Southeast",
                location = ph_location_type(
                  type = "title") )-> report
 ```
@@ -467,76 +467,76 @@ add_slide(layout = "Two Content")%>%
 
 ```{r FPSE ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 39)
-nbhd19 <- filter(lastmonth, Nbrhd == 39)
-tot20 <- filter(ytd, Nbrhd ==39)
-tot19 <- filter(lastytd, Nbrhd == 39)
+nbhd21 <- filter(df, Nbrhd == 39)
+nbhd20 <- filter(lastmonth, Nbrhd == 39)
+tot21 <- filter(ytd, Nbrhd ==39)
+tot20 <- filter(lastytd, Nbrhd == 39)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -561,7 +561,7 @@ if("Forest Park Southeast" %in% df$nbhd_name){
 
 #write shapefile
 fpse_shp <- filter(merge, nbhd_name == "Forest Park Southeast")
-st_write(fpse_shp, here::here("data", params$year, params$month, "shapefiles", "fpse.shp"), 
+st_write(fpse_shp, here::here("data", params$year, params$month, "shapefiles", "fpse.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -601,7 +601,7 @@ tmap_save(fpse_map, file = here::here("results", params$year, params$month, "fps
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Forest Park Southeast", 
+  ph_with("Forest Park Southeast",
                location = ph_location_type(
                  type = "title") )-> report
   }
@@ -627,7 +627,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
   group_by(new_use)%>%
@@ -651,18 +651,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -670,7 +670,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Neighborhood Summary", 
+  ph_with("Neighborhood Summary",
                location = ph_location_type(
                  type = "title")) -> report
 ```
@@ -678,22 +678,22 @@ report%>%
 ```{r, echo=FALSE}
 if("Forest Park Southeast" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 39,]) < 15){
-    
+
     #create in depth summary table
   df%>%
   filter(nbhd_name == "Forest Park Southeast")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "address")%>%
     set_caption("Forest Park Southeast Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -719,7 +719,7 @@ ggplot(fpse, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> fpse_plot
 
-ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "fpse", "fpse_cost.png"),
        plot = fpse_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -728,7 +728,7 @@ report%>%
   ph_with(external_img(here::here("results", params$year, params$month, "fpse", "fpse_cost.png"),
                        width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE)%>%
-  ph_with(value = "Forest Park Southeast Permit Cost Breakdown", 
+  ph_with(value = "Forest Park Southeast Permit Cost Breakdown",
           location = ph_location_type(type = "title")) -> report
 }
 ```
@@ -738,20 +738,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 38)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 38)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -769,83 +769,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "cwe.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Central West End", 
+  ph_with("Central West End",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r CWE ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 38)
-nbhd19 <- filter(lastmonth, Nbrhd == 38)
-tot20 <- filter(ytd, Nbrhd ==38)
-tot19 <- filter(lastytd, Nbrhd == 38)
+nbhd21 <- filter(df, Nbrhd == 38)
+nbhd20 <- filter(lastmonth, Nbrhd == 38)
+tot21 <- filter(ytd, Nbrhd ==38)
+tot20 <- filter(lastytd, Nbrhd == 38)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -870,9 +870,9 @@ if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
 
 if("Central West End" %in% df$nbhd_name){
 
-#write shapefile  
+#write shapefile
 cwe_shp <- filter(merge, nbhd_name == "Central West End")
-st_write(cwe_shp, here::here("data", params$year, params$month, "shapefiles", "cwe.shp"), 
+st_write(cwe_shp, here::here("data", params$year, params$month, "shapefiles", "cwe.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -913,7 +913,7 @@ tmap_save(cwe_map, file = here::here("results", params$year, params$month, "cwe"
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "cwe", "cwe_use.jpeg"), width = 9, height = 5), location = ph_location_type(type="body"), use_loc_size = FALSE)%>%
-  ph_with("Central West End", 
+  ph_with("Central West End",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -921,7 +921,7 @@ report%>%
 
 ```{r, echo=FALSE}
 if("Central West End" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Central West End")%>%
@@ -941,7 +941,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use)  -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Central West End")%>%
   group_by(new_use)%>%
@@ -965,18 +965,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -984,7 +984,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Central West End", 
+  ph_with("Central West End",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -993,22 +993,22 @@ report%>%
 ```{r CWE summary table, echo = FALSE}
 if("Central West End" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 38,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Central West End")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "address")%>%
     set_caption("Central West End Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -1033,7 +1033,7 @@ ggplot(cwe, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> cwe_plot
 
-ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "cwe", "cwe_cost.png"),
        plot = cwe_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -1050,20 +1050,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 47)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 47)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -1081,83 +1081,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "dbplace.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("DeBaliviere Place", 
+  ph_with("DeBaliviere Place",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r dbplace ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 47)
-nbhd19 <- filter(lastmonth, Nbrhd == 47)
-tot20 <- filter(ytd, Nbrhd == 47)
-tot19 <- filter(lastytd, Nbrhd == 47)
+nbhd21 <- filter(df, Nbrhd == 47)
+nbhd20 <- filter(lastmonth, Nbrhd == 47)
+tot21 <- filter(ytd, Nbrhd == 47)
+tot20 <- filter(lastytd, Nbrhd == 47)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1181,9 +1181,9 @@ if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
 ```{r DeBaliviere Place Building Permit Mapping, include = FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
 
-#write shapefile  
+#write shapefile
 dbplace_shp <- filter(merge, nbhd_name == "DeBaliviere Place")
-st_write(dbplace_shp, here::here("data", params$year, params$month, "shapefiles", "dbplace.shp"), 
+st_write(dbplace_shp, here::here("data", params$year, params$month, "shapefiles", "dbplace.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -1223,7 +1223,7 @@ tmap_save(dbplace_map, file = here::here("results", params$year, params$month, "
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "dbplace", "dbplace_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("DeBaliviere Place", 
+  ph_with("DeBaliviere Place",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -1231,7 +1231,7 @@ report%>%
 
 ```{r, echo=FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
@@ -1251,7 +1251,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use)  -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
   group_by(new_use)%>%
@@ -1275,18 +1275,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -1294,7 +1294,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("DeBaliviere Place", 
+  ph_with("DeBaliviere Place",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -1303,22 +1303,22 @@ report%>%
 ```{r dbplace summary table, echo = FALSE}
 if("DeBaliviere Place" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 47,]) < 15){
-    
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "DeBaliviere Place")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("DeBaliviere Place Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -1343,7 +1343,7 @@ ggplot(dbplace, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> dbplace_plot
 
-ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "dbplace", "dbplace_cost.png"),
        plot = dbplace_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -1360,20 +1360,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 46)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 46)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -1391,83 +1391,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "skinker.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Skinker DeBaliviere", 
+  ph_with("Skinker DeBaliviere",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r skinker ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 46)
-nbhd19 <- filter(lastmonth, Nbrhd == 46)
-tot20 <- filter(ytd, Nbrhd == 46)
-tot19 <- filter(lastytd, Nbrhd == 46)
+nbhd21 <- filter(df, Nbrhd == 46)
+nbhd20 <- filter(lastmonth, Nbrhd == 46)
+tot21 <- filter(ytd, Nbrhd == 46)
+tot20 <- filter(lastytd, Nbrhd == 46)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1493,7 +1493,7 @@ if("Skinker DeBaliviere" %in% df$nbhd_name){
 
 #write shapefile
 skinker_shp <- filter(merge, nbhd_name == "Skinker DeBaliviere")
-st_write(skinker_shp, here::here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"), 
+st_write(skinker_shp, here::here("data", params$year, params$month, "shapefiles", "skinkerdb.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -1532,9 +1532,9 @@ tmap_save(skinker_map, file = here::here("results", params$year, params$month, "
 #add to powerpoint report
 report%>%
   add_slide()%>%
-  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), width = 9, height = 5), 
+  ph_with(external_img(here::here("results", params$year, params$month, "skinker", "skinker_use.jpeg"), width = 9, height = 5),
           location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Skinker DeBaliviere", 
+  ph_with("Skinker DeBaliviere",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -1542,7 +1542,7 @@ report%>%
 
 ```{r Skinker DeBaliviere summary table, echo = FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
@@ -1562,7 +1562,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use)  -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
   group_by(new_use)%>%
@@ -1586,18 +1586,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -1605,7 +1605,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Skinker DeBaliviere", 
+  ph_with("Skinker DeBaliviere",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -1614,22 +1614,22 @@ report%>%
 ```{r, echo=FALSE}
 if("Skinker DeBaliviere" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 46,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Skinker DeBaliviere")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
 
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("Skinker DeBaliviere Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -1672,20 +1672,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 48)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 48)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -1703,83 +1703,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "westend.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("West End", 
+  ph_with("West End",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r West End ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 48)
-nbhd19 <- filter(lastmonth, Nbrhd == 48)
-tot20 <- filter(ytd, Nbrhd == 48)
-tot19 <- filter(lastytd, Nbrhd == 48)
+nbhd21 <- filter(df, Nbrhd == 48)
+nbhd20 <- filter(lastmonth, Nbrhd == 48)
+tot21 <- filter(ytd, Nbrhd == 48)
+tot20 <- filter(lastytd, Nbrhd == 48)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -1806,7 +1806,7 @@ if("West End" %in% df$nbhd_name){
 
 #write shapefile
 westend_shp <- filter(merge, nbhd_name == "West End")
-st_write(westend_shp, here::here("data", params$year, params$month, "shapefiles", "westend.shp"), 
+st_write(westend_shp, here::here("data", params$year, params$month, "shapefiles", "westend.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -1846,7 +1846,7 @@ tmap_save(westend_map, file = here::here("results", params$year, params$month, "
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "westend", "westend_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("West End", 
+  ph_with("West End",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -1854,7 +1854,7 @@ report%>%
 
 ```{r West End summary table, echo=FALSE}
 if("West End" %in% df$nbhd_name){
-  
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "West End")%>%
@@ -1874,7 +1874,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "West End")%>%
   group_by(new_use)%>%
@@ -1898,18 +1898,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -1917,7 +1917,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("West End", 
+  ph_with("West End",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -1931,17 +1931,17 @@ if("West End" %in% df$nbhd_name){
   df%>%
   filter(nbhd_name == "West End")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("West End Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -1967,7 +1967,7 @@ ggplot(westend, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> westend_plot
 
-ggsave(here::here("results",  params$year, params$month, "westend", "westend_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "westend", "westend_cost.png"),
        plot = westend_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -1985,20 +1985,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 49)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 49)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -2016,83 +2016,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "vstprk.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Visitation Park", 
+  ph_with("Visitation Park",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r vstprk ytd summary notes}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 49)
-nbhd19 <- filter(lastmonth, Nbrhd == 49)
-tot20 <- filter(ytd, Nbrhd == 49)
-tot19 <- filter(lastytd, Nbrhd == 49)
+nbhd21 <- filter(df, Nbrhd == 49)
+nbhd20 <- filter(lastmonth, Nbrhd == 49)
+tot21 <- filter(ytd, Nbrhd == 49)
+tot20 <- filter(lastytd, Nbrhd == 49)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2115,12 +2115,12 @@ if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
 
 ```{r Visitation Park Building Permit Mapping, include = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
-  
+
 #write shapefile
 visit_shp <- filter(merge, nbhd_name == "Visitation Park")
-st_write(visit_shp, here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"), 
+st_write(visit_shp, here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
          delete_dsn = TRUE)
-  
+
 #Load shapefile
 st_read(here::here("data", params$year, params$month, "shapefiles", "vstprk.shp"),
         stringsAsFactors = FALSE) %>%
@@ -2158,7 +2158,7 @@ tmap_save(vstprk_map, file = here::here("results", params$year, params$month, "v
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vstprk", "vstprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Visitation Park", 
+  ph_with("Visitation Park",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -2166,7 +2166,7 @@ report%>%
 
 ```{r, echo = FALSE}
 if("Visitation Park" %in% df$nbhd_name){
-    
+
  #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Visitation Park")%>%
@@ -2186,7 +2186,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Visitation Park")%>%
   group_by(new_use)%>%
@@ -2210,18 +2210,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -2229,7 +2229,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Visitation Park", 
+  ph_with("Visitation Park",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -2238,22 +2238,22 @@ report%>%
 ```{r, echo=FALSE}
 if("Visitation Park" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 49,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Visitation Park")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("Visitation Park Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -2278,7 +2278,7 @@ ggplot(vstprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vstprk_plot
 
-ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "vstprk", "vstprk_cost.png"),
        plot = vstprk_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -2296,20 +2296,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 51)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 51)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -2327,83 +2327,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "academy.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Academy", 
+  ph_with("Academy",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r Academy ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 51)
-nbhd19 <- filter(lastmonth, Nbrhd == 51)
-tot20 <- filter(ytd, Nbrhd == 51)
-tot19 <- filter(lastytd, Nbrhd == 51)
+nbhd21 <- filter(df, Nbrhd == 51)
+nbhd20 <- filter(lastmonth, Nbrhd == 51)
+tot21 <- filter(ytd, Nbrhd == 51)
+tot20 <- filter(lastytd, Nbrhd == 51)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2426,10 +2426,10 @@ if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
 
 ```{r Academy Building Permit Mapping, include = FALSE}
 if("Academy" %in% df$nbhd_name){
-  
-#write shapefile  
+
+#write shapefile
   academy_shp <- filter(merge, nbhd_name == "Academy")
-  st_write(academy_shp, here::here("data", params$year, params$month, "shapefiles", "academy.shp"), 
+  st_write(academy_shp, here::here("data", params$year, params$month, "shapefiles", "academy.shp"),
          delete_dsn = TRUE)
 
 
@@ -2470,7 +2470,7 @@ tmap_save(academy_map, file = here::here("results", params$year, params$month, "
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "academy", "ac_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Academy", 
+  ph_with("Academy",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -2478,7 +2478,7 @@ report%>%
 
 ```{r Academy summary table, echo = FALSE}
 if("Academy" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Academy")%>%
@@ -2498,7 +2498,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Academy")%>%
   group_by(new_use)%>%
@@ -2522,18 +2522,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -2541,7 +2541,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Academy", 
+  ph_with("Academy",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -2550,22 +2550,22 @@ report%>%
 ```{r Academy summary table, echo=FALSE}
 if("Academy" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 51,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Academy")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("Academy Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -2591,7 +2591,7 @@ ggplot(academy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ac_plot
 
-ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "academy", "ac_cost.png"),
        plot = ac_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -2609,20 +2609,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 53)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 53)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -2640,83 +2640,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "ftnprk.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Fountain Park", 
+  ph_with("Fountain Park",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r ftnprk ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 53)
-nbhd19 <- filter(lastmonth, Nbrhd == 53)
-tot20 <- filter(ytd, Nbrhd == 53)
-tot19 <- filter(lastytd, Nbrhd == 53)
+nbhd21 <- filter(df, Nbrhd == 53)
+nbhd20 <- filter(lastmonth, Nbrhd == 53)
+tot21 <- filter(ytd, Nbrhd == 53)
+tot20 <- filter(lastytd, Nbrhd == 53)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -2742,7 +2742,7 @@ if("Fountain Park" %in% df$nbhd_name){
 
 #write shapefile
 ftnprk_shp <- filter(merge, nbhd_name == "Fountain Park")
-st_write(ftnprk_shp, here::here("data", params$year, params$month, "shapefiles", "ftnprk.shp"), 
+st_write(ftnprk_shp, here::here("data", params$year, params$month, "shapefiles", "ftnprk.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -2782,7 +2782,7 @@ tmap_save(ftnprk_map, file = here::here("results", params$year, params$month, "f
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "ftnprk", "ftnprk_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Fountain Park", 
+  ph_with("Fountain Park",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -2790,7 +2790,7 @@ report%>%
 
 ```{r Fountain Park summary table, echo = FALSE}
 if("Fountain Park" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Fountain Park")%>%
@@ -2810,7 +2810,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Fountain Park")%>%
   group_by(new_use)%>%
@@ -2834,18 +2834,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -2853,7 +2853,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Fountain Park", 
+  ph_with("Fountain Park",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -2862,22 +2862,22 @@ report%>%
 ```{r, echo=FALSE}
 if("Fountain Park" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 53,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Fountain Park")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("Fountain Park Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -2903,7 +2903,7 @@ ggplot(ftnprk, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> ftnprk_plot
 
-ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "ftnprk", "ftnprk_cost.png"),
        plot = ftnprk_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -2920,20 +2920,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 54)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 54)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -2951,83 +2951,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "lewis.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Lewis Place", 
+  ph_with("Lewis Place",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r Lewis Place ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 54)
-nbhd19 <- filter(lastmonth, Nbrhd == 54)
-tot20 <- filter(ytd, Nbrhd == 54)
-tot19 <- filter(lastytd, Nbrhd == 54)
+nbhd21 <- filter(df, Nbrhd == 54)
+nbhd20 <- filter(lastmonth, Nbrhd == 54)
+tot21 <- filter(ytd, Nbrhd == 54)
+tot20 <- filter(lastytd, Nbrhd == 54)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -3054,7 +3054,7 @@ if("Lewis Place" %in% df$nbhd_name){
 
 #write shapefile
 lewis_shp <- filter(merge, nbhd_name == "Lewis Place")
-st_write(lewis_shp, here::here("data", params$year, params$month, "shapefiles", "lewis.shp"), 
+st_write(lewis_shp, here::here("data", params$year, params$month, "shapefiles", "lewis.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -3094,7 +3094,7 @@ tmap_save(lewis_map, file = here::here("results", params$year, params$month, "le
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "lewis", "lewis_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Lewis Place", 
+  ph_with("Lewis Place",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -3102,7 +3102,7 @@ report%>%
 
 ```{r, echo=FALSE}
 if("Lewis Place" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Lewis Place")%>%
@@ -3122,7 +3122,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Lewis Place")%>%
   group_by(new_use)%>%
@@ -3146,18 +3146,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -3165,7 +3165,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Lewis Place", 
+  ph_with("Lewis Place",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -3174,22 +3174,22 @@ report%>%
 ```{r, echo=FALSE}
 if("Lewis Place" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 54,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Lewis Place")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("Lewis Place Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -3214,7 +3214,7 @@ ggplot(lewis, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> lewis_plot
 
-ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "lewis", "lewis_cost.png"),
        plot = lewis_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -3232,20 +3232,20 @@ report%>%
 
 ```{r}
 #create mean, median, range stats
-nbhd20 <- filter(df, Nbrhd == 58)
-mean <- mean(nbhd20$EstProjectCost)
+nbhd21 <- filter(df, Nbrhd == 58)
+mean <- mean(nbhd21$EstProjectCost)
 mean <- currency(mean, digits = 0L)
 if(is.nan(mean)){mean[is.nan(mean)] <- 0}
 if(is.infinite(mean)){mean[is.infinite(mean)] <- 0}
-median <- median(nbhd20$EstProjectCost)
+median <- median(nbhd21$EstProjectCost)
 median <- currency(median, digits = 0L)
 if(is.nan(median)){median[is.nan(median)] <- 0}
 if(is.infinite(median)){median[is.infinite(median)] <- 0}
-min <- min(nbhd20$EstProjectCost)
+min <- min(nbhd21$EstProjectCost)
 min <- currency(min, digits = 0L)
 if(is.nan(min)){min[is.nan(min)] <- 0}
 if(is.infinite(min)){min[is.infinite(min)] <- 0}
-max <- max(nbhd20$EstProjectCost)
+max <- max(nbhd21$EstProjectCost)
 max <- currency(max, digits = 0L)
 if(is.nan(max)){max[is.nan(max)] <- 0}
 if(is.infinite(max)){max[is.infinite(max)] <- 0}
@@ -3263,83 +3263,83 @@ report%>%
 add_slide(layout = "Two Content")%>%
   ph_with(external_img(here::here("data", "neighborhood_pics", "vandy.png"), height = 3.73, width = 4.19), location = ph_location_left(), use_loc_size = FALSE)%>%
  ph_with(summary, location = ph_location_right(), is_list = TRUE, level_list = c(1, 2, 2, 2))%>%
-  ph_with("Vandeventer", 
+  ph_with("Vandeventer",
                location = ph_location_type(
                  type = "title") )-> report
 ```
 
 ```{r vandy ytd summary}
 #filter out neighborhood
-nbhd20 <- filter(df, Nbrhd == 58)
-nbhd19 <- filter(lastmonth, Nbrhd == 58)
-tot20 <- filter(ytd, Nbrhd == 58)
-tot19 <- filter(lastytd, Nbrhd == 58)
+nbhd21 <- filter(df, Nbrhd == 58)
+nbhd20 <- filter(lastmonth, Nbrhd == 58)
+tot21 <- filter(ytd, Nbrhd == 58)
+tot20 <- filter(lastytd, Nbrhd == 58)
 
 #create cost and year to date variables for each year
+bp21 <- nrow(nbhd21)
 bp20 <- nrow(nbhd20)
-bp19 <- nrow(nbhd19)
+cost21 <- mean(nbhd21$EstProjectCost)
+cost21 <- currency(cost21, digits = 0L)
+if(is.nan(cost21)){cost21[is.nan(cost21)] <- 0}
 cost20 <- mean(nbhd20$EstProjectCost)
 cost20 <- currency(cost20, digits = 0L)
 if(is.nan(cost20)){cost20[is.nan(cost20)] <- 0}
-cost19 <- mean(nbhd19$EstProjectCost)
-cost19 <- currency(cost19, digits = 0L)
-if(is.nan(cost19)){cost19[is.nan(cost19)] <- 0}
+bptot21 <- nrow(tot21)
 bptot20 <- nrow(tot20)
-bptot19 <- nrow(tot19)
+totcost21 <- mean(tot21$EstProjectCost)
+totcost21 <- currency(totcost21, digits = 0L)
+if(is.nan(totcost21)){totcost21[is.nan(totcost21)] <- 0}
 totcost20 <- mean(tot20$EstProjectCost)
 totcost20 <- currency(totcost20, digits = 0L)
 if(is.nan(totcost20)){totcost20[is.nan(totcost20)] <- 0}
-totcost19 <- mean(tot19$EstProjectCost)
-totcost19 <- currency(totcost19, digits = 0L)
-if(is.nan(totcost19)){totcost19[is.nan(totcost19)] <- 0}
 
 #create percent change variables
-pct_chg_cnt <- (bp20 - bp19)/bp19
+pct_chg_cnt <- (bp21 - bp20)/bp20
 pct_chg_cnt <- percent(pct_chg_cnt)
 if(is.nan(pct_chg_cnt)){pct_chg_cnt[is.nan(pct_chg_cnt)] <- 0}
 if(is.infinite(pct_chg_cnt)){pct_chg_cnt[is.infinite(pct_chg_cnt)] <- "Infinite"}
-pct_chg_cost <- (cost20 - cost19)/cost19
+pct_chg_cost <- (cost21 - cost20)/cost20
 pct_chg_cost <- percent(pct_chg_cost)
 if(is.nan(pct_chg_cost)){pct_chg_cost[is.nan(pct_chg_cost)] <- 0}
 if(is.infinite(pct_chg_cost)){pct_chg_cost[is.infinite(pct_chg_cost)] <- "Infinite"}
-pct_chg_ytd20 <- (bptot20 - bptot19)/bptot19
-pct_chg_ytd20 <- percent(pct_chg_ytd20)
-if(is.nan(pct_chg_ytd20)){pct_chg_ytd20[is.nan(pct_chg_ytd20)] <- 0}
-if(is.infinite(pct_chg_ytd20)){pct_chg_ytd20[is.infinite(pct_chg_ytd20)] <- "Infinite"}
-pct_chg_cost20 <- (totcost20 - totcost19)/totcost19
-pct_chg_cost20 <- percent(pct_chg_cost20)
-if(is.nan(pct_chg_cost20)){pct_chg_cost20[is.nan(pct_chg_cost20)] <- 0}
-if(is.infinite(pct_chg_cost20)){pct_chg_cost20[is.infinite(pct_chg_cost20)] <- "Infinite"}
-  
-#create sprints for powerpoint output  
+pct_chg_ytd21 <- (bptot21 - bptot20)/bptot20
+pct_chg_ytd21 <- percent(pct_chg_ytd21)
+if(is.nan(pct_chg_ytd21)){pct_chg_ytd21[is.nan(pct_chg_ytd21)] <- 0}
+if(is.infinite(pct_chg_ytd21)){pct_chg_ytd21[is.infinite(pct_chg_ytd21)] <- "Infinite"}
+pct_chg_cost21 <- (totcost21 - totcost20)/totcost20
+pct_chg_cost21 <- percent(pct_chg_cost21)
+if(is.nan(pct_chg_cost21)){pct_chg_cost21[is.nan(pct_chg_cost21)] <- 0}
+if(is.infinite(pct_chg_cost21)){pct_chg_cost21[is.infinite(pct_chg_cost21)] <- "Infinite"}
+
+#create sprints for powerpoint output
 sprint_1 <- sprintf("%s building permits in %s %s",
-                    bp20, params$month, params$year)
-sprint_2 <- sprintf("%s total building permits in %s", 
-                    bptot20, params$year)
+                    bp21, params$month, params$year)
+sprint_2 <- sprintf("%s total building permits in %s",
+                    bptot21, params$year)
 
 # text formatting
 color24a <- fp_text(color = ifelse(pct_chg_cnt == 0, "#00B0F0", ifelse(pct_chg_cnt > 0, "#00B050", "red")), font.size = 24)
 color20a <- fp_text(color = ifelse(pct_chg_cost == 0, "#00B0F0", ifelse(pct_chg_cost > 0, "#00B050", "red")), font.size = 20)
-color24b <- fp_text(color = ifelse(pct_chg_ytd20 == 0, '#00B0F0', ifelse(pct_chg_ytd20 > 0, '#00B050', 'red')), font.size = 24)
-color20b <- fp_text(color = ifelse(pct_chg_cost20 == 0, "#00B0F0", ifelse(pct_chg_cost20 > 0, "#00B050", "red")), font.size = 20)
-  
+color24b <- fp_text(color = ifelse(pct_chg_ytd21 == 0, '#00B0F0', ifelse(pct_chg_ytd21 > 0, '#00B050', 'red')), font.size = 24)
+color20b <- fp_text(color = ifelse(pct_chg_cost21 == 0, "#00B0F0", ifelse(pct_chg_cost21 > 0, "#00B050", "red")), font.size = 20)
+
 
 # create summary notes
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(cost20), bold),
+       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(cost21), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost19, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost20, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
-  fpar(ftext(paste(pct_chg_ytd20, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot19, " total building permits)", sep = ""), reg24)),
-  fpar(ftext(paste(totcost20), bold),
+  fpar(ftext(paste(pct_chg_ytd21, "change ", sep = " "), color24b),
+       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot20, " total building permits)", sep = ""), reg24)),
+  fpar(ftext(paste(totcost21), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
-  fpar(ftext(paste(pct_chg_cost20, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost19, ")", sep = ""), reg20))
+  fpar(ftext(paste(pct_chg_cost21, "change", sep = " "), color20b),
+       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost20, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -3362,10 +3362,10 @@ if("Residential" %in% sub$new_use){col <- c(col, "Residential" = "#377eb8")}
 
 ```{r Vandeventer Building Permit Mapping, include = FALSE}
 if("Vandeventer" %in% df$nbhd_name){
-  
+
 #write shapefile
 vandy_shp <- filter(merge, nbhd_name == "Vandeventer")
-st_write(vandy_shp, here::here("data", params$year, params$month, "shapefiles", "vandy.shp"), 
+st_write(vandy_shp, here::here("data", params$year, params$month, "shapefiles", "vandy.shp"),
          delete_dsn = TRUE)
 
 #Load shapefile
@@ -3405,7 +3405,7 @@ tmap_save(vandy_map, file = here::here("results", params$year, params$month, "va
 report%>%
   add_slide()%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_use.jpeg"), width = 9, height = 5), location = ph_location_type(type = "body"), use_loc_size = FALSE)%>%
-  ph_with("Vandeventer", 
+  ph_with("Vandeventer",
                location = ph_location_type(
                  type = "title") )-> report
 }
@@ -3413,7 +3413,7 @@ report%>%
 
 ```{r vandy summary table, echo=FALSE}
 if("Vandeventer" %in% df$nbhd_name){
-    
+
 #create summary tables for current month and past 6 months
 df%>%
   filter(nbhd_name == "Vandeventer")%>%
@@ -3433,7 +3433,7 @@ table%>%
   replace(., is.na(.), 0)%>%
   arrange(., new_use) -> table
 
-  
+
 month6%>%
   filter(nbhd_name == "Vandeventer")%>%
   group_by(new_use)%>%
@@ -3457,18 +3457,18 @@ table$mean <- currency(table$mean, digits = 0L)
 table1$mean <- currency(table1$mean, digits = 0L)
 table$sum <- currency(table$sum, digits = 0L)
 table1$sum <- currency(table1$sum, digits = 0L)
-  
+
 #make summary tables
   flextable(table)%>%
   autofit()%>%
   add_header_lines(values = paste(params$month, params$year, sep = " "))%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex
-  
+
   flextable(table1)%>%
   autofit()%>%
   add_header_lines(values = "Last 6 Months")%>%
-  set_header_labels(new_use = "Permit Use", 
+  set_header_labels(new_use = "Permit Use",
     mean = "Average Cost", count = "# of Permits", sum = "Total Value of Permits") -> flex01
 
 # add powerpoint slide
@@ -3476,7 +3476,7 @@ report%>%
   add_slide(layout = "Two Content")%>%
   ph_with(flex, location = ph_location_left())%>%
   ph_with(flex01, location = ph_location_right())%>%
-  ph_with("Vandeventer", 
+  ph_with("Vandeventer",
                location = ph_location_type(
                  type = "title")) -> report
 }
@@ -3485,22 +3485,22 @@ report%>%
 ```{r, echo=FALSE}
 if("Vandeventer" %in% df$nbhd_name){
   if(nrow(df[df$Nbrhd == 58,]) < 15){
-  
+
   #create in depth summary table
   df%>%
   filter(nbhd_name == "Vandeventer")%>%
     dplyr::select(OwnerName, new_use, EstProjectCost, OrigAddress) -> table
-  
+
 #make a currency value
 table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
-  
+
 #print summary table
   flextable(table)%>%
   autofit()%>%
-  set_header_labels(OwnerName = "Owner", new_use = "New Use", 
+  set_header_labels(OwnerName = "Owner", new_use = "New Use",
     EstProjectCost = "Cost", OrigAddress = "Address")%>%
     set_caption("Vandeventer Individual Permit Breakdown") -> flex02
-  
+
 #add powerpoint slide
   report%>%
     add_slide()%>%
@@ -3525,7 +3525,7 @@ ggplot(vandy, aes(lrgcost)) +
   xlab("Building Permit Cost") +
   labs(fill = "New Use") -> vandy_plot
 
-ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.png"), 
+ggsave(here::here("results",  params$year, params$month, "vandy", "vandy_cost.png"),
        plot = vandy_plot, width = 9, height = 5, units = "in")
 
 #add to powerpoint report
@@ -3533,7 +3533,7 @@ report%>%
   add_slide()%>%
   ph_with(value = "Vandeventer Permit Cost Breakdown", location = ph_location_type(type = "title"))%>%
   ph_with(external_img(here::here("results", params$year, params$month, "vandy", "vandy_cost.png"),
-                       width = 9, height = 5), location = ph_location_type(type = "body"), 
+                       width = 9, height = 5), location = ph_location_type(type = "body"),
                        use_loc_size = FALSE) -> report
 }
 ```
@@ -3564,4 +3564,3 @@ convert_to_pdf(path = here::here("results", "presentations", params$year, params
 rm(list = ls())
 print("NICE JOB! You successfully ran all your code. Have an awesome day :)")
 ```
-
