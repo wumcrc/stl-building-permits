@@ -305,6 +305,16 @@ data%>%
                                              ifelse(grepl("53", Nbrhd), "ftnprk",       
                                              ifelse(grepl("54", Nbrhd), "lewis",       
                                              ifelse(grepl("58", Nbrhd), "vandy", NA)))))))))))%>%
+  mutate(tiles = ifelse(grepl("38", Nbrhd), "cwe_tiles",
+                                             ifelse(grepl("39", Nbrhd), "fpse_tiles",
+                                             ifelse(grepl("46", Nbrhd), "sdb_tiles",  
+                                             ifelse(grepl("47", Nbrhd), "dbp_tiles",
+                                             ifelse(grepl("48", Nbrhd), "we_tiles",
+                                             ifelse(grepl("49", Nbrhd), "vp_tiles",       
+                                             ifelse(grepl("51", Nbrhd), "ac_tiles",       
+                                             ifelse(grepl("53", Nbrhd), "fp_tiles",       
+                                             ifelse(grepl("54", Nbrhd), "lp_tiles",       
+                                             ifelse(grepl("58", Nbrhd), "vd_tiles", NA)))))))))))%>%
   
   #Drop unused variables using `select` function, assign to new `df` data frame
   dplyr::select(AppType, CancelType, CityBlock, Parcel, OwnerCode, HANDLE, AddrNum,
@@ -312,7 +322,7 @@ data%>%
                     IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, StrucType1,
                     NbrOfUnits, NewUse,NewUseGroup1, OldUse, OwnerName, OwnerCo, OwnerAddr, OwnerCity,
                     OwnerState, OwnerZIP, Nbrhd, FirstDate, LastDate, UpDateGeo, count, big_cost, lil_cost, lrgcost, new_use,
-                    nbhd_name, yr, month, abbr) -> df
+                    nbhd_name, yr, month, abbr, tiles) -> df
 ```
 
 
