@@ -6,7 +6,7 @@ output: html_document
 params:
   
   #Change Every month
-  month: January
+  month: February
   pastyear: 2020
   year: 2021 
                  
@@ -14,22 +14,22 @@ params:
   ytd: "2021-01-01" 
                
   # First day of current month | Change this each month
-  date: "2021-01-01"   
+  date: "2021-02-01"   
   
   # First day of next month | Change this each month
-  enddate: "2021-02-01"
+  enddate: "2021-03-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2020-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2020-01-01" 
+  pstmonth: "2020-02-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2020-02-01"  
+  pstmonth2: "2020-03-01"  
   
     #6 Months prior to params$date
-  month6: "2020-08-01"
+  month6: "2020-09-01"
   
   #Quarterly Report Data only needs to be updated once every quarter. Quarter data for current year and previous year for comparison
   #start of quarter
