@@ -5,7 +5,7 @@ date: "3/11/2021"
 output: html_document
 params:
 #change EVERY month
-  month: January
+  month: February
   year: 2021
   pastyear: 2020
 ---
@@ -31,7 +31,7 @@ library(RColorBrewer) # cynthia brewer color palettes
 library(viridis)      # color palettes
 library(knitr)
 library(ggplot2)      # plot making
-#library(formattable)  # currency values
+library(formattable)  # currency values
 library(lubridate)    # manipulate date time data
 library(officer)      # powerpoint manipulation
 library(flextable)    # nice tables
