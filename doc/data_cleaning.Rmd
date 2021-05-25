@@ -257,7 +257,7 @@ data%>%
                                              ifelse(grepl("A2", NewUseGroup1), "Commercial",
                                              ifelse(grepl("A3", NewUseGroup1), "Commercial",
                                              ifelse(grepl("R1", NewUseGroup1), "Commercial",  
-                                             ifelse(grepl("B", NewUseGroup1), "Institutional",
+                                             ifelse(grepl("B", NewUseGroup1), "Commercial",
                                              ifelse(grepl("M", NewUseGroup1), "Commercial",
                                              ifelse(grepl("E", NewUseGroup1), "Institutional",       
                                              ifelse(grepl("I2", NewUseGroup1), "Institutional", 
