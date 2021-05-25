@@ -6,7 +6,7 @@ output: html_document
 params:
   
   #Change Every month
-  month: March
+  month: April
   pastyear: 2020
   year: 2021 
                  
@@ -14,22 +14,22 @@ params:
   ytd: "2021-01-01" 
                
   # First day of current month | Change this each month
-  date: "2021-03-01"   
+  date: "2021-04-01"   
   
   # First day of next month | Change this each month
-  enddate: "2021-04-01"
+  enddate: "2021-05-01"
            
   #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
   pastdate: "2020-01-01" 
             
   # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2020-03-01" 
+  pstmonth: "2020-04-01" 
            
   # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2020-04-01"  
+  pstmonth2: "2020-05-01"  
   
     #6 Months prior to params$date
-  month6: "2020-10-01"
+  month6: "2020-11-01"
   
   #Quarterly Report Data only needs to be updated once every quarter. Quarter data for current year and previous year for comparison
   #start of quarter
@@ -228,8 +228,8 @@ data <- read_excel(here::here("data", "PrmBldg.xlsx"))
 data%>%
   
   #create year & month variables
-  mutate(yr = format(as.Date(data$FirstDate,  format="%d/%m/%Y"), "%Y"))%>%
-  mutate(month = format(as.Date(data$FirstDate, format="%d/%m/%Y"), "%m"))%>%
+  mutate(yr = format(as.Date(data$IssueDate,  format="%d/%m/%Y"), "%Y"))%>%
+  mutate(month = format(as.Date(data$IssueDate, format="%d/%m/%Y"), "%m"))%>%
   
   # Use filter command to filter out permits without a cancellation date and with cost of $0
   filter(is.na(CancelDate))%>%
@@ -340,15 +340,15 @@ data_month %>%
 write_csv(means, here::here("data", params$year, params$month, "mean_data.csv"))
 
 #current year to date
-data_year <- filter(df, FirstDate >= as.Date(params$ytd) & FirstDate <= as.Date(params$enddate))
+data_year <- filter(df, IssueDate >= as.Date(params$ytd) & IssueDate <= as.Date(params$enddate))
 write_csv(data_year, here::here("data", params$year, params$month, "ytd.csv"))
 
 #last year this month
-lstmonth <- filter(df, FirstDate >= as.Date(params$pstmonth) & FirstDate <= as.Date(params$pstmonth2))
+lstmonth <- filter(df, IssueDate >= as.Date(params$pstmonth) & IssueDate <= as.Date(params$pstmonth2))
 write_csv(lstmonth, here::here("data", params$year, params$month, "lastmonth.csv"))
 
 #last year to date
-lastytd <- filter(df, FirstDate >= as.Date(params$pastdate) & FirstDate <= as.Date(params$pstmonth2))
+lastytd <- filter(df, IssueDate >= as.Date(params$pastdate) & IssueDate <= as.Date(params$pstmonth2))
 write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 
 #last year data
@@ -356,15 +356,15 @@ lstyr <- filter(df, yr == params$year)
 write_csv(lstyr, here::here("data", params$year, "yearly", "clean_year.csv"))
 
 #6 month data
-month6 <- filter(df, FirstDate >= as.Date(params$month6) & FirstDate <= as.Date(params$enddate))
+month6 <- filter(df, IssueDate >= as.Date(params$month6) & IssueDate <= as.Date(params$enddate))
 write_csv(month6, here::here("data", params$year, params$month, "month6.csv"))
 
 #Quarterly Data
-data_qrt <- filter(df, FirstDate >= as.Date(params$qrtstart) & FirstDate <= as.Date(params$qrtend))
+data_qrt <- filter(df, IssueDate >= as.Date(params$qrtstart) & IssueDate <= as.Date(params$qrtend))
 write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "quarter-data.csv"))
 
 #Last year quarterly data
-data_qrt <- filter(df, FirstDate >= as.Date(params$qrtstart2) & FirstDate <= as.Date(params$qrtend2))
+data_qrt <- filter(df, IssueDate >= as.Date(params$qrtstart2) & IssueDate <= as.Date(params$qrtend2))
 write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "past-qrtr-data.csv"))
 
 #5 year data
