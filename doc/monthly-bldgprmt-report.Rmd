@@ -45,7 +45,7 @@ library(grid)
 
 ```{r, include=FALSE}
 #load data
-setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
+#setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
 df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
 ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
@@ -398,29 +398,24 @@ report%>%
 #Individual Neighborhood Summaries
 
 ```{r}
-neighborhoods <- c("Forest Park South East", "Central West End", "DeBaliviere Place", "Skinker DeBaliviere", "West End", "Visitation Park", "Academy", "Fountain Park", "Lewis Place", "Vandeventer")
-
 #create comments to use to filter and name outputs
-comment(cwe_tiles) <- "cwe_tiles"
-comment(fpse_tiles) <- "fpse_tiles"
-comment(sdb_tiles) <- "sdb_tiles"
-comment(dbp_tiles) <- "dbp_tiles"
-comment(we_tiles) <- "we_tiles"
-comment(vp_tiles) <- "vp_tiles"
-comment(ac_tiles) <- "ac_tiles"
-comment(fp_tiles) <- "fp_tiles"
-comment(lp_tiles) <- "lp_tiles"
-comment(vd_tiles) <- "vd_tiles"
+comment(cwe_tiles) <- "38"
+comment(fpse_tiles) <- "39"
+comment(sdb_tiles) <- "46"
+comment(dbp_tiles) <- "47"
+comment(we_tiles) <- "48"
+comment(vp_tiles) <- "49"
+comment(ac_tiles) <- "51"
+comment(fp_tiles) <- "53"
+comment(lp_tiles) <- "54"
+comment(vd_tiles) <- "58"
 
 for (i in list(cwe_tiles, fpse_tiles, sdb_tiles, dbp_tiles, we_tiles, vp_tiles, ac_tiles, fp_tiles, lp_tiles, vd_tiles)) {
-  name <- comment(i)
-  if(name %in% df$tiles){
-  nbhd_pres <- filter(df, tiles == name)
+  num <- as.numeric(comment(i))
+  if(num %in% df$Nbrhd){
+  nbhd_pres <- filter(df, Nbrhd == num)
   neighborhood <- unique(nbhd_pres$nbhd_name)
 abbr <- unique(nbhd_pres$abbr)
-num <- unique(nbhd_pres$Nbrhd)
-
-  
 
 #create mean, median, range stats
 mean <- mean(nbhd_pres$EstProjectCost)
@@ -713,12 +708,12 @@ report%>%
 print(report, target = here::here("results", "presentations",  params$year, params$month, paste("bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
 
 #delete any existing permit report file in the Shiny app
-mydir <- "/Users/loganbogenut/Documents/GitHub/crime_interactive/crime_interactive/www/"
-file.remove(file.path(mydir, dir(path = mydir, pattern = "bldgprmt_report")))
+mydir <- paste("/Users/loganbogenut/Documents/GitHub/stl-building-permits/results/presentations/", params$year, "/", params$month, sep = "")
+file.remove(file.path(mydir, dir(path = mydir, pattern = ".pdf")))
 
-#convert & save powerpoint as PDF to Shiny app
+#convert & save powerpoint as PDF
 convert_to_pdf(path = here::here("results", "presentations", params$year, params$month, paste("bldgprmt_report", params$month, params$year, ".pptx", sep = "")),
-               pdf_file = sub("[.]pptx", ".pdf", paste("~/Documents/GitHub/crime_interactive/crime_interactive/www/", "bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
+               pdf_file = sub("[.]pptx", ".pdf", paste("/Users/loganbogenut/Documents/GitHub/stl-building-permits/results/presentations/", params$year, "/", params$month, "/bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
 
 # This code cleans our Global Environment and gives you a nice lil' message
 rm(list = ls())

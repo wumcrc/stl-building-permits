@@ -1,0 +1,80 @@
+---
+title: "10 year analysis"
+author: "Logan Williams"
+date: "5/10/2021"
+output: html_document
+---
+
+```{r}
+
+tot <- filter(df, yr >= 2010)
+
+tot%>%
+  group_by(nbhd_name)%>%
+  summarise(yr10count = n(filter(tot, yr == 2010)), tot_cost = sum(EstProjectCost))-> test
+
+temp <- filter(tot, yr == 2010)
+
+temp%>%
+  group_by(nbhd_name)%>%
+  summarise(yr10count = n(), yr10sum = sum(EstProjectCost)) -> table
+
+
+
+
+temp <- filter(tot, yr == 2021)
+
+temp%>%
+  group_by(nbhd_name)%>%
+  summarise(yr21count = n(), yr21sum = sum(EstProjectCost)) -> sub
+
+names <- c("Central West End", "Forest Park Southeast", "Skinker DeBaliviere", "DeBaliviere Place", "West End", "Visitation Park", "Academy", "Fountain Park", "Lewis Place", "Vandeventer")
+
+names[!(names %in% sub$nbhd_name)] -> missing_neighborhoods
+is_empty(missing_neighborhoods) -> test
+
+if(test == FALSE) {
+   add_row(sub, nbhd_name = missing_neighborhoods) -> sub
+   sub <- replace(sub, is.na(sub), 0)
+}
+
+master <- left_join(sub, master)
+
+write.xlsx(master, here::here("11year-data.xlsx"))
+library(xlsx)
+library(writexl)
+library(openxlsx)
+library(readxl)
+test <- as.data.frame(test)
+
+temp <- data.frame("Neighborhood" = character(),
+                    "Total Buildng Permits Issued" = double(),
+                    "Average Value" = double(),
+                    "Total Value" =  double(),
+                    "Total Instiutional Permits" = double(),
+                    "Total Commercial Permits" = double(),
+                    "Total Industrial Permits" = double(),
+                    "Total Residential Permits" = double(),
+                    check.names = FALSE)
+
+for(i in 2010:2021){
+  if(i = 2010){
+  tot%>%
+    filter(yr = i) -> sub
+  
+  sub%>%
+  group_by(nbhd_name)%>%
+  summarize(count = n(), sum = sum(EstProjectCost)) -> temp
+  }or(i = 2011){
+    tot%>%
+    filter(yr = i) -> sub
+  
+  sub%>%
+  group_by(nbhd_name)%>%
+  summarize("" = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost)) -> sub
+  
+  rbind(sub, temp)
+  }
+}
+```
+
