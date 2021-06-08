@@ -5,7 +5,7 @@ date: "3/11/2021"
 output: html_document
 params:
 #change EVERY month
-  month: April
+  month: May
   year: 2021
   pastyear: 2020
 ---
@@ -725,7 +725,7 @@ file.copy(from=paste(mydir, "/bldgprmt_report", params$month, params$year, ".pdf
           copy.mode = TRUE)
 
 # This code cleans our Global Environment and gives you a nice lil' message
-#rm(list = ls())
+rm(list = ls())
 print("NICE JOB! You successfully ran all your code. Have an awesome day :)")
 ```
 

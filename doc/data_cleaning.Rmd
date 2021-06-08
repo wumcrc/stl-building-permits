@@ -6,40 +6,20 @@ output: html_document
 params:
   
   #Change Every month
-  month: April
-  pastyear: 2020
+  month: May
   year: 2021 
-                 
-  # Compiles Year to Date Dataset for this year | Leave at January 1st 2020
-  ytd: "2021-01-01" 
-               
-  # First day of current month | Change this each month
-  date: "2021-04-01"   
   
   # First day of next month | Change this each month
-  enddate: "2021-05-01"
-           
-  #Leave at January 1st of last year | Compiles Year to Date Dataset for previous year
-  pastdate: "2020-01-01" 
-            
-  # First day of the month from LAST YEAR | Compiles Data for the most recent month of the previous year
-  pstmonth: "2020-04-01" 
-           
-  # This is the first day of the next month (of last year) | Compiles Data for the most recent month of the previous year
-  pstmonth2: "2020-05-01"  
+  enddate: "2021-06-01"
   
-    #6 Months prior to params$date
-  month6: "2020-11-01"
+  #6 Months prior to the first of the current month
+  month6: "2020-12-01"
   
-  #Quarterly Report Data only needs to be updated once every quarter. Quarter data for current year and previous year for comparison
-  #start of quarter
-  qrtstart: "2021-01-01"
-  qrtstart2: "2020-01-01"
-  
-  #end of quarter
-  qrtend: "2021-03-31"
-  qrtend2: "2020-03-31"
-  
+  #Quarterly Report Data only needs to be updated once every quarter. 
+  #start of quarter as the month number
+  qrtstart: 1
+  #end of quarter as the month number
+  qrtend: 3
   #Quarter
   quarter: 1
 ---
@@ -259,10 +239,6 @@ data%>%
   #This variable is specifically for individual neighborhood analysis
   mutate(lrgcost = ifelse(grepl("1", big_cost), "> $50,000", "< $50,000"))%>% 
   
-  #create count variable
-  # group_by(nbhd_name, new_use)%>%
-  # mutate(count = n())%>%
-  
   #rename handle
   rename(HANDLE = Handle)%>%
   mutate(abbr = ifelse(grepl("38", Nbrhd), "cwe",
@@ -277,7 +253,7 @@ data%>%
                                              ifelse(grepl("58", Nbrhd), "vandy", NA)))))))))))%>%
   
   #Drop unused variables using `select` function, assign to new `df` data frame
-  dplyr::select(HANDLE, OwnerName, OrigAddress, AppDate, IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, NewUseGroup1, Nbrhd, FirstDate, big_cost, lil_cost, lrgcost, nbhd_name, yr, month, abbr) -> df
+  dplyr::select(HANDLE, OwnerName, OrigAddress, OwnerAddr, AppDate, IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, NewUseGroup1, Nbrhd, FirstDate, big_cost, lil_cost, lrgcost, nbhd_name, yr, month, abbr) -> df
 #add new_use categories
 df <- inner_join(df, cat, by = "NewUseGroup1")
 df <- df%>%
@@ -292,7 +268,7 @@ df <- df%>%
 #write new cleaned data into .csv files
 
 #current month
-data_month <- filter(df, IssueDate >= as.Date(params$date) & IssueDate <= as.Date(params$enddate))
+data_month <- dplyr::filter(df, as.numeric(month) == match(params$month, month.name) & yr == params$year)
 write_csv(data_month, here::here("data", params$year, params$month, "clean_data.csv"))
 
 # This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
@@ -302,15 +278,15 @@ data_month %>%
 write_csv(means, here::here("data", params$year, params$month, "mean_data.csv"))
 
 #current year to date
-data_year <- filter(df, IssueDate >= as.Date(params$ytd) & IssueDate <= as.Date(params$enddate))
+data_year <- filter(df, as.numeric(month) >= 1 & as.numeric(month) <= match(params$month, month.name) & yr == params$year)
 write_csv(data_year, here::here("data", params$year, params$month, "ytd.csv"))
 
 #last year this month
-lstmonth <- filter(df, IssueDate >= as.Date(params$pstmonth) & IssueDate <= as.Date(params$pstmonth2))
+lstmonth <- filter(df, as.numeric(month) == match(params$month, month.name) & yr == (params$year-1))
 write_csv(lstmonth, here::here("data", params$year, params$month, "lastmonth.csv"))
 
 #last year to date
-lastytd <- filter(df, IssueDate >= as.Date(params$pastdate) & IssueDate <= as.Date(params$pstmonth2))
+lastytd <- filter(df, as.numeric(month) >= 1 & as.numeric(month) <= match(params$month, month.name) & yr == (params$year-1))
 write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
 
 #last year data
@@ -322,11 +298,11 @@ month6 <- filter(df, IssueDate >= as.Date(params$month6) & IssueDate <= as.Date(
 write_csv(month6, here::here("data", params$year, params$month, "month6.csv"))
 
 #Quarterly Data
-data_qrt <- filter(df, IssueDate >= as.Date(params$qrtstart) & IssueDate <= as.Date(params$qrtend))
+data_qrt <- filter(df, as.numeric(month) >= params$qrtstart & as.numeric(month) <= params$qrtend & yr == params$year)
 write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "quarter-data.csv"))
 
 #Last year quarterly data
-data_qrt <- filter(df, IssueDate >= as.Date(params$qrtstart2) & IssueDate <= as.Date(params$qrtend2))
+data_qrt <- filter(df, as.numeric(month) >= params$qrtstart & as.numeric(month) <= params$qrtend & yr == (params$year -1))
 write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "past-qrtr-data.csv"))
 
 #5 year data
@@ -340,3 +316,52 @@ write_csv(yr5, here::here("data", params$year, "yearly", "5year.csv"))
 rm(list = ls())
 print("Congrats! The code ran and you rock! Have a great day champ :)")
 ```
+
+```{r, eval = FALSE}
+#Temporary code for fixing/matching Address data
+library(stringr)
+temp1 <- head(df,5)
+
+#remove leading spaces and trailing spaces
+owner <- dplyr::select(df, OwnerAddr)
+orig <- dplyr:: select(df, OrigAddress)
+owner$OwnerAddr <- gsub('^\\ |\\ $', '', owner$OwnerAddr)
+orig$OrigAddress <- gsub('^\\ |\\ $', '', orig$OrigAddress)
+#add space if number and letters are next to each other
+owner$OwnerAddr <- gsub("([0-9])([A-Z])", "\\1 \\2", owner$OwnerAddr)
+#split columns into address number and street name
+orig_temp <- colsplit(df$OrigAddress, " ", c("num", "name"))
+owner_temp <- colsplit(df$OwnerAddr, " ", c("num", "name"))
+#combine columns
+owner <- cbind(owner, owner_temp)
+orig <- cbind(orig, orig_temp)
+
+#drop leading and trailing spaces form name column
+owner$name <- gsub('^\\ |\\ $', '', owner$name)
+orig$name <- gsub('^\\ |\\ $', '', orig$name)
+
+owner$num <- gsub("[^0-9.-]", "", owner$num) #remove all letters
+owner$num <- sub("\\-.*", "", owner$num) #remove all dashes
+owner$num <- gsub(" ", "", owner$num, fixed = TRUE) #remove all spaces
+orig$num <- gsub("[^0-9.-]", "", orig$num) #remove all letters
+orig$num <- sub("\\-.*", "", orig$num) #remove all dashes
+orig$num <- gsub(" ", "", orig$num, fixed = TRUE) #remove all spaces
+orig$num <- as.numeric(orig$num)
+owner$num <- as.numeric(owner$num)
+owner%>%
+  mutate(similar = case_when(
+    owner$num == orig$num ~ "Same",
+    owner$num >= (orig$num-4) & owner$num <= (orig$num + 4) ~ "Similar",
+    owner$num >= (orig$num-20) & owner$num <= (orig$num +20) ~ "Possible")) -> owner
+#Remove directions of streets as well as suffixes
+owner$name <- gsub('^\\N |\\ ST$', '', owner$name)
+owner$name <- gsub('^\\S |\\ BLVD$', '', owner$name)
+owner$name <- gsub('^\\E |\\ AV$', '', owner$name)
+owner$name <- gsub('^\\W |\\ PL$', '', owner$name)
+
+orig$name <- gsub('^\\N |\\ ST$', '', orig$name)
+orig$name <- gsub('^\\S |\\ BLVD$', '', orig$name)
+orig$name <- gsub('^\\E |\\ AV$', '', orig$name)
+orig$name <- gsub('^\\W |\\ PL$', '', orig$name)
+```
+
