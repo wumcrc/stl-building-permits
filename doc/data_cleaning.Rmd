@@ -14,14 +14,6 @@ params:
   
   #6 Months prior to the first of the current month
   month6: "2020-12-01"
-  
-  #Quarterly Report Data only needs to be updated once every quarter. 
-  #start of quarter as the month number
-  qrtstart: 1
-  #end of quarter as the month number
-  qrtend: 3
-  #Quarter
-  quarter: 1
 ---
 
 ### Introduction
@@ -78,97 +70,19 @@ library(lubridate)    #manipulate date time data
 ```{r}
 # This code chunk creates the appropriate folder paths that are referred to in all of the .Rmd documents. 
 # This code is necessary to knit and compile the powerpoint presentations.
-
+abbr <- c("academy", "cwe", "dbplace", "ftnprk", "fpse", "lewis", "skinker", "vandy", "vstprk", "westend", "all_nbhds")
 here::here()
 dir.create(getwd())
 dir.create(here::here(file.path("results", params$year)))
-dir.create(here::here(file.path("results", params$year, "yearly")))
-dir.create(here::here(file.path("results", params$year, "yearly", "academy")))
-dir.create(here::here(file.path("results", params$year, "yearly", "cwe")))
-dir.create(here::here(file.path("results", params$year, "yearly", "dbplace")))
-dir.create(here::here(file.path("results", params$year, "yearly", "ftnprk")))
-dir.create(here::here(file.path("results", params$year, "yearly", "fpse")))
-dir.create(here::here(file.path("results", params$year, "yearly", "lewis")))
-dir.create(here::here(file.path("results", params$year, "yearly", "skinker")))
-dir.create(here::here(file.path("results", params$year, "yearly", "vandy")))
-dir.create(here::here(file.path("results", params$year, "yearly", "vstprk")))
-dir.create(here::here(file.path("results", params$year, "yearly", "westend")))
-dir.create(here::here(file.path("results", params$year, "yearly", "all_nbhds")))
 dir.create(here::here(file.path("results", params$year, params$month)))
-dir.create(here::here(file.path("results", params$year, params$month, "academy")))
-dir.create(here::here(file.path("results", params$year, params$month, "cwe")))
-dir.create(here::here(file.path("results", params$year, params$month, "dbplace")))
-dir.create(here::here(file.path("results", params$year, params$month, "ftnprk")))
-dir.create(here::here(file.path("results", params$year, params$month, "fpse")))
-dir.create(here::here(file.path("results", params$year, params$month, "lewis")))
-dir.create(here::here(file.path("results", params$year, params$month, "skinker")))
-dir.create(here::here(file.path("results", params$year, params$month, "vandy")))
-dir.create(here::here(file.path("results", params$year, params$month, "vstprk")))
-dir.create(here::here(file.path("results", params$year, params$month, "westend")))
-dir.create(here::here(file.path("results", params$year, params$month, "all_nbhds")))
 dir.create(here::here(file.path("results", "presentations", params$year)))
 dir.create(here::here(file.path("results", "presentations", params$year, params$month)))
-dir.create(here::here(file.path("results", "presentations", params$year, "yearly")))
-dir.create(here::here(file.path("results", "presentations", params$year, "quarterly")))
 dir.create(here::here(file.path("data", params$year)))
 dir.create(here::here(file.path("data", params$year, params$month)))
 dir.create(here::here(file.path("data", params$year, params$month, "shapefiles")))
-dir.create(here::here(file.path("data", params$year, "yearly")))
-dir.create(here::here(file.path("data", params$year, "yearly", "shapefiles")))
-dir.create(here::here(file.path("data", params$year, "quarterly")))
-dir.create(here::here(file.path("data", params$year, "quarterly", "1")))
-dir.create(here::here(file.path("data", params$year, "quarterly", "2")))
-dir.create(here::here(file.path("data", params$year, "quarterly", "3")))
-dir.create(here::here(file.path("data", params$year, "quarterly", "4")))
-dir.create(here::here(file.path("results", params$year, "quarterly")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "academy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "cwe")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "dbplace")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "ftnprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "fpse")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "lewis")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "skinker")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "vandy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "vstprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "westend")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "1", "all_nbhds")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "academy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "cwe")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "dbplace")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "ftnprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "fpse")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "lewis")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "skinker")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "vandy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "vstprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "westend")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "2", "all_nbhds")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "academy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "cwe")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "dbplace")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "ftnprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "fpse")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "lewis")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "skinker")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "vandy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "vstprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "westend")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "3", "all_nbhds")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "academy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "cwe")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "dbplace")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "ftnprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "fpse")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "lewis")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "skinker")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "vandy")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "vstprk")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "westend")))
-dir.create(here::here(file.path("results", params$year, "quarterly", "4", "all_nbhds")))
+for (i in abbr) {
+  dir.create(here::here(file.path("results", params$year, params$month, i)))
+}
 ```
 
 ### Temporary Code
@@ -177,7 +91,6 @@ library(readxl)
 data <- read_excel(here::here("data", "PrmBldg.xlsx"))
 cat <- read_excel(here::here("data", "working-db", "bldgpermits", "bldg-permit-categories.xlsx"))
 ```
-
 
 ```{r, include=FALSE}
 # Set working directory
@@ -267,7 +180,7 @@ df <- df%>%
 ```{r}
 #write new cleaned data into .csv files
 
-#current month
+#current month, convert month variable to numeric to compare with params
 data_month <- dplyr::filter(df, as.numeric(month) == match(params$month, month.name) & yr == params$year)
 write_csv(data_month, here::here("data", params$year, params$month, "clean_data.csv"))
 
