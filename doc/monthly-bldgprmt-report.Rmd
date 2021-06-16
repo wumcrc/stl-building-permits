@@ -7,7 +7,6 @@ params:
 #change EVERY month
   month: May
   year: 2021
-  pastyear: 2020
 ---
 
 ```{r setup, include=FALSE}
@@ -39,7 +38,7 @@ library(customLayout) # custom powerpoint layout
 library(rlang)        # check for empty values
 library(tidyr)        # used to drop NA
 library(docxtractr)   #convert pptx to pdf
-library(gateway)
+library(gateway)      #get STL spatial boundaries
 library(grid)
 ```
 
@@ -47,15 +46,7 @@ library(grid)
 #load data
 #setwd('/Users/loganbogenut/Documents/GitHub/stl-building-permits')
 
-df <- read_csv(here::here("data", params$year, params$month, "clean_data.csv"))
-ytd <- read_csv(here::here("data", params$year, params$month,  "ytd.csv"))
-lastmonth <- read_csv(here::here("data", params$year, params$month,  "lastmonth.csv"))
-lastytd <- read_csv(here::here("data", params$year, params$month,  "lastytd.csv"))
-avg <- read_csv(here::here("data", params$year, params$month,  "mean_data.csv"))
-month6 <- read_csv(here::here("data", params$year, params$month,  "month6.csv"))
-bound <- gw_get_data("Neighborhoods", "sf")
-nbhd_num <- c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58")
-
+load(file = here::here("data", params$year, params$month, "clean-permit-data.rda"))
 load(file = here::here("data", "basemap_tiles", "mapbox-tiles.rda"))
 load(file = here::here("data", "basemap_tiles", "boundaries.rda"))
 load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
@@ -63,8 +54,10 @@ load(file = here::here("data", "basemap_tiles", "nbhd-boundaries.rda"))
 #create powerpoint
 report <- read_pptx()
 
+bound <- gw_get_data("Neighborhoods", "sf") #get neighborhood boundaries
+nbhd_num <- c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58")
 names <- c("Central West End", "Forest Park Southeast", "Skinker DeBaliviere", "DeBaliviere Place", "West End", "Visitation Park", "Academy", "Fountain Park", "Lewis Place", "Vandeventer")
-use <- c("Industrial", "Institutional", "Residential", "Commercial")
+use <- c("Industrial", "Residential", "Commercial")
 ```
 
 #Function References
@@ -198,17 +191,17 @@ st_read(here::here("data", "working-db", "parcels", "prcl.shp"),
 
 ```{r, include=FALSE}
 #make sure both are numeric
-df$HANDLE <- as.numeric(df$HANDLE)
+data_month$HANDLE <- as.numeric(data_month$HANDLE)
 prcl$HANDLE <- as.numeric(prcl$HANDLE)
 
 #merge by handle
-merge <- df%>%
+merge <- data_month%>%
   merge(prcl, by = "HANDLE")
 ```
 
 ```{r}
 #create custom color palette for plots
-cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#4daf4a", "Institutional" = "#984ea3")
+cols <- c("Industrial" = "#e41a1c", "Residential" = "#377eb8", "Commercial" = "#4daf4a")
 
 # summary note colors
 reg24 <- fp_text(color = 'black', font.size = 24)
@@ -302,7 +295,7 @@ add_slide()%>%
 ```{r}
 # Average cost by neighborhood for each `new_use`
 
-ggplot(avg, aes(x = nbhd_name, y = mean, fill = new_use)) +
+ggplot(means, aes(x = nbhd_name, y = mean, fill = new_use)) +
   scale_colour_manual(
     values = cols,
     aesthetics = c("colour", "fill")
@@ -331,7 +324,7 @@ report%>%
 
 ```{r, echo = FALSE}
 #create summary tables for current month and past 6 months
-df%>%
+data_month%>%
   group_by(nbhd_name)%>%
   summarize(mean = mean(EstProjectCost), count = n(), sum = sum(EstProjectCost))%>%
   dplyr::select(nbhd_name, mean, count, sum) -> table
@@ -412,8 +405,8 @@ comment(vd_tiles) <- "58"
 
 for (i in list(cwe_tiles, fpse_tiles, sdb_tiles, dbp_tiles, we_tiles, vp_tiles, ac_tiles, fp_tiles, lp_tiles, vd_tiles)) {
   num <- as.numeric(comment(i))
-  if(num %in% df$Nbrhd){
-  nbhd_pres <- filter(df, Nbrhd == num)
+  if(num %in% data_month$Nbrhd){
+  nbhd_pres <- filter(data_month, Nbrhd == num)
   neighborhood <- unique(nbhd_pres$nbhd_name)
 abbr <- unique(nbhd_pres$abbr)
 
@@ -510,18 +503,18 @@ color20b <- fp_text(color = ifelse(pct_chg_cost_pres == 0, "#00B0F0", ifelse(pct
 summary <- block_list(
   fpar(ftext(sprint_1, boldline)),
   fpar(ftext(paste(pct_chg_cnt, "change ", sep = " "), color24a),
-       ftext(paste("compared to ", params$month, " ", params$pastyear, " (", bp_past, " total building permits)", sep = ""), reg24)),
+       ftext(paste("compared to ", params$month, " ", (params$year -1), " (", bp_past, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(cost_pres), bold),
        ftext(paste(": Average building permit cost in", params$month, params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost, "change", sep = " "), color20a),
-       ftext(paste(" compared to ", params$month, " ", params$pastyear, " (", cost_past, ")", sep = ""), reg20)),
+       ftext(paste(" compared to ", params$month, " ", (params$year -1), " (", cost_past, ")", sep = ""), reg20)),
   fpar(ftext(sprint_2, boldline)),
   fpar(ftext(paste(pct_chg_ytd, "change ", sep = " "), color24b),
-       ftext(paste("YTD compared to this time in ", params$pastyear, " (", bptot_past, " total building permits)", sep = ""), reg24)),
+       ftext(paste("YTD compared to this time in ", (params$year -1), " (", bptot_past, " total building permits)", sep = ""), reg24)),
   fpar(ftext(paste(totcost_pres), bold),
        ftext(paste(": YTD average building permit cost in", params$year, sep = " "), reg24)),
   fpar(ftext(paste(pct_chg_cost_pres, "change", sep = " "), color20b),
-       ftext(paste(" YTD compared to this time in ", params$pastyear, " (", totcost_past, ")", sep = ""), reg20))
+       ftext(paste(" YTD compared to this time in ", (params$year -1), " (", totcost_past, ")", sep = ""), reg20))
 )
 
 # write summary notes to powerpoint slide
@@ -534,7 +527,6 @@ report%>%
 col <- character(0)
 if("Commercial" %in% nbhd_pres$new_use){col <- c("Commercial" = "#4daf4a")}
 if("Industrial" %in% nbhd_pres$new_use){col <- c(col, "Industrial" = "#e41a1c")}
-if("Institutional" %in% nbhd_pres$new_use){col <- c(col, "Institutional" = "#984ea3")}
 if("Residential" %in% nbhd_pres$new_use){col <- c(col, "Residential" = "#377eb8")}
 
 #write shapefile
@@ -727,5 +719,48 @@ file.copy(from=paste(mydir, "/bldgprmt_report", params$month, params$year, ".pdf
 # This code cleans our Global Environment and gives you a nice lil' message
 rm(list = ls())
 print("NICE JOB! You successfully ran all your code. Have an awesome day :)")
+```
+
+```{r}
+library(stringr)
+temp1 <- head(data_month,5)
+#remove leading spaces and trailing spaces
+owner <- dplyr::select(data_month, OwnerAddr)
+orig <- dplyr:: select(data_month, OrigAddress)
+owner$OwnerAddr <- gsub('^\\ |\\ $', '', owner$OwnerAddr)
+orig$OrigAddress <- gsub('^\\ |\\ $', '', orig$OrigAddress)
+#add space if number and letters are next to each other
+owner$OwnerAddr <- gsub("([0-9])([A-Z])", "\\1 \\2", owner$OwnerAddr)
+#split columns into address number and street name
+orig_temp <- colsplit(data_month$OrigAddress, " ", c("num", "name"))
+owner_temp <- colsplit(data_month$OwnerAddr, " ", c("num", "name"))
+#combine columns
+owner <- cbind(owner, owner_temp)
+orig <- cbind(orig, orig_temp)
+#drop leading and trailing spaces form name column
+owner$name <- gsub('^\\ |\\ $', '', owner$name)
+orig$name <- gsub('^\\ |\\ $', '', orig$name)
+owner$num <- gsub("[^0-9.-]", "", owner$num) #remove all letters
+owner$num <- sub("\\-.*", "", owner$num) #remove all dashes
+owner$num <- gsub(" ", "", owner$num, fixed = TRUE) #remove all spaces
+orig$num <- gsub("[^0-9.-]", "", orig$num) #remove all letters
+orig$num <- sub("\\-.*", "", orig$num) #remove all dashes
+orig$num <- gsub(" ", "", orig$num, fixed = TRUE) #remove all spaces
+orig$num <- as.numeric(orig$num)
+owner$num <- as.numeric(owner$num)
+owner%>%
+  mutate(similar = case_when(
+    owner$num == orig$num ~ "Same",
+    owner$num >= (orig$num-4) & owner$num <= (orig$num + 4) ~ "Similar",
+    owner$num >= (orig$num-20) & owner$num <= (orig$num +20) ~ "Possible")) -> owner
+#Remove directions of streets as well as suffixes
+owner$name <- gsub('^\\N |\\ ST$', '', owner$name)
+owner$name <- gsub('^\\S |\\ BLVD$', '', owner$name)
+owner$name <- gsub('^\\E |\\ AV$', '', owner$name)
+owner$name <- gsub('^\\W |\\ PL$', '', owner$name)
+orig$name <- gsub('^\\N |\\ ST$', '', orig$name)
+orig$name <- gsub('^\\S |\\ BLVD$', '', orig$name)
+orig$name <- gsub('^\\E |\\ AV$', '', orig$name)
+orig$name <- gsub('^\\W |\\ PL$', '', orig$name)
 ```
 
