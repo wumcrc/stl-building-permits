@@ -178,49 +178,26 @@ df <- df%>%
 
 
 ```{r}
-#write new cleaned data into .csv files
-
 #current month, convert month variable to numeric to compare with params
 data_month <- dplyr::filter(df, as.numeric(month) == match(params$month, month.name) & yr == params$year)
-write_csv(data_month, here::here("data", params$year, params$month, "clean_data.csv"))
-
-# This code creates a new dataset called `means` that contains a breakdown of building permits by neighborhood broken up by `new_use`. The new dataset contains the `mean` variable which is the mean `EstProjectCost`, a `count1` variable which is simply the number of building permits, a `high_cost` variable which is the number of housing permits whose `EstProjectCost` is greater than or equal to 50,000, and a `low_cost` varaiable which is the number of housing permits whose `EstProjectCost` is less than 50,000.
+#create means data
 data_month %>%
   group_by(nbhd_name, new_use) %>%
   summarise(mean = mean(EstProjectCost), count1 = mean(count), high_cost = sum(big_cost, na.rm = TRUE), low_cost = sum(lil_cost, na.rm = TRUE)) -> means
-write_csv(means, here::here("data", params$year, params$month, "mean_data.csv"))
 
 #current year to date
-data_year <- filter(df, as.numeric(month) >= 1 & as.numeric(month) <= match(params$month, month.name) & yr == params$year)
-write_csv(data_year, here::here("data", params$year, params$month, "ytd.csv"))
+ytd <- filter(df, as.numeric(month) >= 1 & as.numeric(month) <= match(params$month, month.name) & yr == params$year)
 
 #last year this month
-lstmonth <- filter(df, as.numeric(month) == match(params$month, month.name) & yr == (params$year-1))
-write_csv(lstmonth, here::here("data", params$year, params$month, "lastmonth.csv"))
+lastmonth <- filter(df, as.numeric(month) == match(params$month, month.name) & yr == (params$year-1))
 
 #last year to date
 lastytd <- filter(df, as.numeric(month) >= 1 & as.numeric(month) <= match(params$month, month.name) & yr == (params$year-1))
-write_csv(lastytd, here::here("data", params$year, params$month, "lastytd.csv"))
-
-#last year data
-lstyr <- filter(df, yr == params$year)
-write_csv(lstyr, here::here("data", params$year, "yearly", "clean_year.csv"))
 
 #6 month data
 month6 <- filter(df, IssueDate >= as.Date(params$month6) & IssueDate <= as.Date(params$enddate))
-write_csv(month6, here::here("data", params$year, params$month, "month6.csv"))
 
-#Quarterly Data
-data_qrt <- filter(df, as.numeric(month) >= params$qrtstart & as.numeric(month) <= params$qrtend & yr == params$year)
-write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "quarter-data.csv"))
-
-#Last year quarterly data
-data_qrt <- filter(df, as.numeric(month) >= params$qrtstart & as.numeric(month) <= params$qrtend & yr == (params$year -1))
-write_csv(data_qrt, here::here("data", params$year, "quarterly", params$quarter, "past-qrtr-data.csv"))
-
-#5 year data
-yr5 <- filter(df, yr >= (params$year - 4) & yr <= params$year)
-write_csv(yr5, here::here("data", params$year, "yearly", "5year.csv"))
+save(data_month, means, ytd, lastmonth, lastytd, month6, file = here::here("data", params$year, params$month, "clean-permit-data.rda"))
 ```
 
 ```{r}
