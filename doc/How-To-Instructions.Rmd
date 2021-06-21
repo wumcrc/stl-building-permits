@@ -3,39 +3,15 @@
 
 #Step 1
 Run the `data_cleaning.Rmd` at the beginning of each month. Right now I have Jes send me the updated data each month via an excel file, but hopefully you're using a computer that can run the appropriate code so that he doesn't have to do that. Check the `data_cleaning.Rmd` to see what code is commented out at the beginning of the notebook. If you're running it on your own then make sure that the data is available for the current month! The only way to do that is to run the `odbcDriverConnect` function to get the data and you will have to manually check to see if the current month of data is available. Once you have checked to see that the data is available for the current month, the next step is to change the `params` of the `data_-creation_cleaning.Rmd`. 
-          `month` should be changed to the current month
-          `pastyear` should be kept at the previous year
           `year` should be set to the current year
-          `ytd` should be set to January 1st of the current year
-          `enddate` should be set to the first day of the next month
-          `date` should be set to the first day of the current month
-          `pastdate` should be set to January 1st of the previous year
-          `pstmonth` should be set to the 1st of the current month, but of the previous year
-          `pstmonth2` should be set to the first day of the next month of the previous year
-          `month6` should be set 6 months prior to the `date` parameter
-          `qrtstart` only needs to be changed once every quarter. Ask Jes about Quarterly specifics. This is the beginning of the quarter
-          `qrtend` set 3 months after qrtstart. This is the end of the quarter
-          `qrtstart2` also only needs to be changed once a quarter. This is the beginning of the quarter, the same as `qrtstart` only set to the previous year
-          `qrtend2` same as `qrtend` just set to the previous year
-          `quarter` should be changed to the appropriate quarter you are observing
-Once you have changed all 8 of the params you can run the `data-creation.Rmd`. 
-
-If you are running the `quarterly-report.Rmd` skip to step 7.
-If you are running the `yearly_report.Rmd` skip to step 8.
+Once you have changed all of the params you can run the `data-creation.Rmd`.
 
 
 #Step 2
 Once you have run the `data_cleaning.Rmd` you need to run the `mapping.Rmd`. This .Rmd produces the monthly building permit report. Before you run this notebook, you need to change the params.  
           `month` should be changed to the current month
           `year` should be set to the current year
-          `pastyear` should be set to the previous year
-          `ytd` should be set to January 1st of the current year
-          `date` should be set to the first day of the current month of the current year
-          `enddate` should be set to the first day of the next month
-          `pastdate` should be set to the first day of the current month of the previous year
-          `pstmonth` is the same as `date` but set to the previous year
-          `pstmonth2` is the same as `enddate` but set to the previous year
-After you change all 9 params you can run this notebook. 
+After you change all 2 params you can run this notebook. 
 
 #Step 4
 CHECK THE FINAL RESULT! Make sure that the presentation looks accurate. The most common mistake I have made is not changing the params, which results in an empty looking presentation because the data is wrong. So always make sure to check the final products!
@@ -47,16 +23,4 @@ Once you have double checked everything it is time to push everything to github!
           Make a third commit with all remaining files which should only be the plots, tables and other files created and saved from the .Rmd, ex: Add November Results
           
 #Step 6
-After you have made those commits it is time to push them to Github! Congrats, you're all done!
-
-#Step 7
-For the Quarterly reports, once you have ran the `data_cleaning.Rmd` it is time to run the `quarterly-report.Rmd`. First, you will have to change the parameters:
-          `quarter` should be changed to the appropriate quarter you are observing
-          `year` should be set to the current year
-          `pastyear` should be set to the previous year
-Once you have done this you are ready to run the `quarterly-report.Rmd`! Now, complete steps 4-6. 
-
-#Step 8
-For the Yearly reports, once you have ran the `data_cleaning.Rmd` it is time to run the `yearly_report.Rmd`. First, you will have to change the parameters:
-          `year` should be set to the year you want to run the reports for
-Once you have done this you are ready to run the `yearly_report.Rmd`! Now, complete steps 4-6. 
+After you have made those commits it is time to push them to Github! Congrats, you're all done! 
