@@ -5,7 +5,7 @@ date: "3/11/2021"
 output: html_document
 params:
 #change EVERY month
-  month: May
+  month: June
   year: 2021
 ---
 
@@ -721,7 +721,7 @@ rm(list = ls())
 print("NICE JOB! You successfully ran all your code. Have an awesome day :)")
 ```
 
-```{r}
+```{r, eval=FALSE}
 library(stringr)
 temp1 <- head(data_month,5)
 #remove leading spaces and trailing spaces
