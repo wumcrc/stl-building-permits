@@ -6,14 +6,14 @@ output: html_document
 params:
   
   #Change Every month
-  month: May
+  month: June
   year: 2021 
   
   # First day of next month | Change this each month
-  enddate: "2021-06-01"
+  enddate: "2021-07-01"
   
   #6 Months prior to the first of the current month
-  month6: "2020-12-01"
+  month6: "2020-01-01"
 ---
 
 ### Introduction
@@ -70,7 +70,7 @@ library(lubridate)    #manipulate date time data
 ```{r}
 # This code chunk creates the appropriate folder paths that are referred to in all of the .Rmd documents. 
 # This code is necessary to knit and compile the powerpoint presentations.
-abbr <- c("academy", "cwe", "dbplace", "ftnprk", "fpse", "lewis", "skinker", "vandy", "vstprk", "westend", "all_nbhds")
+abbr <- c("ac", "cwe", "dbp", "fp", "fpse", "lp", "sdbp", "vd", "vp", "we", "all_nbhds")
 here::here()
 dir.create(getwd())
 dir.create(here::here(file.path("results", params$year)))
@@ -156,14 +156,14 @@ data%>%
   rename(HANDLE = Handle)%>%
   mutate(abbr = ifelse(grepl("38", Nbrhd), "cwe",
                                              ifelse(grepl("39", Nbrhd), "fpse",
-                                             ifelse(grepl("46", Nbrhd), "skinker",  
-                                             ifelse(grepl("47", Nbrhd), "dbplace",
-                                             ifelse(grepl("48", Nbrhd), "westend",
-                                             ifelse(grepl("49", Nbrhd), "vstprk",       
-                                             ifelse(grepl("51", Nbrhd), "academy",       
-                                             ifelse(grepl("53", Nbrhd), "ftnprk",       
-                                             ifelse(grepl("54", Nbrhd), "lewis",       
-                                             ifelse(grepl("58", Nbrhd), "vandy", NA)))))))))))%>%
+                                             ifelse(grepl("46", Nbrhd), "sdbp",  
+                                             ifelse(grepl("47", Nbrhd), "dbp",
+                                             ifelse(grepl("48", Nbrhd), "we",
+                                             ifelse(grepl("49", Nbrhd), "vp",       
+                                             ifelse(grepl("51", Nbrhd), "ac",       
+                                             ifelse(grepl("53", Nbrhd), "fp",       
+                                             ifelse(grepl("54", Nbrhd), "lp",       
+                                             ifelse(grepl("58", Nbrhd), "vd", NA)))))))))))%>%
   
   #Drop unused variables using `select` function, assign to new `df` data frame
   dplyr::select(HANDLE, OwnerName, OrigAddress, OwnerAddr, AppDate, IssueDate,CompleteDate, CancelDate, EstProjectCost, AppDescription, NewUseGroup1, Nbrhd, FirstDate, big_cost, lil_cost, lrgcost, nbhd_name, yr, month, abbr) -> df
