@@ -5,7 +5,7 @@ date: "3/11/2021"
 output: html_document
 params:
 #change EVERY month
-  month: June
+  month: September
   year: 2021
 ---
 
@@ -386,6 +386,11 @@ report%>%
                  type = "title"))%>%
   phl_with_flextable(olay = offlayout01, 2, flex)%>%
   phl_with_flextable(olay = offlayout01, 4, flex01) -> report
+
+#add core neighborhood slide
+report%>%
+  add_slide(layout = "Title Slide", master = "Office Theme")%>%
+  ph_with(value = "Core Neighborhoods", location = ph_location_type(type = "ctrTitle"))  -> report
 ```
 
 #Individual Neighborhood Summaries
@@ -688,6 +693,13 @@ report%>%
                        use_loc_size = FALSE)%>%
   ph_with(value = paste(neighborhood, "Permit Cost Breakdown"), 
           location = ph_location_type(type = "title")) -> report
+
+if(num ==39){
+  #add expanded service area slide
+report%>%
+  add_slide(layout = "Title Slide", master = "Office Theme")%>%
+  ph_with(value = "Expanded Service Area", location = ph_location_type(type = "ctrTitle"))  -> report
+}
   }}
 
   # additional notes slide

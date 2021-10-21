@@ -6,14 +6,14 @@ output: html_document
 params:
   
   #Change Every month
-  month: June
+  month: September
   year: 2021 
   
   # First day of next month | Change this each month
-  enddate: "2021-07-01"
+  enddate: "2021-10-01"
   
   #6 Months prior to the first of the current month
-  month6: "2020-01-01"
+  month6: "2020-03-01"
 ---
 
 ### Introduction
