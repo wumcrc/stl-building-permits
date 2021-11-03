@@ -1,14 +1,20 @@
-
 ### Instructions for this R Project
+If you have any problems running the code refer to this document OR the `function-ref.Rmd` located in the `doc` folder.
 
 #Step 1
-Run the `data_cleaning.Rmd` at the beginning of each month. Right now I have Jes send me the updated data each month via an excel file, but hopefully you're using a computer that can run the appropriate code so that he doesn't have to do that. Check the `data_cleaning.Rmd` to see what code is commented out at the beginning of the notebook. If you're running it on your own then make sure that the data is available for the current month! The only way to do that is to run the `odbcDriverConnect` function to get the data and you will have to manually check to see if the current month of data is available. Once you have checked to see that the data is available for the current month, the next step is to change the `params` of the `data_-creation_cleaning.Rmd`. 
+If you have not already, download Libreoffice from https://www.libreoffice.org/download/download/ this allows you to utilize the `docxtractr` package which converts powerpoints to PDFs.
+
+#Step 2
+Run the `data_cleaning.Rmd` at the beginning of each month. Right now I have Jes send me the updated data each month via an excel file, but hopefully you're using a computer that can run the appropriate code so that he doesn't have to do that. Check the `data_cleaning.Rmd` to see what code is commented out at the beginning of the notebook. If you're running it on your own then make sure that the data is available for the current month! The only way to do that is to run the `odbcDriverConnect` function to get the data and you will have to manually check to see if the current month of data is available. Once you have checked to see that the data is available for the current month, the next step is to change the `params` of the `data_cleaning.Rmd`. 
           `year` should be set to the current year
+          `month` should be set to the current month
+          `enddate` should be set to the first day of the next month (If the current month is September, this should be set to the first day of October)
+          `month6` should be set to 6 months prior to the first of the CURRENT month. An easy trick for this is just taking `enddate` and subtracting the month by 7.
 Once you have changed all of the params you can run the `data-creation.Rmd`.
 
 
-#Step 2
-Once you have run the `data_cleaning.Rmd` you need to run the `mapping.Rmd`. This .Rmd produces the monthly building permit report. Before you run this notebook, you need to change the params.  
+#Step 3
+Once you have run the `data_cleaning.Rmd` you need to run the `monthly-bldgprmt-report.Rmd`. This .Rmd produces the monthly building permit report. Before you run this notebook, you need to change the params.  
           `month` should be changed to the current month
           `year` should be set to the current year
 After you change all 2 params you can run this notebook. 
