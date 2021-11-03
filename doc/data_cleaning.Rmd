@@ -12,8 +12,8 @@ params:
   # First day of next month | Change this each month
   enddate: "2021-10-01"
   
-  #6 Months prior to the first of the current month
-  month6: "2020-03-01"
+  #6 Months prior to the first of the current month (subtract `enddate` month by 7)
+  month6: "2021-03-01"
 ---
 
 ### Introduction
@@ -34,38 +34,6 @@ library(readr)        #Write csv
 library(writexl)      #write excel
 library(lubridate)    #manipulate date time data
 ```
-
-#Function References
-
-`dir.create` creates a new folder in a specified location, often using the `here` function from the `here` package to specify the desired location.
-
-`here` is a function from the `here` package that is used for file path referencing. It specifically directs you to your current working directory.
-
-`getwd` gives you your current working directory.
-
-`file.path` constructs file paths in a platform independent way.
-
-`filter` is a dplyr function that is used to clean data. Specifically it is used to find rows/cases where a condition is true. If the condition is true then the values are kept, if not they are dropped.
-
-`group_by` takes an existing tbl and converts it into a grouped tbl based on a specific variable.
-
-`rename` does exactly what you think it does. It renames variables based on name.
-
-`replace` replaces a certain value with another. It is used in this notebook to replace NAs with 0.
-
-`mutate` is used to create a new variable in your data frame.
-
-`ifelse` is a function that provides a condition. If this condition is true, it executes a command, if the condition isn't true it executes a seperate command. It is used in this notebook along with the `mutate` function to create new variables based on existing variables in a dataset.
-
-`grepl` searches for matches to a pattern. It is used in this notebook along with `ifelse` and `mutate` to look for matches to, for example, neighborhood number and then create a variable with the corresponding neighborhood name.
-
-`select` comes from the dplyr package and is used to select variables from a dataset that you wish to keep (it can also be used to remove unwanted variables).
-
-`summarise` is used in conjunction with `group_by` to create an output that has one row for each group specified in the `summarise` function.
-
-`as.Date` converts a specified variable to a date format. This is used in this notebook so that we can filter out observations based on the date they occurred. 
-
-`write_csv` is a function used to write a .csv file from a dataset.
 
 ```{r}
 # This code chunk creates the appropriate folder paths that are referred to in all of the .Rmd documents. 
@@ -206,52 +174,3 @@ save(data_month, means, ytd, lastmonth, lastytd, month6, file = here::here("data
 rm(list = ls())
 print("Congrats! The code ran and you rock! Have a great day champ :)")
 ```
-
-```{r, eval = FALSE}
-#Temporary code for fixing/matching Address data
-library(stringr)
-temp1 <- head(df,5)
-
-#remove leading spaces and trailing spaces
-owner <- dplyr::select(df, OwnerAddr)
-orig <- dplyr:: select(df, OrigAddress)
-owner$OwnerAddr <- gsub('^\\ |\\ $', '', owner$OwnerAddr)
-orig$OrigAddress <- gsub('^\\ |\\ $', '', orig$OrigAddress)
-#add space if number and letters are next to each other
-owner$OwnerAddr <- gsub("([0-9])([A-Z])", "\\1 \\2", owner$OwnerAddr)
-#split columns into address number and street name
-orig_temp <- colsplit(df$OrigAddress, " ", c("num", "name"))
-owner_temp <- colsplit(df$OwnerAddr, " ", c("num", "name"))
-#combine columns
-owner <- cbind(owner, owner_temp)
-orig <- cbind(orig, orig_temp)
-
-#drop leading and trailing spaces form name column
-owner$name <- gsub('^\\ |\\ $', '', owner$name)
-orig$name <- gsub('^\\ |\\ $', '', orig$name)
-
-owner$num <- gsub("[^0-9.-]", "", owner$num) #remove all letters
-owner$num <- sub("\\-.*", "", owner$num) #remove all dashes
-owner$num <- gsub(" ", "", owner$num, fixed = TRUE) #remove all spaces
-orig$num <- gsub("[^0-9.-]", "", orig$num) #remove all letters
-orig$num <- sub("\\-.*", "", orig$num) #remove all dashes
-orig$num <- gsub(" ", "", orig$num, fixed = TRUE) #remove all spaces
-orig$num <- as.numeric(orig$num)
-owner$num <- as.numeric(owner$num)
-owner%>%
-  mutate(similar = case_when(
-    owner$num == orig$num ~ "Same",
-    owner$num >= (orig$num-4) & owner$num <= (orig$num + 4) ~ "Similar",
-    owner$num >= (orig$num-20) & owner$num <= (orig$num +20) ~ "Possible")) -> owner
-#Remove directions of streets as well as suffixes
-owner$name <- gsub('^\\N |\\ ST$', '', owner$name)
-owner$name <- gsub('^\\S |\\ BLVD$', '', owner$name)
-owner$name <- gsub('^\\E |\\ AV$', '', owner$name)
-owner$name <- gsub('^\\W |\\ PL$', '', owner$name)
-
-orig$name <- gsub('^\\N |\\ ST$', '', orig$name)
-orig$name <- gsub('^\\S |\\ BLVD$', '', orig$name)
-orig$name <- gsub('^\\E |\\ AV$', '', orig$name)
-orig$name <- gsub('^\\W |\\ PL$', '', orig$name)
-```
-
