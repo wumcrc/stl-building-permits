@@ -6,14 +6,14 @@ output: html_document
 params:
   
   #Change Every month
-  month: October
+  month: December
   year: 2021 
   
   # First day of next month | Change this each month
-  enddate: "2021-11-01"
+  enddate: "2022-01-01"
   
   #6 Months prior to the first of the current month (subtract `enddate` month by 7)
-  month6: "2021-04-01"
+  month6: "2021-06-01"
 ---
 
 ### Introduction
@@ -56,7 +56,7 @@ for (i in abbr) {
 ### Temporary Code
 ```{r, message=FALSE}
 library(readxl)
-data <- read_excel(here::here("data", "PrmBldg.xlsx"))
+data <- read_excel(here::here("data", "PrmBldg.xlsx"), guess_max = 1048576)
 cat <- read_excel(here::here("data", "working-db", "bldgpermits", "bldg-permit-categories.xlsx"))
 ```
 
