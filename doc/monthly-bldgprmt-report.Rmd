@@ -5,7 +5,7 @@ date: "3/11/2021"
 output: html_document
 params:
 #change EVERY month
-  month: October
+  month: December
   year: 2021
 ---
 
@@ -595,62 +595,18 @@ file.remove(file.path(mydir, dir(path = mydir, pattern = ".pdf")))
 
 #convert & save powerpoint as PDF
 convert_to_pdf(path = here::here("results", "presentations", params$year, params$month, paste("bldgprmt_report", params$month, params$year, ".pptx", sep = "")),
-               pdf_file = sub("[.]pptx", ".pdf", paste("/Users/loganbogenut/Documents/GitHub/stl-building-permits/results/presentations/", params$year, "/", params$month, "/bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
+               pdf_file = sub("[.]pptx", ".pdf", paste("/Users/jesstevens/Documents/Github/WUMCRC/Projects/stl-building-permits/results/presentations/", params$year, "/", params$month, "/bldgprmt_report", params$month, params$year, ".pptx", sep = "")))
 
 #Copy PDF to Shiny App
 #delete any existing permit report file in the Shiny App
-shinydr <- "/Users/loganbogenut/Documents/GitHub/crime_interactive/crime_interactive/www/"
-file.remove(file.path(shinydr, dir(path = shinydr, pattern = "bldgprmt_report")))
+#shinydr <- "/Users/loganbogenut/Documents/GitHub/crime_interactive/crime_interactive/www/"
+#file.remove(file.path(shinydr, dir(path = shinydr, pattern = "bldgprmt_report")))
 
-file.copy(from=paste(mydir, "/bldgprmt_report", params$month, params$year, ".pdf", sep = ""), to=shinydr, 
-          overwrite = TRUE, 
-          copy.mode = TRUE)
+#file.copy(from=paste(mydir, "/bldgprmt_report", params$month, params$year, ".pdf", sep = ""), to=shinydr, 
+#          overwrite = TRUE, 
+#          copy.mode = TRUE)
 
 # This code cleans our Global Environment and gives you a nice lil' message
 rm(list = ls())
 print("NICE JOB! You successfully ran all your code. Have an awesome day :)")
 ```
-
-```{r, eval=FALSE}
-library(stringr)
-temp1 <- head(data_month,5)
-#remove leading spaces and trailing spaces
-owner <- dplyr::select(data_month, OwnerAddr)
-orig <- dplyr:: select(data_month, OrigAddress)
-owner$OwnerAddr <- gsub('^\\ |\\ $', '', owner$OwnerAddr)
-orig$OrigAddress <- gsub('^\\ |\\ $', '', orig$OrigAddress)
-#add space if number and letters are next to each other
-owner$OwnerAddr <- gsub("([0-9])([A-Z])", "\\1 \\2", owner$OwnerAddr)
-#split columns into address number and street name
-orig_temp <- colsplit(data_month$OrigAddress, " ", c("num", "name"))
-owner_temp <- colsplit(data_month$OwnerAddr, " ", c("num", "name"))
-#combine columns
-owner <- cbind(owner, owner_temp)
-orig <- cbind(orig, orig_temp)
-#drop leading and trailing spaces form name column
-owner$name <- gsub('^\\ |\\ $', '', owner$name)
-orig$name <- gsub('^\\ |\\ $', '', orig$name)
-owner$num <- gsub("[^0-9.-]", "", owner$num) #remove all letters
-owner$num <- sub("\\-.*", "", owner$num) #remove all dashes
-owner$num <- gsub(" ", "", owner$num, fixed = TRUE) #remove all spaces
-orig$num <- gsub("[^0-9.-]", "", orig$num) #remove all letters
-orig$num <- sub("\\-.*", "", orig$num) #remove all dashes
-orig$num <- gsub(" ", "", orig$num, fixed = TRUE) #remove all spaces
-orig$num <- as.numeric(orig$num)
-owner$num <- as.numeric(owner$num)
-owner%>%
-  mutate(similar = case_when(
-    owner$num == orig$num ~ "Same",
-    owner$num >= (orig$num-4) & owner$num <= (orig$num + 4) ~ "Similar",
-    owner$num >= (orig$num-20) & owner$num <= (orig$num +20) ~ "Possible")) -> owner
-#Remove directions of streets as well as suffixes
-owner$name <- gsub('^\\N |\\ ST$', '', owner$name)
-owner$name <- gsub('^\\S |\\ BLVD$', '', owner$name)
-owner$name <- gsub('^\\E |\\ AV$', '', owner$name)
-owner$name <- gsub('^\\W |\\ PL$', '', owner$name)
-orig$name <- gsub('^\\N |\\ ST$', '', orig$name)
-orig$name <- gsub('^\\S |\\ BLVD$', '', orig$name)
-orig$name <- gsub('^\\E |\\ AV$', '', orig$name)
-orig$name <- gsub('^\\W |\\ PL$', '', orig$name)
-```
-

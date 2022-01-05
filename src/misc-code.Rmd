@@ -1,0 +1,51 @@
+---
+title: "Untitled"
+author: "Jes Stevens, MA"
+date: "1/4/2022"
+output: html_document
+---
+
+```{r, eval=FALSE}
+library(stringr)
+temp1 <- head(data_month,5)
+#remove leading spaces and trailing spaces
+owner <- dplyr::select(data_month, OwnerAddr)
+orig <- dplyr:: select(data_month, OrigAddress)
+owner$OwnerAddr <- gsub('^\\ |\\ $', '', owner$OwnerAddr)
+orig$OrigAddress <- gsub('^\\ |\\ $', '', orig$OrigAddress)
+#add space if number and letters are next to each other
+owner$OwnerAddr <- gsub("([0-9])([A-Z])", "\\1 \\2", owner$OwnerAddr)
+#split columns into address number and street name
+orig_temp <- colsplit(data_month$OrigAddress, " ", c("num", "name"))
+owner_temp <- colsplit(data_month$OwnerAddr, " ", c("num", "name"))
+#combine columns
+owner <- cbind(owner, owner_temp)
+orig <- cbind(orig, orig_temp)
+#drop leading and trailing spaces form name column
+owner$name <- gsub('^\\ |\\ $', '', owner$name)
+orig$name <- gsub('^\\ |\\ $', '', orig$name)
+owner$num <- gsub("[^0-9.-]", "", owner$num) #remove all letters
+owner$num <- sub("\\-.*", "", owner$num) #remove all dashes
+owner$num <- gsub(" ", "", owner$num, fixed = TRUE) #remove all spaces
+orig$num <- gsub("[^0-9.-]", "", orig$num) #remove all letters
+orig$num <- sub("\\-.*", "", orig$num) #remove all dashes
+orig$num <- gsub(" ", "", orig$num, fixed = TRUE) #remove all spaces
+orig$num <- as.numeric(orig$num)
+owner$num <- as.numeric(owner$num)
+owner%>%
+  mutate(similar = case_when(
+    owner$num == orig$num ~ "Same",
+    owner$num >= (orig$num-4) & owner$num <= (orig$num + 4) ~ "Similar",
+    owner$num >= (orig$num-20) & owner$num <= (orig$num +20) ~ "Possible")) -> owner
+#Remove directions of streets as well as suffixes
+owner$name <- gsub('^\\N |\\ ST$', '', owner$name)
+owner$name <- gsub('^\\S |\\ BLVD$', '', owner$name)
+owner$name <- gsub('^\\E |\\ AV$', '', owner$name)
+owner$name <- gsub('^\\W |\\ PL$', '', owner$name)
+orig$name <- gsub('^\\N |\\ ST$', '', orig$name)
+orig$name <- gsub('^\\S |\\ BLVD$', '', orig$name)
+orig$name <- gsub('^\\E |\\ AV$', '', orig$name)
+orig$name <- gsub('^\\W |\\ PL$', '', orig$name)
+```
+
+
