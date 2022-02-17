@@ -101,7 +101,7 @@ data%>%
   filter(Nbrhd %in% c("38", "39", "46", "47", "48", "49", "51", "53", "54", "58"))%>%
   
   
-  # Recode values to neighborood names
+  # Recode values to neighborhood names
   mutate(nbhd_name = ifelse(grepl("38", Nbrhd), "Central West End",
                                              ifelse(grepl("39", Nbrhd), "Forest Park Southeast",
                                              ifelse(grepl("46", Nbrhd), "Skinker DeBaliviere",  
