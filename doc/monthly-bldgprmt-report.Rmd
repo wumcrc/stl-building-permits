@@ -70,7 +70,7 @@ st_read(here::here("data", "working-db", "parcels", "prcl.shp"),
 ```{r, include=FALSE}
 #make sure both are numeric
 data_month$HANDLE <- as.numeric(data_month$HANDLE)
-#prcl$HANDLE <- as.numeric(prcl$HANDLE)
+prcl$HANDLE <- as.numeric(prcl$HANDLE)
 
 #merge by handle
 merge <- data_month%>%
