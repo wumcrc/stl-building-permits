@@ -5,7 +5,10 @@ If you have any problems running the code refer to this document OR the `functio
 If you have not already, download Libreoffice from https://www.libreoffice.org/download/download/ this allows you to utilize the `docxtractr` package which converts powerpoints to PDFs.
 
 #Step 2
-Run the `data_cleaning.Rmd` at the beginning of each month. Right now I have Jes send me the updated data each month via an excel file, but hopefully you're using a computer that can run the appropriate code so that he doesn't have to do that. Check the `data_cleaning.Rmd` to see what code is commented out at the beginning of the notebook. If you're running it on your own then make sure that the data is available for the current month! The only way to do that is to run the `odbcDriverConnect` function to get the data and you will have to manually check to see if the current month of data is available (if Jes is updating the data then you don't need to run the `odbcDriverConnect` code). Once you have checked to see that the data is available for the current month, the next step is to change the `params` of the `data_cleaning.Rmd`. 
+Run the `data_cleaning.Rmd` at the beginning of each month. Right now I have Jes send me the updated data each month via an excel file, but hopefully you're using a computer that can run the appropriate code so that he doesn't have to do that. Check the `data_cleaning.Rmd` to see what code is commented out at the beginning of the notebook. If you're running it on your own then make sure that the data is available for the current month! The only way to do that is to run the `odbcDriverConnect` function to get the data and you will have to manually check to see if the current month of data is available (if Jes is updating the data then you don't need to run the `odbcDriverConnect` code). 
+
+#Step 2.1
+Once you have checked to see that the data is available for the current month, the next step is to change the `params` of the `data_cleaning.Rmd`. 
           `year` should be set to the current year
           `month` should be set to the current month
           `enddate` should be set to the first day of the next month (If the current month is September, this should be set to the first day of October)
