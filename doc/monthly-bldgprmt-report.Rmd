@@ -536,8 +536,10 @@ table$EstProjectCost <- currency(table$EstProjectCost, digits = 0L)
   colformat_num(., digits = 0, prefix = "$", j = 3) %>%
   autofit()%>%
   set_header_labels(OwnerName = "Owner", new_use = "New Use", 
-    EstProjectCost = "Cost", OrigAddress = "address")%>%
+    EstProjectCost = "Cost", OrigAddress = "address", nbhd_name = "Neighborhood")%>%
     set_caption(paste(neighborhood, "Individual Permit Breakdown"))%>%
+    fontsize(size = 10)%>%
+    width(j = 4, width = .75)%>%
     height_all(height = .25, part = "all")-> flex02
   
 #add powerpoint slide
