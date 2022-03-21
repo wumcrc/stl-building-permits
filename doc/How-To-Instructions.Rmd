@@ -13,7 +13,7 @@ Once you have checked to see that the data is available for the current month, t
           `month` should be set to the current month
           `enddate` should be set to the first day of the next month (If the current month is September, this should be set to the first day of October)
           `month6` should be set to 6 months prior to the first of the CURRENT month. An easy trick for this is just taking `enddate` and subtracting the month by 7 (Make sure you change the year as well if 6 months prior is not in the current year).
-Once you have changed all of the params you can run the `data-creation.Rmd`.
+Once you have changed all of the params you can run the `data_creation.Rmd`.
 
 
 #Step 3
